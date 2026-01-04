@@ -3,13 +3,16 @@ class Database {
     private $db;
     
     public function __construct() {
-        // Create data directory if it doesn't exist
-        $dataDir = __DIR__ . '/data';
+        // Get project root directory (one level up from includes/)
+        $projectRoot = dirname(__DIR__);
+        
+        // Create data directory if it doesn't exist (in project root)
+        $dataDir = $projectRoot . '/data';
         if (!is_dir($dataDir)) {
             @mkdir($dataDir, 0755, true);
         }
         
-        // Use data directory for database file, fallback to current directory if needed
+        // Use data directory for database file
         $dbPath = $dataDir . '/casino.db';
         
         // Try to create the database connection
@@ -18,33 +21,14 @@ class Database {
             $this->db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
             $this->initializeDatabase();
         } catch (PDOException $e) {
-            // If data directory doesn't work, try current directory as fallback
-            if ($dataDir !== __DIR__ && strpos($e->getMessage(), 'unable to open') !== false) {
-                $dbPath = __DIR__ . '/casino.db';
-                try {
-                    $this->db = new PDO('sqlite:' . $dbPath);
-                    $this->db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-                    $this->initializeDatabase();
-                } catch (PDOException $e2) {
-                    $errorMsg = "Database error: Unable to create database file.\n\n";
-                    $errorMsg .= "Please run the following commands on your server:\n";
-                    $errorMsg .= "sudo mkdir -p $dataDir\n";
-                    $errorMsg .= "sudo chown www-data:www-data $dataDir\n";
-                    $errorMsg .= "sudo chmod 755 $dataDir\n\n";
-                    $errorMsg .= "Or run: php " . __DIR__ . "/setup.php\n\n";
-                    $errorMsg .= "Original error: " . $e2->getMessage();
-                    throw new Exception($errorMsg);
-                }
-            } else {
-                $errorMsg = "Database error: Unable to create database file.\n\n";
-                $errorMsg .= "Please run the following commands on your server:\n";
-                $errorMsg .= "sudo mkdir -p $dataDir\n";
-                $errorMsg .= "sudo chown www-data:www-data $dataDir\n";
-                $errorMsg .= "sudo chmod 755 $dataDir\n\n";
-                $errorMsg .= "Or run: php " . __DIR__ . "/setup.php\n\n";
-                $errorMsg .= "Original error: " . $e->getMessage();
-                throw new Exception($errorMsg);
-            }
+            $errorMsg = "Database error: Unable to create database file.\n\n";
+            $errorMsg .= "Please run the following commands on your server:\n";
+            $errorMsg .= "sudo mkdir -p $dataDir\n";
+            $errorMsg .= "sudo chown www-data:www-data $dataDir\n";
+            $errorMsg .= "sudo chmod 755 $dataDir\n\n";
+            $errorMsg .= "Or run: php " . $projectRoot . "/setup.php\n\n";
+            $errorMsg .= "Original error: " . $e->getMessage();
+            throw new Exception($errorMsg);
         }
     }
     

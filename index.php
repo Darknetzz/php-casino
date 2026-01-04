@@ -18,6 +18,7 @@ $user = getCurrentUser();
             <h2>🎰 Casino</h2>
             <div class="nav-right">
                 <span class="balance">Balance: $<span id="balance"><?php echo number_format($user['balance'], 2); ?></span></span>
+                <a href="pages/profile.php" class="btn btn-secondary">Profile</a>
                 <a href="pages/logout.php" class="btn btn-secondary">Logout</a>
             </div>
         </div>
@@ -46,6 +47,12 @@ $user = getCurrentUser();
                 <div class="game-icon">🎲</div>
                 <h3>Roulette</h3>
                 <p>Bet on your lucky number!</p>
+            </div>
+            
+            <div class="game-card" onclick="window.location.href='games/plinko.php'">
+                <div class="game-icon">⚪</div>
+                <h3>Plinko</h3>
+                <p>Drop the ball and win!</p>
             </div>
         </div>
         

@@ -19,6 +19,7 @@ $user = getCurrentUser();
             <div class="nav-right">
                 <span class="balance">Balance: $<span id="balance"><?php echo number_format($user['balance'], 2); ?></span></span>
                 <a href="../index.php" class="btn btn-secondary">Home</a>
+                <a href="../pages/profile.php" class="btn btn-secondary">Profile</a>
                 <a href="../pages/logout.php" class="btn btn-secondary">Logout</a>
             </div>
         </div>
