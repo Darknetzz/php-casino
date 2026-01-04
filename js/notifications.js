@@ -267,6 +267,7 @@ $(document).ready(function() {
             notifications.slice(0, 20).forEach(function(notif) {
                 const timeAgo = getTimeAgo(notif.timestamp);
                 const readClass = notif.read ? 'notification-read' : 'notification-unread';
+                const typeClass = 'notification-type-' + notif.type;
                 
                 let icon = 'ℹ️';
                 if (notif.type === 'success') icon = '🎉';
@@ -279,7 +280,7 @@ $(document).ready(function() {
                 else if (notif.game === 'crash') gameIcon = '🚀';
                 
                 html += `
-                    <div class="notification-dropdown-item ${readClass}" data-id="${notif.id}">
+                    <div class="notification-dropdown-item ${readClass} ${typeClass}" data-id="${notif.id}">
                         <div class="notification-dropdown-icon">${gameIcon || icon}</div>
                         <div class="notification-dropdown-content">
                             <div class="notification-dropdown-title">${notif.title}</div>

@@ -8,6 +8,9 @@ $error = '';
 
 // Handle form submissions
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // Debug: Log POST data (remove after debugging)
+    // error_log('POST data: ' . print_r($_POST, true));
+    
     if (isset($_POST['update_settings'])) {
         $errors = [];
         
@@ -47,10 +50,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             
             if (empty($errors)) {
-                $db->setSetting('roulette_mode', $rouletteMode);
-                $db->setSetting('crash_mode', $crashMode);
-                header('Location: admin.php?tab=rounds&success=1');
-                exit;
+                try {
+                    $db->setSetting('roulette_mode', $rouletteMode);
+                    $db->setSetting('crash_mode', $crashMode);
+                    header('Location: admin.php?tab=rounds&success=1');
+                    exit;
+                } catch (Exception $e) {
+                    $error = 'Error saving settings: ' . $e->getMessage();
+                }
             } else {
                 $error = implode(', ', $errors);
             }
@@ -69,9 +76,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             
             if (empty($errors)) {
-                $db->setSetting('worker_interval', $workerInterval);
-                header('Location: admin.php?tab=rounds&success=1');
-                exit;
+                try {
+                    $db->setSetting('worker_interval', $workerInterval);
+                    header('Location: admin.php?tab=rounds&success=1');
+                    exit;
+                } catch (Exception $e) {
+                    $error = 'Error saving settings: ' . $e->getMessage();
+                }
             } else {
                 $error = implode(', ', $errors);
             }

@@ -205,19 +205,8 @@ $(document).ready(function() {
                     $('#roundCountdown').show();
                     $('#crashControls').hide();
                     
-                    // Only update countdown if round changed or countdown isn't running
-                    // Also sync if there's a significant drift (more than 2 seconds difference)
-                    if (roundChanged || !bettingCountdownInterval) {
-                        updateBettingCountdown(timeLeft);
-                    } else if (bettingCountdownInterval) {
-                        // Sync countdown with server time if drift is significant
-                        // This prevents the countdown from getting stuck
-                        const currentDisplayed = parseInt($('#countdownText').text().match(/\d+/)?.[0] || '0');
-                        const serverTime = Math.ceil(timeLeft);
-                        if (Math.abs(currentDisplayed - serverTime) > 2) {
-                            updateBettingCountdown(timeLeft);
-                        }
-                    }
+                    // Update countdown (timestamp will only be set if round changed)
+                    updateBettingCountdown(timeLeft);
                     
                     // Reset game state when entering betting phase
                     if (roundChanged) {
@@ -278,18 +267,33 @@ $(document).ready(function() {
         });
     }
     
+    // Store end timestamp for smooth countdown
+    let bettingEndsTimestamp = null;
+    let countdownRoundId = null;
+    
     function updateBettingCountdown(seconds) {
         if (bettingCountdownInterval) {
             clearInterval(bettingCountdownInterval);
         }
         
-        let timeLeft = Math.max(0, Math.ceil(seconds));
+        // Only update timestamp if round changed or we're starting fresh
+        const currentRoundId = currentRound ? currentRound.id : null;
+        if (countdownRoundId !== currentRoundId || bettingEndsTimestamp === null) {
+            // Calculate end timestamp from current time + remaining seconds
+            const now = Date.now();
+            const bettingEndsInMs = Math.max(0, (seconds || 0) * 1000);
+            bettingEndsTimestamp = now + bettingEndsInMs;
+            countdownRoundId = currentRoundId;
+        }
+        
         const updateCountdown = function() {
-            if (currentRound && currentRound.status === 'betting' && currentRound.id) {
+            if (currentRound && currentRound.status === 'betting' && currentRound.id === countdownRoundId) {
+                const now = Date.now();
+                const timeLeft = Math.max(0, Math.ceil((bettingEndsTimestamp - now) / 1000));
+                
                 if (timeLeft > 0) {
                     $('#multiplierDisplay').text(`Round #${currentRound.round_number} - Betting ends in ${timeLeft}s`);
                     $('#countdownText').html(`Next round in: <span style="font-size: 1.5em; color: #667eea;">${timeLeft}s</span>`);
-                    timeLeft--;
                 } else {
                     clearInterval(bettingCountdownInterval);
                     bettingCountdownInterval = null;
@@ -302,6 +306,12 @@ $(document).ready(function() {
                 bettingCountdownInterval = null;
                 if (currentRound && currentRound.status === 'running') {
                     $('#countdownText').html('Round in progress...');
+                }
+                // Reset timestamp when round changes
+                const currentRoundIdCheck = currentRound ? currentRound.id : null;
+                if (currentRoundIdCheck !== countdownRoundId) {
+                    bettingEndsTimestamp = null;
+                    countdownRoundId = null;
                 }
             }
         };
@@ -621,6 +631,9 @@ $(document).ready(function() {
     drawGraph();
     
     let statusCountdownInterval = null;
+    let statusEndTimestamp = null;
+    let statusCountdownRoundId = null;
+    let statusCountdownType = null; // 'betting' or null
     
     function updateRoundStatusDisplay(round) {
         if (!$('#roundStatusDisplay').length) return; // Section doesn't exist (local mode)
@@ -635,6 +648,9 @@ $(document).ready(function() {
             $('#currentRoundNumber').text('-');
             $('#roundStatusText').text('Waiting for next round...');
             $('#countdownValue').text('Waiting...');
+            statusEndTimestamp = null;
+            statusCountdownRoundId = null;
+            statusCountdownType = null;
             return;
         }
         
@@ -644,25 +660,41 @@ $(document).ready(function() {
         
         if (round.status === 'betting') {
             statusText = 'Betting Phase';
-            let timeLeft = Math.ceil(round.time_until_betting_ends || 0);
+            // Only update timestamp if round changed or we're starting fresh
+            if (statusCountdownRoundId !== round.id || statusCountdownType !== 'betting' || statusEndTimestamp === null) {
+                const now = Date.now();
+                const bettingEndsIn = round.time_until_betting_ends || 0;
+                statusEndTimestamp = now + (bettingEndsIn * 1000);
+                statusCountdownRoundId = round.id;
+                statusCountdownType = 'betting';
+            }
+            
             const updateCountdown = function() {
                 if (currentRound && currentRound.status === 'betting' && currentRound.id === round.id) {
+                    const now = Date.now();
+                    const timeLeft = Math.max(0, Math.ceil((statusEndTimestamp - now) / 1000));
                     $('#countdownValue').text(`Next round in: ${timeLeft}s`);
-                    if (timeLeft > 0) {
-                        timeLeft--;
-                    } else {
+                    if (timeLeft <= 0) {
                         clearInterval(statusCountdownInterval);
                         statusCountdownInterval = null;
                     }
                 } else {
                     clearInterval(statusCountdownInterval);
                     statusCountdownInterval = null;
+                    if (statusCountdownRoundId !== round.id) {
+                        statusEndTimestamp = null;
+                        statusCountdownRoundId = null;
+                        statusCountdownType = null;
+                    }
                 }
             };
             updateCountdown();
             statusCountdownInterval = setInterval(updateCountdown, 1000);
         } else if (round.status === 'running') {
             statusText = 'Running';
+            statusEndTimestamp = null;
+            statusCountdownRoundId = null;
+            statusCountdownType = null;
             if (round.crash_point) {
                 $('#countdownValue').text(`Crash point: ${parseFloat(round.crash_point).toFixed(2)}x`);
             } else {
@@ -670,6 +702,9 @@ $(document).ready(function() {
             }
         } else if (round.status === 'finished') {
             statusText = 'Finished';
+            statusEndTimestamp = null;
+            statusCountdownRoundId = null;
+            statusCountdownType = null;
             if (round.crash_point) {
                 $('#countdownValue').text(`Crashed at: ${parseFloat(round.crash_point).toFixed(2)}x`);
             } else {
