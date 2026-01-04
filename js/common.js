@@ -77,9 +77,7 @@ function addBetAdjustButtons(inputSelector) {
         // For inputs in bet-controls, wrap in a container that maintains flex behavior
         const $wrapper = $('<div class="bet-input-wrapper"></div>');
         $input.wrap($wrapper);
-        
-        // Get the input again after wrapping to ensure we have the correct reference
-        const $wrappedInput = $input.closest('.bet-input-wrapper').find('input');
+        const $wrapperContainer = $input.parent(); // Get the wrapper after wrapping
         
         // Create button groups container
         const $buttonGroups = $('<div class="bet-adjust-buttons-inline"></div>');
@@ -104,17 +102,17 @@ function addBetAdjustButtons(inputSelector) {
             
             $btn.on('click', function(e) {
                 e.preventDefault();
-                const current = parseFloat($wrappedInput.val()) || 0;
-                const min = parseFloat($wrappedInput.attr('min')) || 0;
-                const max = parseFloat($wrappedInput.attr('max')) || Infinity;
+                const current = parseFloat($input.val()) || 0;
+                const min = parseFloat($input.attr('min')) || 0;
+                const max = parseFloat($input.attr('max')) || Infinity;
                 const newValue = Math.max(min, Math.min(max, current + adjust));
-                $wrappedInput.val(newValue).trigger('change');
+                $input.val(newValue).trigger('change');
             });
         });
         
         $buttonGroups.append($positiveGroup);
         $buttonGroups.append($negativeGroup);
-        $input.closest('.bet-input-wrapper').append($buttonGroups);
+        $wrapperContainer.append($buttonGroups);
     } else {
         // For inputs not in bet-controls, use form-group structure
         const $formGroup = $('<div class="form-group"></div>');
@@ -122,9 +120,7 @@ function addBetAdjustButtons(inputSelector) {
         
         const $inputWrapper = $('<div class="form-input-wrapper"></div>');
         $input.wrap($inputWrapper);
-        
-        // Get the input again after wrapping to ensure we have the correct reference
-        const $wrappedInput = $input.closest('.form-input-wrapper').find('input');
+        const $inputWrapperContainer = $input.parent(); // Get the wrapper after wrapping
         
         const $buttonGroups = $('<div class="form-button-groups"></div>');
         const $positiveGroup = $('<div class="button-group button-group-positive"></div>');
@@ -147,17 +143,17 @@ function addBetAdjustButtons(inputSelector) {
             
             $btn.on('click', function(e) {
                 e.preventDefault();
-                const current = parseFloat($wrappedInput.val()) || 0;
-                const min = parseFloat($wrappedInput.attr('min')) || 0;
-                const max = parseFloat($wrappedInput.attr('max')) || Infinity;
+                const current = parseFloat($input.val()) || 0;
+                const min = parseFloat($input.attr('min')) || 0;
+                const max = parseFloat($input.attr('max')) || Infinity;
                 const newValue = Math.max(min, Math.min(max, current + adjust));
-                $wrappedInput.val(newValue).trigger('change');
+                $input.val(newValue).trigger('change');
             });
         });
         
         $buttonGroups.append($positiveGroup);
         $buttonGroups.append($negativeGroup);
-        $inputWrapper.after($buttonGroups);
+        $inputWrapperContainer.after($buttonGroups);
     }
 }
 
