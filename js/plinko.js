@@ -73,8 +73,13 @@ $(document).ready(function() {
             ballPosition = {row: 0, col: 4.5};
             updateBallPosition();
             
-            // Animate ball drop
+            // Animate ball drop with smooth physics
             let currentRow = 0;
+            let velocity = 0.1; // Vertical velocity
+            let horizontalVelocity = 0;
+            const gravity = 0.02;
+            const bounceDamping = 0.7;
+            
             const dropInterval = setInterval(function() {
                 if (currentRow >= rows) {
                     clearInterval(dropInterval);
@@ -112,19 +117,33 @@ $(document).ready(function() {
                     return;
                 }
                 
-                // Move ball down one row
-                currentRow++;
+                // Apply gravity
+                velocity += gravity;
+                currentRow += velocity;
                 ballPosition.row = currentRow;
                 
-                // Randomly move left or right (simulating peg bounce)
-                const randomDirection = Math.random() < 0.5 ? -0.5 : 0.5;
-                ballPosition.col += randomDirection;
+                // When ball hits a peg (every row), bounce randomly
+                if (Math.floor(currentRow) > Math.floor(ballPosition.row - velocity)) {
+                    // Simulate peg bounce - random horizontal direction
+                    const bounceStrength = 0.3 + Math.random() * 0.4; // 0.3 to 0.7
+                    horizontalVelocity = (Math.random() < 0.5 ? -1 : 1) * bounceStrength;
+                }
                 
-                // Keep ball within bounds
-                ballPosition.col = Math.max(0, Math.min(cols - 1, ballPosition.col));
+                // Apply horizontal movement with damping
+                ballPosition.col += horizontalVelocity;
+                horizontalVelocity *= 0.95; // Friction/damping
+                
+                // Keep ball within bounds (with slight bounce at edges)
+                if (ballPosition.col < 0) {
+                    ballPosition.col = 0;
+                    horizontalVelocity *= -bounceDamping;
+                } else if (ballPosition.col > cols - 1) {
+                    ballPosition.col = cols - 1;
+                    horizontalVelocity *= -bounceDamping;
+                }
                 
                 updateBallPosition();
-            }, 100);
+            }, 50); // Faster updates for smoother animation
         }, 'json');
     }
     
@@ -136,7 +155,8 @@ $(document).ready(function() {
         
         ballElement.css({
             left: leftPercent + '%',
-            top: topPercent + '%'
+            top: topPercent + '%',
+            transition: 'left 0.05s linear, top 0.05s linear'
         });
     }
     

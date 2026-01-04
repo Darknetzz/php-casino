@@ -1,8 +1,9 @@
 $(document).ready(function() {
     let selectedBet = null;
     let isSpinning = false;
+    let currentRotation = 0;
     
-    // Roulette numbers with colors (0 is green)
+    // Roulette numbers with colors (0 is green) - European roulette order
     const rouletteNumbers = [
         {num: 0, color: 'green'}, {num: 32, color: 'red'}, {num: 15, color: 'black'},
         {num: 19, color: 'red'}, {num: 4, color: 'black'}, {num: 21, color: 'red'},
@@ -18,6 +19,38 @@ $(document).ready(function() {
         {num: 12, color: 'red'}, {num: 35, color: 'black'}, {num: 3, color: 'red'},
         {num: 26, color: 'black'}
     ];
+    
+    // Create the roulette wheel
+    function createWheel() {
+        const wheel = $('#rouletteWheel');
+        wheel.empty();
+        
+        const totalNumbers = rouletteNumbers.length;
+        const anglePerNumber = 360 / totalNumbers;
+        
+        rouletteNumbers.forEach((item, index) => {
+            const angle = index * anglePerNumber;
+            const numberDiv = $('<div class="roulette-number-slot"></div>');
+            numberDiv.css({
+                transform: `rotate(${angle}deg)`
+            });
+            numberDiv.addClass(`roulette-${item.color}`);
+            
+            // Create number text with better positioning
+            const numberText = $('<span></span>');
+            numberText.text(item.num);
+            numberText.css({
+                transform: `rotate(${-angle}deg)`,
+                display: 'inline-block'
+            });
+            numberDiv.append(numberText);
+            
+            numberDiv.attr('data-number', item.num);
+            wheel.append(numberDiv);
+        });
+    }
+    
+    createWheel();
     
     function getNumberColor(num) {
         const entry = rouletteNumbers.find(n => n.num === num);
@@ -95,9 +128,29 @@ $(document).ready(function() {
         $('#spinBtn').prop('disabled', true);
         $('#result').html('');
         
-        // Spin animation
+        // Determine winning number
+        const resultNum = Math.floor(Math.random() * 37);
+        const resultColor = getNumberColor(resultNum);
+        
+        // Calculate rotation needed to land on winning number
+        const winningIndex = rouletteNumbers.findIndex(n => n.num === resultNum);
+        const anglePerNumber = 360 / rouletteNumbers.length;
+        const targetAngle = winningIndex * anglePerNumber;
+        
+        // Add multiple full rotations (5-8 full spins) plus position to winning number
+        const fullSpins = 5 + Math.random() * 3; // 5-8 full spins
+        const totalRotation = currentRotation + (fullSpins * 360) + (360 - targetAngle);
+        currentRotation = totalRotation % 360;
+        
+        // Animate wheel spin
+        $('#rouletteWheel').css({
+            transition: 'transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99)',
+            transform: `rotate(${totalRotation}deg)`
+        });
+        
+        // Show spinning result text
         let spinCount = 0;
-        const maxSpins = 30;
+        const maxSpins = 40;
         const spinInterval = setInterval(function() {
             const randomNum = Math.floor(Math.random() * 37);
             const color = getNumberColor(randomNum);
@@ -107,8 +160,7 @@ $(document).ready(function() {
             if (spinCount >= maxSpins) {
                 clearInterval(spinInterval);
                 
-                const resultNum = Math.floor(Math.random() * 37);
-                const resultColor = getNumberColor(resultNum);
+                // Show final result
                 $('#rouletteResult').html(`<span class="roulette-number roulette-${resultColor}">${resultNum}</span>`);
                 
                 const won = checkWin(selectedBet, resultNum);
