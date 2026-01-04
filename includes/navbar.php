@@ -72,6 +72,9 @@ if (strpos($_SERVER['PHP_SELF'], '/games/') !== false) {
                     <a href="<?php echo $basePath; ?>pages/profile.php" class="dropdown-item">
                         <span>👤</span> Profile
                     </a>
+                    <a href="<?php echo $basePath; ?>pages/notifications.php" class="dropdown-item">
+                        <span>🔔</span> Notifications
+                    </a>
                     <?php if (isAdmin()): ?>
                     <a href="<?php echo $basePath; ?>pages/admin.php" class="dropdown-item">
                         <span>⚙️</span> Admin Panel

@@ -174,7 +174,9 @@ include __DIR__ . '/../includes/navbar.php';
             renderNotifications();
             
             // Update badge in navbar if notification system is loaded
-            if (typeof updateNotificationDropdown === 'function') {
+            if (typeof window.markAllAsRead === 'function') {
+                window.markAllAsRead();
+            } else if (typeof updateNotificationDropdown === 'function') {
                 updateNotificationDropdown();
             }
         });
@@ -185,14 +187,16 @@ include __DIR__ . '/../includes/navbar.php';
         $('#clearAllBtn').on('click', function() {
             if (confirm('Are you sure you want to clear all notifications? This cannot be undone.')) {
                 localStorage.removeItem(STORAGE_KEY);
+                
+                // Update global references
+                window.notifications = [];
+                window.unreadCount = 0;
+                
                 renderNotifications();
                 
                 // Update badge in navbar if notification system is loaded
-                if (typeof updateNotificationDropdown === 'function') {
-                    const notifications = [];
-                    window.notifications = notifications;
-                    window.unreadCount = 0;
-                    updateNotificationDropdown();
+                if (typeof window.updateNotificationDropdown === 'function') {
+                    window.updateNotificationDropdown();
                 }
             }
         });

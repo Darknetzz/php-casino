@@ -240,33 +240,53 @@ $(document).ready(function() {
         
         let html = '<div class="bets-list">';
         let totalBet = 0;
-        const numberBetsFromServer = [];
-        const colorBetsFromServer = [];
         
-        // Separate number bets and color bets
+        // Consolidate bets by bet_type and bet_value
+        const consolidatedBets = {};
         userBets.forEach(function(bet) {
+            const key = bet.bet_type + '_' + bet.bet_value;
+            if (!consolidatedBets[key]) {
+                consolidatedBets[key] = {
+                    bet_type: bet.bet_type,
+                    bet_value: bet.bet_value,
+                    amount: 0,
+                    count: 0,
+                    multiplier: bet.multiplier || 2
+                };
+            }
+            consolidatedBets[key].amount += parseFloat(bet.amount || 0);
+            consolidatedBets[key].count += 1;
             totalBet += parseFloat(bet.amount || 0);
+        });
+        
+        const numberBets = [];
+        const colorBets = [];
+        
+        // Separate consolidated bets into number and color bets
+        Object.keys(consolidatedBets).forEach(function(key) {
+            const bet = consolidatedBets[key];
             if (bet.bet_type === 'number') {
-                numberBetsFromServer.push(bet);
+                numberBets.push(bet);
             } else if (bet.bet_type === 'color' || bet.bet_type === 'range') {
-                colorBetsFromServer.push(bet);
+                colorBets.push(bet);
             }
         });
         
         // Display number bets first
-        numberBetsFromServer.forEach(function(bet) {
+        numberBets.forEach(function(bet) {
             const number = parseInt(bet.bet_value);
             const colors = getRouletteNumberColors(number);
+            const countText = bet.count > 1 ? ` (${bet.count}x)` : '';
             html += `<div class="bet-item">
                 <span style="display: flex; align-items: center; gap: 8px;">
                     <div style="width: 24px; height: 24px; border-radius: 50%; background-color: ${colors.bg}; color: ${colors.text}; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.2);">${number}</div>
-                    <span>Number ${bet.bet_value}: $${parseFloat(bet.amount).toFixed(2)}</span>
+                    <span>Number ${bet.bet_value}: $${bet.amount.toFixed(2)}${countText}</span>
                 </span>
             </div>`;
         });
         
         // Display color bets after number bets
-        colorBetsFromServer.forEach(function(bet) {
+        colorBets.forEach(function(bet) {
             const betValue = bet.bet_value || '';
             const betName = betValue.charAt(0).toUpperCase() + betValue.slice(1);
             let colorClass = '';
@@ -277,8 +297,9 @@ $(document).ready(function() {
             } else if (betValue === 'green') {
                 colorClass = 'bet-item-green';
             }
+            const countText = bet.count > 1 ? ` (${bet.count}x)` : '';
             html += `<div class="bet-item ${colorClass}">
-                <span>${betName}: $${parseFloat(bet.amount).toFixed(2)} (${parseInt(bet.multiplier || 2)}x)</span>
+                <span>${betName}: $${bet.amount.toFixed(2)} (${parseInt(bet.multiplier)}x)${countText}</span>
             </div>`;
         });
         
@@ -320,11 +341,32 @@ $(document).ready(function() {
         // Display bets grouped by user
         Object.keys(betsByUser).forEach(function(userId) {
             const userData = betsByUser[userId];
+            
+            // Consolidate bets by bet_type and bet_value for this user
+            const consolidatedBets = {};
+            userData.bets.forEach(function(bet) {
+                const key = bet.bet_type + '_' + bet.bet_value;
+                if (!consolidatedBets[key]) {
+                    consolidatedBets[key] = {
+                        bet_type: bet.bet_type,
+                        bet_value: bet.bet_value,
+                        amount: 0,
+                        count: 0,
+                        multiplier: bet.multiplier || 2
+                    };
+                }
+                consolidatedBets[key].amount += parseFloat(bet.amount || 0);
+                consolidatedBets[key].count += 1;
+            });
+            
             html += '<div class="user-bets-group" style="border: 1px solid #ddd; border-radius: 6px; padding: 12px; background: #f9f9f9;">';
             html += '<div style="font-weight: bold; margin-bottom: 8px; color: #667eea;">' + escapeHtml(userData.username) + '</div>';
             html += '<div style="display: flex; flex-direction: column; gap: 6px;">';
             
-            userData.bets.forEach(function(bet) {
+            // Display consolidated bets
+            Object.keys(consolidatedBets).forEach(function(key) {
+                const bet = consolidatedBets[key];
+                
                 // Check if bet matches predicted result (only if predictedResult is provided)
                 let matchesPrediction = false;
                 if (predictedResult !== null && predictedResult !== undefined) {
@@ -336,13 +378,14 @@ $(document).ready(function() {
                 }
                 
                 const sparkleIcon = matchesPrediction ? ' 🔮' : '';
+                const countText = bet.count > 1 ? ` (${bet.count}x)` : '';
                 
                 if (bet.bet_type === 'number') {
                     const number = parseInt(bet.bet_value);
                     const colors = getRouletteNumberColors(number);
                     html += '<div class="bet-item" style="display: flex; align-items: center; gap: 8px; padding: 6px; background: white; border-radius: 4px;">';
                     html += '<div style="width: 24px; height: 24px; border-radius: 50%; background-color: ' + colors.bg + '; color: ' + colors.text + '; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.2);">' + number + '</div>';
-                    html += '<span>Number ' + bet.bet_value + ': $' + parseFloat(bet.amount).toFixed(2) + sparkleIcon + '</span>';
+                    html += '<span>Number ' + bet.bet_value + ': $' + bet.amount.toFixed(2) + countText + sparkleIcon + '</span>';
                     html += '</div>';
                 } else if (bet.bet_type === 'color' || bet.bet_type === 'range') {
                     const betValue = bet.bet_value || '';
@@ -356,7 +399,7 @@ $(document).ready(function() {
                         colorClass = 'bet-item-green';
                     }
                     html += '<div class="bet-item ' + colorClass + '" style="display: flex; align-items: center; padding: 6px; background: white; border-radius: 4px;">';
-                    html += '<span>' + betName + ': $' + parseFloat(bet.amount).toFixed(2) + ' (' + parseInt(bet.multiplier || 2) + 'x)' + sparkleIcon + '</span>';
+                    html += '<span>' + betName + ': $' + bet.amount.toFixed(2) + ' (' + parseInt(bet.multiplier) + 'x)' + countText + sparkleIcon + '</span>';
                     html += '</div>';
                 }
             });
