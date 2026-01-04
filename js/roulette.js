@@ -107,10 +107,7 @@ $(document).ready(function() {
         targetIndex = targetIndex % rouletteNumbers.length;
         if (targetIndex < 0) targetIndex += rouletteNumbers.length;
         
-        const result = rouletteNumbers[targetIndex].num;
-        console.log(`  getNumberAtTop(${rotation.toFixed(2)}): normalized=${normalizedRotation.toFixed(2)}, targetAngle=${targetStartingAngle.toFixed(2)}, index=${targetIndex}, number=${result}`);
-        
-        return result;
+        return rouletteNumbers[targetIndex].num;
     }
     
     function checkColorBetWin(betType, resultNum) {
@@ -304,23 +301,15 @@ $(document).ready(function() {
             const resultNum = Math.floor(Math.random() * 37);
             const resultColor = getNumberColor(resultNum);
             
-            console.log('=== ROULETTE SPIN DEBUG ===');
-            console.log('Winning number:', resultNum);
-            
             // Calculate rotation needed to land on winning number
             const anglePerNumber = 360 / rouletteNumbers.length;
             const winningIndex = rouletteNumbers.findIndex(n => n.num === resultNum);
             const pocketStartAngle = winningIndex * anglePerNumber;
             
-            console.log('Winning index:', winningIndex);
-            console.log('Pocket start angle:', pocketStartAngle);
-            console.log('Angle per number:', anglePerNumber);
-            
             // Use brute force: test all rotations to find the one that puts resultNum at top
             let rotationToTop = 0;
             let found = false;
             
-            console.log('Testing rotations to find correct one...');
             // Test at each pocket position (rough test first)
             for (let i = 0; i < rouletteNumbers.length; i++) {
                 const testRot = i * anglePerNumber;
@@ -328,14 +317,12 @@ $(document).ready(function() {
                 if (testNum === resultNum) {
                     rotationToTop = testRot;
                     found = true;
-                    console.log(`Found rotation: ${testRot.toFixed(2)} (index ${i}) puts ${resultNum} at top`);
                     break;
                 }
             }
             
             // If not found, try with small offsets around each pocket
             if (!found) {
-                console.log('Coarse search failed, trying fine-grained search...');
                 for (let i = 0; i < rouletteNumbers.length; i++) {
                     const baseRot = i * anglePerNumber;
                     for (let offset = -anglePerNumber/4; offset <= anglePerNumber/4; offset += 1) {
@@ -344,7 +331,6 @@ $(document).ready(function() {
                         if (testNum === resultNum) {
                             rotationToTop = testRot;
                             found = true;
-                            console.log(`Found rotation: ${testRot.toFixed(2)} (index ${i} + offset ${offset.toFixed(2)}) puts ${resultNum} at top`);
                             break;
                         }
                     }
@@ -353,7 +339,6 @@ $(document).ready(function() {
             }
             
             if (!found) {
-                console.log('WARNING: Brute force failed! Using calculated fallback...');
                 // Fallback: try the calculated rotation
                 rotationToTop = (360 - pocketStartAngle) % 360;
             }
@@ -362,19 +347,7 @@ $(document).ready(function() {
             const fullSpins = Math.floor(5 + Math.random() * 3); // 5-7 full spins (integer)
             let totalRotation = (fullSpins * 360) + rotationToTop;
             
-            console.log('Rotation to top:', rotationToTop);
-            console.log('Full spins (integer):', fullSpins);
-            console.log('Total rotation:', totalRotation);
-            console.log('Final rotation (mod 360):', totalRotation % 360);
-            console.log('Verification - should equal rotationToTop:', (totalRotation % 360).toFixed(2), 'vs', rotationToTop.toFixed(2));
-            
-            // Verify that the final rotation mod 360 equals rotationToTop
-            const finalRotationMod = totalRotation % 360;
-            if (Math.abs(finalRotationMod - rotationToTop) > 0.01 && Math.abs(finalRotationMod - (rotationToTop + 360)) > 0.01) {
-                console.log('ERROR: Final rotation mod 360 does not match rotationToTop!');
-            }
-            
-            currentRotation = finalRotationMod;
+            currentRotation = totalRotation % 360;
             
             // Reset wheel to 0 first to ensure we start from a known position
             $('#rouletteWheel').css({
@@ -391,75 +364,17 @@ $(document).ready(function() {
                 transform: `rotate(${totalRotation}deg)`
             });
             
-            // After animation completes, verify and correct if needed
+            // After animation completes, verify and correct if needed (silent - no console logs)
             $('#rouletteWheel').one('transitionend', function() {
-                console.log('=== POST-ANIMATION VERIFICATION ===');
-                
-                // First, verify using calculation
                 const finalRotation = totalRotation % 360;
                 const calculatedNumber = getNumberAtTop(finalRotation);
-                console.log('Final rotation (mod 360):', finalRotation);
-                console.log('Calculated number at top:', calculatedNumber);
-                console.log('Expected number:', resultNum);
                 
-                // Also check DOM positions
-                const wheelRect = $('#rouletteWheel')[0].getBoundingClientRect();
-                const wheelCenterX = wheelRect.left + wheelRect.width / 2;
-                const wheelCenterY = wheelRect.top + wheelRect.height / 2;
-                const pointerY = wheelRect.top - 20; // Pointer is slightly above the wheel
-                
-                console.log('Wheel center:', wheelCenterX.toFixed(1), wheelCenterY.toFixed(1));
-                console.log('Pointer Y:', pointerY.toFixed(1));
-                
-                let closestPocket = null;
-                let minDistance = Infinity;
-                const pocketDistances = [];
-                
-                $('.roulette-pocket').each(function() {
-                    const pocketRect = this.getBoundingClientRect();
-                    const pocketCenterX = pocketRect.left + pocketRect.width / 2;
-                    const pocketCenterY = pocketRect.top + pocketRect.height / 2;
-                    const pocketNumber = parseInt($(this).attr('data-number'));
-                    
-                    // Calculate distance from pocket center to pointer position (top center)
-                    const distance = Math.sqrt(
-                        Math.pow(pocketCenterX - wheelCenterX, 2) + 
-                        Math.pow(pocketCenterY - pointerY, 2)
-                    );
-                    
-                    pocketDistances.push({number: pocketNumber, distance: distance, x: pocketCenterX, y: pocketCenterY});
-                    
-                    if (distance < minDistance) {
-                        minDistance = distance;
-                        closestPocket = $(this);
-                    }
-                });
-                
-                // Sort by distance and log top 5 closest
-                pocketDistances.sort((a, b) => a.distance - b.distance);
-                console.log('Top 5 closest pockets to pointer:');
-                pocketDistances.slice(0, 5).forEach(p => {
-                    console.log(`  Number ${p.number}: distance=${p.distance.toFixed(2)}, pos=(${p.x.toFixed(1)}, ${p.y.toFixed(1)})`);
-                });
-                
-                // Use calculated number for verification (more reliable than DOM)
-                const actualNumber = calculatedNumber;
-                console.log('Using calculated number:', actualNumber);
-                console.log('Match:', actualNumber === resultNum ? 'YES ✓' : 'NO ✗');
-                
-                if (actualNumber !== resultNum) {
-                    console.log('MISMATCH DETECTED - Attempting correction...');
+                if (calculatedNumber !== resultNum) {
                     // Need to correct - calculate adjustment needed
-                    const actualIndex = rouletteNumbers.findIndex(n => n.num === actualNumber);
+                    const actualIndex = rouletteNumbers.findIndex(n => n.num === calculatedNumber);
                     const winningIndex = rouletteNumbers.findIndex(n => n.num === resultNum);
                     let indexDiff = (winningIndex - actualIndex + rouletteNumbers.length) % rouletteNumbers.length;
                     const angleAdjustment = indexDiff * anglePerNumber;
-                    
-                    console.log('Actual index:', actualIndex, 'Winning index:', winningIndex);
-                    console.log('Index difference:', indexDiff);
-                    console.log('Angle adjustment:', angleAdjustment);
-                    console.log('Current total rotation:', totalRotation);
-                    console.log('New total rotation:', totalRotation + angleAdjustment);
                     
                     // Update totalRotation for the correction
                     totalRotation = totalRotation + angleAdjustment;
@@ -469,10 +384,7 @@ $(document).ready(function() {
                         transition: 'transform 0.3s ease-out',
                         transform: `rotate(${totalRotation}deg)`
                     });
-                } else {
-                    console.log('SUCCESS: Numbers match!');
                 }
-                console.log('=== END VERIFICATION ===');
             });
             
         
