@@ -39,13 +39,7 @@ if (strpos($_SERVER['PHP_SELF'], '/games/') !== false) {
             </div>
         </div>
         <div class="nav-right">
-            <button id="darkModeToggle" class="dark-mode-toggle" title="Toggle Dark Mode">
-                <span id="darkModeIcon">🌙</span>
-            </button>
             <span class="balance">Balance: $<span id="balance"><?php echo number_format($user['balance'], 2); ?></span></span>
-            <?php if (strpos($_SERVER['PHP_SELF'], '/games/') !== false || strpos($_SERVER['PHP_SELF'], '/pages/') !== false): ?>
-            <a href="<?php echo $basePath; ?>index.php" class="btn btn-secondary">Home</a>
-            <?php endif; ?>
             <div class="user-menu">
                 <button class="user-menu-btn" id="userMenuBtn">
                     <span class="user-avatar"><?php echo strtoupper(substr($user['username'], 0, 1)); ?></span>
@@ -61,6 +55,9 @@ if (strpos($_SERVER['PHP_SELF'], '/games/') !== false) {
                         <span>⚙️</span> Admin Panel
                     </a>
                     <?php endif; ?>
+                    <button id="darkModeToggle" class="dropdown-item" style="width: 100%; text-align: left; background: none; border: none; cursor: pointer; color: inherit; font-size: inherit; font-family: inherit; margin: 0;" title="Toggle Dark Mode">
+                        <span id="darkModeIcon">🌙</span> Dark Mode
+                    </button>
                     <a href="<?php echo $basePath; ?>pages/logout.php" class="dropdown-item">
                         <span>🚪</span> Logout
                     </a>
