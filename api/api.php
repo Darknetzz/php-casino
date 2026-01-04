@@ -68,6 +68,14 @@ switch ($action) {
         $plinkoMultipliersStr = getSetting('plinko_multipliers', '0.2,0.5,0.8,1.0,2.0,1.0,0.8,0.5,0.2');
         $plinkoMultipliers = array_map('floatval', explode(',', $plinkoMultipliersStr));
         
+        // Get dice multipliers
+        $diceMultipliers = [
+            3 => floatval(getSetting('dice_3_of_kind_multiplier', 2)),
+            4 => floatval(getSetting('dice_4_of_kind_multiplier', 5)),
+            5 => floatval(getSetting('dice_5_of_kind_multiplier', 10)),
+            6 => floatval(getSetting('dice_6_of_kind_multiplier', 20))
+        ];
+        
         $settings = [
             'max_bet' => floatval(getSetting('max_bet', 100)),
             'max_deposit' => floatval(getSetting('max_deposit', 10000)),
@@ -75,7 +83,8 @@ switch ($action) {
             'slots_multipliers' => $slotsMultipliers,
             'slots_win_row' => intval(getSetting('slots_win_row', 1)),
             'slots_bet_rows' => intval(getSetting('slots_bet_rows', 1)),
-            'plinko_multipliers' => $plinkoMultipliers
+            'plinko_multipliers' => $plinkoMultipliers,
+            'dice_multipliers' => $diceMultipliers
         ];
         echo json_encode(['success' => true, 'settings' => $settings]);
         break;

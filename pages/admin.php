@@ -34,7 +34,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         
         // Check if this is multipliers update
-        if (isset($_POST['slots_cherry_multiplier']) || isset($_POST['plinko_multiplier_0'])) {
+        if (isset($_POST['slots_cherry_multiplier']) || isset($_POST['plinko_multiplier_0']) || isset($_POST['dice_3_of_kind'])) {
             // Slots multipliers
             if (isset($_POST['slots_cherry_multiplier'])) {
                 $slotsCherry = floatval($_POST['slots_cherry_multiplier'] ?? 0);
@@ -85,6 +85,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 
                 if (empty($errors)) {
                     $db->setSetting('plinko_multipliers', $plinkoMultipliers);
+                }
+            }
+            
+            // Dice multipliers
+            if (isset($_POST['dice_3_of_kind'])) {
+                $dice3OfKind = floatval($_POST['dice_3_of_kind'] ?? 0);
+                $dice4OfKind = floatval($_POST['dice_4_of_kind'] ?? 0);
+                $dice5OfKind = floatval($_POST['dice_5_of_kind'] ?? 0);
+                $dice6OfKind = floatval($_POST['dice_6_of_kind'] ?? 0);
+                
+                if ($dice3OfKind < 0) $errors[] = 'Dice 3 of a kind multiplier must be greater than or equal to 0';
+                if ($dice4OfKind < 0) $errors[] = 'Dice 4 of a kind multiplier must be greater than or equal to 0';
+                if ($dice5OfKind < 0) $errors[] = 'Dice 5 of a kind multiplier must be greater than or equal to 0';
+                if ($dice6OfKind < 0) $errors[] = 'Dice 6 of a kind multiplier must be greater than or equal to 0';
+                
+                if (empty($errors)) {
+                    $db->setSetting('dice_3_of_kind_multiplier', $dice3OfKind);
+                    $db->setSetting('dice_4_of_kind_multiplier', $dice4OfKind);
+                    $db->setSetting('dice_5_of_kind_multiplier', $dice5OfKind);
+                    $db->setSetting('dice_6_of_kind_multiplier', $dice6OfKind);
                 }
             }
             
@@ -342,6 +362,51 @@ include __DIR__ . '/../includes/navbar.php';
                                 <td colspan="2">
                                     <input type="number" name="plinko_multiplier_4" 
                                            min="0" step="0.1" value="<?php echo htmlspecialchars($plinkoMultipliers[4] ?? '2.0'); ?>" 
+                                           required style="width: 100px; padding: 8px;">
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    
+                    <h3 style="margin-top: 30px; margin-bottom: 15px; color: #667eea;">Dice Roll Multipliers</h3>
+                    <p style="margin-bottom: 15px; color: #666;">Configure multipliers for matching dice combinations:</p>
+                    <table class="multiplier-table">
+                        <thead>
+                            <tr>
+                                <th>Combination</th>
+                                <th>Multiplier</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>3 of a kind</td>
+                                <td>
+                                    <input type="number" id="dice_3_of_kind" name="dice_3_of_kind" 
+                                           min="0" step="0.1" value="<?php echo htmlspecialchars($settings['dice_3_of_kind_multiplier'] ?? '2'); ?>" 
+                                           required style="width: 100px; padding: 8px;">
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>4 of a kind</td>
+                                <td>
+                                    <input type="number" id="dice_4_of_kind" name="dice_4_of_kind" 
+                                           min="0" step="0.1" value="<?php echo htmlspecialchars($settings['dice_4_of_kind_multiplier'] ?? '5'); ?>" 
+                                           required style="width: 100px; padding: 8px;">
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>5 of a kind</td>
+                                <td>
+                                    <input type="number" id="dice_5_of_kind" name="dice_5_of_kind" 
+                                           min="0" step="0.1" value="<?php echo htmlspecialchars($settings['dice_5_of_kind_multiplier'] ?? '10'); ?>" 
+                                           required style="width: 100px; padding: 8px;">
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>6 of a kind</td>
+                                <td>
+                                    <input type="number" id="dice_6_of_kind" name="dice_6_of_kind" 
+                                           min="0" step="0.1" value="<?php echo htmlspecialchars($settings['dice_6_of_kind_multiplier'] ?? '20'); ?>" 
                                            required style="width: 100px; padding: 8px;">
                                 </td>
                             </tr>

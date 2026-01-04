@@ -13,7 +13,7 @@ $(document).ready(function() {
         6: 20  // 6 of a kind
     };
     
-    // Load max bet and default bet from settings
+    // Load max bet, default bet, and multipliers from settings
     $.get('../api/api.php?action=getSettings', function(data) {
         if (data.success) {
             settings = data.settings;
@@ -24,6 +24,14 @@ $(document).ready(function() {
             }
             if (data.settings.default_bet) {
                 $('#betAmount').val(data.settings.default_bet);
+            }
+            if (data.settings.dice_multipliers) {
+                multipliers = {
+                    3: data.settings.dice_multipliers[3] || 2,
+                    4: data.settings.dice_multipliers[4] || 5,
+                    5: data.settings.dice_multipliers[5] || 10,
+                    6: data.settings.dice_multipliers[6] || 20
+                };
             }
         }
     }, 'json');
