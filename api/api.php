@@ -292,8 +292,22 @@ switch ($action) {
         $user = getCurrentUser();
         $round = $db->getCurrentRouletteRound();
         
-        if (!$round || $round['status'] !== 'betting') {
+        if (!$round) {
             echo json_encode(['success' => false, 'message' => 'No active betting round']);
+            break;
+        }
+        
+        // Check if round is in betting status
+        if ($round['status'] !== 'betting') {
+            echo json_encode(['success' => false, 'message' => 'Betting period has ended']);
+            break;
+        }
+        
+        // Double-check that betting period hasn't ended (even if status hasn't been updated yet)
+        $now = time();
+        $bettingEndsAt = strtotime($round['betting_ends_at']);
+        if ($now >= $bettingEndsAt) {
+            echo json_encode(['success' => false, 'message' => 'Betting period has ended']);
             break;
         }
         
@@ -369,10 +383,25 @@ switch ($action) {
     
     case 'placeCrashBet':
         require_once __DIR__ . '/../includes/provably_fair.php';
+        $user = getCurrentUser();
         $round = $db->getCurrentCrashRound();
         
-        if (!$round || $round['status'] !== 'betting') {
+        if (!$round) {
             echo json_encode(['success' => false, 'message' => 'No active betting round']);
+            break;
+        }
+        
+        // Check if round is in betting status
+        if ($round['status'] !== 'betting') {
+            echo json_encode(['success' => false, 'message' => 'Betting period has ended']);
+            break;
+        }
+        
+        // Double-check that betting period hasn't ended (even if status hasn't been updated yet)
+        $now = time();
+        $bettingEndsAt = strtotime($round['betting_ends_at']);
+        if ($now >= $bettingEndsAt) {
+            echo json_encode(['success' => false, 'message' => 'Betting period has ended']);
             break;
         }
         

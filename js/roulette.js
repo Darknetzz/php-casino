@@ -251,6 +251,16 @@ $(document).ready(function() {
                     $('#roundCountdown').show();
                     // For the main countdown, show time until result (betting ends + spinning duration)
                     updateBettingCountdown(bettingEndsIn, resultIn);
+                    
+                    // Disable betting if betting period has ended
+                    if (bettingEndsIn <= 0) {
+                        $('.bet-btn, #addNumberBetBtn').prop('disabled', true).addClass('disabled');
+                        $('#betAmount').prop('disabled', true);
+                    } else {
+                        $('.bet-btn, #addNumberBetBtn').prop('disabled', false).removeClass('disabled');
+                        $('#betAmount').prop('disabled', false);
+                    }
+                    
                     // Reset spinning state when entering betting
                     if (isSpinning) {
                         isSpinning = false;
@@ -260,6 +270,9 @@ $(document).ready(function() {
                         }
                     }
                 } else if (round.status === 'spinning') {
+                    // Disable betting during spinning
+                    $('.bet-btn, #addNumberBetBtn').prop('disabled', true).addClass('disabled');
+                    $('#betAmount').prop('disabled', true);
                     $('#spinBtn').hide();
                     $('#roundCountdown').show();
                     const timeLeft = round.time_until_finish || 0;
@@ -322,9 +335,22 @@ $(document).ready(function() {
                 if (bettingEnds > 0 || resultTime > 0) {
                     $('#rouletteResult').html(`Round #${currentRound.round_number} - Betting ends in ${bettingEnds}s`);
                     $('#countdownText').html(`Next spin in: <span style="font-size: 1.5em; color: #667eea;">${resultTime}s</span>`);
+                    
+                    // Disable betting when betting period ends
+                    if (bettingEnds <= 0) {
+                        $('.bet-btn, #addNumberBetBtn').prop('disabled', true).addClass('disabled');
+                        $('#betAmount').prop('disabled', true);
+                    } else {
+                        $('.bet-btn, #addNumberBetBtn').prop('disabled', false).removeClass('disabled');
+                        $('#betAmount').prop('disabled', false);
+                    }
+                    
                     bettingEnds = Math.max(0, bettingEnds - 1);
                     resultTime = Math.max(0, resultTime - 1);
                 } else {
+                    // Betting period has ended
+                    $('.bet-btn, #addNumberBetBtn').prop('disabled', true).addClass('disabled');
+                    $('#betAmount').prop('disabled', true);
                     clearInterval(bettingCountdownInterval);
                     bettingCountdownInterval = null;
                     // Poll will update when status changes
@@ -568,6 +594,13 @@ $(document).ready(function() {
             return;
         }
         
+        // Check if betting period has ended
+        const bettingEndsIn = currentRound.time_until_betting_ends || 0;
+        if (bettingEndsIn <= 0) {
+            $('#result').html('<div class="alert alert-error">Betting period has ended</div>');
+            return;
+        }
+        
         const betType = $(this).data('bet');
         const multiplier = parseInt($(this).data('multiplier'));
         const amount = parseFloat($('#betAmount').val());
@@ -598,6 +631,18 @@ $(document).ready(function() {
     });
     
     $('#addNumberBetBtn').click(function() {
+        // Check if betting is allowed
+        if (!currentRound || currentRound.status !== 'betting') {
+            $('#result').html('<div class="alert alert-error">Betting is not open</div>');
+            return;
+        }
+        
+        // Check if betting period has ended
+        const bettingEndsIn = currentRound.time_until_betting_ends || 0;
+        if (bettingEndsIn <= 0) {
+            $('#result').html('<div class="alert alert-error">Betting period has ended</div>');
+            return;
+        }
         if (!currentRound || currentRound.status !== 'betting') {
             $('#result').html('<div class="alert alert-error">Betting is not open</div>');
             return;
@@ -658,6 +703,16 @@ $(document).ready(function() {
     
     // Function to place all bets (used in central mode)
     function placeAllBets() {
+        // Check if betting is allowed
+        if (!currentRound || currentRound.status !== 'betting') {
+            return;
+        }
+        
+        // Check if betting period has ended
+        const bettingEndsIn = currentRound.time_until_betting_ends || 0;
+        if (bettingEndsIn <= 0) {
+            return;
+        }
         if (!currentRound || currentRound.status !== 'betting') {
             return;
         }
