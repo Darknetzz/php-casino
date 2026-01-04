@@ -250,22 +250,22 @@ class Database {
         
         if ($game !== null) {
             // For specific game, only count transactions with that game
-            $whereClause = "user_id = ? AND (type = 'win' OR type = 'bet') AND game = ?";
+            $gameClause = "AND game = ?";
             $params[] = $game;
         } else {
             // For overall stats, count all transactions (including NULL game for old transactions)
-            $whereClause = "user_id = ? AND (type = 'win' OR type = 'bet')";
+            $gameClause = "";
         }
         
         // Get total games played (bets)
-        $stmt = $this->db->prepare("SELECT COUNT(*) as total FROM transactions WHERE $whereClause AND type = 'bet'");
+        $stmt = $this->db->prepare("SELECT COUNT(*) as total FROM transactions WHERE user_id = ? AND type = 'bet' $gameClause");
         $stmt->execute($params);
-        $totalGames = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
+        $totalGames = intval($stmt->fetch(PDO::FETCH_ASSOC)['total']);
         
         // Get total wins
-        $stmt = $this->db->prepare("SELECT COUNT(*) as wins FROM transactions WHERE $whereClause AND type = 'win'");
+        $stmt = $this->db->prepare("SELECT COUNT(*) as wins FROM transactions WHERE user_id = ? AND type = 'win' $gameClause");
         $stmt->execute($params);
-        $wins = $stmt->fetch(PDO::FETCH_ASSOC)['wins'];
+        $wins = intval($stmt->fetch(PDO::FETCH_ASSOC)['wins']);
         
         if ($totalGames == 0) {
             return ['wins' => 0, 'total' => 0, 'rate' => 0];
@@ -281,7 +281,7 @@ class Database {
     }
     
     public function getAllWinRates($userId) {
-        $games = ['slots', 'blackjack', 'roulette', 'plinko'];
+        $games = ['slots', 'blackjack', 'roulette', 'plinko', 'dice'];
         $winRates = [];
         
         // Overall win rate

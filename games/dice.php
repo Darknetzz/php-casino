@@ -107,11 +107,21 @@ include __DIR__ . '/../includes/navbar.php';
             // Load win rate for dice
             $.get(getApiPath('getWinRates') + '&game=dice', function(data) {
                 if (data.success && data.winRate) {
-                    $('#winRate').text(data.winRate.rate);
-                    $('#gamesPlayed').text(data.winRate.total);
-                    $('#wins').text(data.winRate.wins);
+                    $('#winRate').text(data.winRate.rate || 0);
+                    $('#gamesPlayed').text(data.winRate.total || 0);
+                    $('#wins').text(data.winRate.wins || 0);
+                } else {
+                    console.error('Failed to load stats:', data);
+                    $('#winRate').text('0');
+                    $('#gamesPlayed').text('0');
+                    $('#wins').text('0');
                 }
-            }, 'json');
+            }, 'json').fail(function(xhr, status, error) {
+                console.error('Error loading stats:', status, error);
+                $('#winRate').text('0');
+                $('#gamesPlayed').text('0');
+                $('#wins').text('0');
+            });
         });
     </script>
 <?php include __DIR__ . '/../includes/footer.php'; ?>
