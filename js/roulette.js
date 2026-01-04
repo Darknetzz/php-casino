@@ -227,6 +227,63 @@ $(document).ready(function() {
         });
     }
     
+    function updateActiveBetsDisplayFromServer(userBets) {
+        // Display server-side bets (read-only, no remove buttons)
+        if (!userBets || userBets.length === 0) {
+            $('#activeBets').html('<p>No number bets placed yet</p>');
+            $('#activeColorBets').html('<p>No color/range bets placed yet</p>');
+            $('#totalBetAmount').hide();
+            return;
+        }
+        
+        const numberBetsList = $('#activeBets');
+        const colorBetsList = $('#activeColorBets');
+        let numberBetsHtml = '<div class="bets-list">';
+        let colorBetsHtml = '<div class="bets-list">';
+        let totalBet = 0;
+        let hasNumberBets = false;
+        let hasColorBets = false;
+        
+        userBets.forEach(function(bet) {
+            totalBet += parseFloat(bet.amount || 0);
+            
+            if (bet.bet_type === 'number') {
+                hasNumberBets = true;
+                numberBetsHtml += `<div class="bet-item">
+                    <span>Number ${bet.bet_value}: $${parseFloat(bet.amount).toFixed(2)}</span>
+                </div>`;
+            } else if (bet.bet_type === 'color' || bet.bet_type === 'range') {
+                hasColorBets = true;
+                const betValue = bet.bet_value || '';
+                const betName = betValue.charAt(0).toUpperCase() + betValue.slice(1);
+                let colorClass = '';
+                if (betValue === 'red') {
+                    colorClass = 'bet-item-red';
+                } else if (betValue === 'black') {
+                    colorClass = 'bet-item-black';
+                } else if (betValue === 'green') {
+                    colorClass = 'bet-item-green';
+                }
+                colorBetsHtml += `<div class="bet-item ${colorClass}">
+                    <span>${betName}: $${parseFloat(bet.amount).toFixed(2)} (${parseInt(bet.multiplier || 2)}x)</span>
+                </div>`;
+            }
+        });
+        
+        numberBetsHtml += '</div>';
+        colorBetsHtml += '</div>';
+        
+        numberBetsList.html(hasNumberBets ? numberBetsHtml : '<p>No number bets placed yet</p>');
+        colorBetsList.html(hasColorBets ? colorBetsHtml : '<p>No color/range bets placed yet</p>');
+        
+        if (totalBet > 0) {
+            $('#totalBetValue').text(totalBet.toFixed(2));
+            $('#totalBetAmount').show();
+        } else {
+            $('#totalBetAmount').hide();
+        }
+    }
+    
     // Poll server for current round state
     function pollRoundState() {
         $.get('../api/api.php?action=getRouletteRound', function(data) {
@@ -294,6 +351,11 @@ $(document).ready(function() {
                     // For the main countdown, show time until result (betting ends + spinning duration)
                     updateBettingCountdown(bettingEndsIn, resultIn);
                     
+                    // Display server-side bets if available
+                    if (round.user_bets && round.user_bets.length > 0) {
+                        updateActiveBetsDisplayFromServer(round.user_bets);
+                    }
+
                     // Disable betting if betting period has ended
                     if (bettingEndsIn <= 0) {
                         $('.bet-btn, #addNumberBetBtn').prop('disabled', true).addClass('disabled');
@@ -821,7 +883,14 @@ $(document).ready(function() {
                     // All bets placed successfully - clear the arrays since they're now on the server
                     numberBets = [];
                     colorBets = [];
-                    updateActiveBetsDisplay();
+                    // Fetch and display the server-side bets
+                    $.get('../api/api.php?action=getRouletteRound', function(data) {
+                        if (data.success && data.round && data.round.user_bets) {
+                            updateActiveBetsDisplayFromServer(data.round.user_bets);
+                        } else {
+                            updateActiveBetsDisplay();
+                        }
+                    }, 'json');
                     updateBalance();
                     $('#bettingResult').html('<div class="alert alert-success">All bets placed!</div>');
                     $('#result').html('');
