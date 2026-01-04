@@ -187,7 +187,7 @@ $(document).ready(function() {
                 console.log('Crash point:', crashPoint);
                 
                 // Update UI
-                $('#placeBetBtn').prop('disabled', true);
+                $('#placeBetBtn').prop('disabled', true).text('Game In Progress...');
                 $('#betAmount').prop('disabled', true);
                 $('#crashControls').show();
                 $('#result').html('');
@@ -229,9 +229,16 @@ $(document).ready(function() {
         
         // Update display
         $('#multiplierDisplay').text(currentMultiplier.toFixed(2) + 'x');
+        
+        // Update button text to show current multiplier
+        if (isGameActive && !hasCashedOut) {
+            $('#placeBetBtn').text('Game In Progress: ' + currentMultiplier.toFixed(2) + 'x');
+        }
+        
         if (hasCashedOut) {
             const winAmount = (betAmount * cashOutMultiplier).toFixed(2);
             $('#cashOutInfo').html('<div style="color: #28a745; font-weight: bold; margin-top: 10px;">Cashed out at ' + cashOutMultiplier.toFixed(2) + 'x<br>Win: $' + winAmount + '</div>');
+            $('#placeBetBtn').text('Cashed Out - Waiting for Crash');
         } else {
             const potentialWin = (betAmount * currentMultiplier).toFixed(2);
             $('#cashOutInfo').html('<div style="color: #666; margin-top: 10px;">Potential win: $' + potentialWin + '</div>');
@@ -310,7 +317,7 @@ $(document).ready(function() {
         
         // Reset UI
         setTimeout(function() {
-            $('#placeBetBtn').prop('disabled', false);
+            $('#placeBetBtn').prop('disabled', false).text('Place Bet');
             $('#betAmount').prop('disabled', false);
             $('#crashControls').hide();
             $('#cashOutBtn').prop('disabled', false);

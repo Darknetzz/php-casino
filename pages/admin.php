@@ -57,10 +57,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     }
                 }
                 
-                // Validate N-of-a-kind rules
+                // Validate N-of-a-kind rules (after validating symbols so we know what's available)
                 if (!is_array($slotsNOfKindRules)) {
                     $slotsNOfKindRules = [];
                 } else {
+                    // Get available symbols for validation
+                    $availableSymbols = [];
+                    if (is_array($slotsSymbols)) {
+                        foreach ($slotsSymbols as $symbol) {
+                            if (!empty($symbol['emoji'])) {
+                                $availableSymbols[] = trim($symbol['emoji']);
+                            }
+                        }
+                    }
+                    
                     foreach ($slotsNOfKindRules as $index => $rule) {
                         $count = intval($rule['count'] ?? 0);
                         $symbol = isset($rule['symbol']) ? trim($rule['symbol']) : '';
@@ -72,7 +82,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         if ($multiplier < 0) {
                             $errors[] = "N-of-a-kind rule #" . ($index + 1) . " multiplier must be greater than or equal to 0";
                         }
-                        // Symbol can be empty (meaning "any") or a specific emoji
+                        // Symbol must be "any" or one of the defined symbols
+                        if ($symbol !== '' && strtolower($symbol) !== 'any' && !in_array($symbol, $availableSymbols)) {
+                            $errors[] = "N-of-a-kind rule #" . ($index + 1) . " symbol must be 'any' or one of the defined symbols";
+                        }
                     }
                 }
                 
@@ -406,7 +419,7 @@ include __DIR__ . '/../includes/navbar.php';
                     </div>
                     
                     <h4 style="margin-top: 30px; margin-bottom: 15px; color: #667eea;">N-of-a-Kind Rules</h4>
-                    <p style="margin-bottom: 15px; color: #666;">Define multipliers for N matching symbols. Leave symbol empty or set to "any" to match any symbol.</p>
+                    <p style="margin-bottom: 15px; color: #666;">Define multipliers for N matching symbols. Select "any" to match any symbol, or select a specific symbol from the list above.</p>
                     <div id="slotsNOfKindContainer">
                         <table class="multiplier-table" id="slotsNOfKindTable" style="max-width: 100%;">
                             <thead>
@@ -433,6 +446,10 @@ include __DIR__ . '/../includes/navbar.php';
                                     }
                                 }
                                 foreach ($slotsNOfKindRules as $index => $rule):
+                                    $ruleSymbol = htmlspecialchars($rule['symbol'] ?? 'any');
+                                    if ($ruleSymbol === '' || strtolower($ruleSymbol) === 'any') {
+                                        $ruleSymbol = 'any';
+                                    }
                                 ?>
                                 <tr data-index="<?php echo $index; ?>">
                                     <td>
@@ -441,11 +458,13 @@ include __DIR__ . '/../includes/navbar.php';
                                                min="2" max="10" style="width: 80px; padding: 8px;" required>
                                     </td>
                                     <td>
-                                        <input type="text" class="n-of-kind-symbol" 
-                                               value="<?php echo htmlspecialchars($rule['symbol'] ?? 'any'); ?>" 
-                                               maxlength="2" style="width: 100px; padding: 8px; font-size: 18px; text-align: center;" 
-                                               placeholder="any">
-                                        <small style="display: block; margin-top: 5px; color: #666;">Leave empty or "any" for any symbol</small>
+                                        <select class="n-of-kind-symbol" style="width: 120px; padding: 8px; font-size: 16px;">
+                                            <option value="any" <?php echo ($ruleSymbol === 'any') ? 'selected' : ''; ?>>any</option>
+                                            <?php foreach ($slotsSymbols as $symbol): ?>
+                                                <?php $symbolEmoji = htmlspecialchars($symbol['emoji'] ?? ''); ?>
+                                                <option value="<?php echo $symbolEmoji; ?>" <?php echo ($ruleSymbol === $symbolEmoji) ? 'selected' : ''; ?>><?php echo $symbolEmoji; ?></option>
+                                            <?php endforeach; ?>
+                                        </select>
                                     </td>
                                     <td>
                                         <input type="number" class="n-of-kind-multiplier" 
@@ -875,12 +894,16 @@ include __DIR__ . '/../includes/navbar.php';
             `;
             tbody.appendChild(row);
             // Don't auto-suggest immediately - wait for user to enter emoji/multiplier
+            // Update N-of-a-kind symbol dropdowns to include the new symbol
+            updateNOfKindSymbolDropdowns();
         }
         
         function removeSlotsSymbol(button) {
             const row = button.closest('tr');
             row.remove();
             updateSlotsSymbolsIndices();
+            // Update N-of-a-kind symbol dropdowns
+            updateNOfKindSymbolDropdowns();
         }
         
         // Suggest a combination from a symbol (all-of-a-kind)
@@ -1047,7 +1070,8 @@ include __DIR__ . '/../includes/navbar.php';
                 const nOfKindRules = [];
                 $('#slotsNOfKindBody tr').each(function() {
                     const count = parseInt($(this).find('.n-of-kind-count').val()) || 2;
-                    let symbol = $(this).find('.n-of-kind-symbol').val().trim();
+                    let symbol = $(this).find('.n-of-kind-symbol').val() || 'any';
+                    symbol = symbol.trim();
                     if (symbol === '' || symbol.toLowerCase() === 'any') {
                         symbol = 'any';
                     }
@@ -1111,13 +1135,24 @@ include __DIR__ . '/../includes/navbar.php';
             const index = tbody.children.length;
             const row = document.createElement('tr');
             row.setAttribute('data-index', index);
+            
+            // Get available symbols from the symbols table
+            let symbolOptions = '<option value="any" selected>any</option>';
+            $('#slotsSymbolsBody tr').each(function() {
+                const emoji = $(this).find('.slots-emoji-input').val().trim();
+                if (emoji) {
+                    symbolOptions += '<option value="' + emoji + '">' + emoji + '</option>';
+                }
+            });
+            
             row.innerHTML = `
                 <td>
                     <input type="number" class="n-of-kind-count" value="2" min="2" max="10" style="width: 80px; padding: 8px;" required>
                 </td>
                 <td>
-                    <input type="text" class="n-of-kind-symbol" value="any" maxlength="2" style="width: 100px; padding: 8px; font-size: 18px; text-align: center;" placeholder="any">
-                    <small style="display: block; margin-top: 5px; color: #666;">Leave empty or "any" for any symbol</small>
+                    <select class="n-of-kind-symbol" style="width: 120px; padding: 8px; font-size: 16px;">
+                        ${symbolOptions}
+                    </select>
                 </td>
                 <td>
                     <input type="number" class="n-of-kind-multiplier" value="1" min="0" step="0.1" style="width: 100px; padding: 8px;" required>
@@ -1128,6 +1163,40 @@ include __DIR__ . '/../includes/navbar.php';
             `;
             tbody.appendChild(row);
             updateNOfKindIndices();
+        }
+        
+        // Update symbol dropdowns in N-of-a-kind rules when symbols are added/removed
+        function updateNOfKindSymbolDropdowns() {
+            // Get current symbols
+            const availableSymbols = [];
+            $('#slotsSymbolsBody tr').each(function() {
+                const emoji = $(this).find('.slots-emoji-input').val().trim();
+                if (emoji) {
+                    availableSymbols.push(emoji);
+                }
+            });
+            
+            // Update all N-of-a-kind rule dropdowns
+            $('#slotsNOfKindBody tr').each(function() {
+                const $select = $(this).find('.n-of-kind-symbol');
+                const currentValue = $select.val();
+                
+                // Rebuild options
+                let options = '<option value="any">any</option>';
+                availableSymbols.forEach(function(emoji) {
+                    options += '<option value="' + emoji + '">' + emoji + '</option>';
+                });
+                
+                $select.html(options);
+                
+                // Try to restore the previous value if it still exists
+                if (currentValue && (currentValue === 'any' || availableSymbols.indexOf(currentValue) !== -1)) {
+                    $select.val(currentValue);
+                } else {
+                    // If the symbol was removed, default to "any"
+                    $select.val('any');
+                }
+            });
         }
         
         function removeNOfKindRule(button) {
