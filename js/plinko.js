@@ -244,46 +244,40 @@ $(document).ready(function() {
                         const newRow = ball.currentRow;
                         const maxColForNewRow = newRow; // Maximum valid column for new row (0 to newRow)
                         
-                        // The ball's column from previous row should be valid for new row
-                        // (since new row has more columns than previous row)
-                        let currentCol = previousCol;
+                        // From a peg at (previousRow, previousCol), the ball can only move to:
+                        // - The peg directly below-left: (newRow, previousCol - 1) if previousCol > 0
+                        // - The peg directly below-right: (newRow, previousCol) if previousCol <= newRow
+                        // These are the only two valid positions directly below the current peg
                         
-                        // Ensure it's within bounds for new row (should always be, but safety check)
-                        currentCol = Math.max(0, Math.min(maxColForNewRow, currentCol));
+                        let newCol;
+                        const canMoveLeft = previousCol > 0; // Can move to col (previousCol - 1)
+                        const canMoveRight = previousCol <= newRow; // Can move to col (previousCol)
                         
-                        // When ball hits a peg, randomly bounce left or right by exactly 1 position
-                        // Determine bounce direction based on current position in new row
-                        let bounceDirection;
-                        
-                        if (currentCol === 0) {
-                            // At left edge, can only move right
-                            bounceDirection = 1;
-                        } else if (currentCol === maxColForNewRow) {
-                            // At right edge, can only move left
-                            bounceDirection = -1;
+                        if (!canMoveLeft && !canMoveRight) {
+                            // Should never happen, but safety fallback
+                            newCol = Math.max(0, Math.min(newRow, previousCol));
+                        } else if (!canMoveLeft) {
+                            // Can only move right (to same column)
+                            newCol = previousCol;
+                        } else if (!canMoveRight) {
+                            // Can only move left (to previousCol - 1)
+                            newCol = previousCol - 1;
                         } else {
-                            // In the middle, randomly choose left or right
-                            bounceDirection = Math.random() < 0.5 ? -1 : 1;
+                            // Can move either left or right - randomly choose
+                            if (Math.random() < 0.5) {
+                                // Move left (to previousCol - 1)
+                                newCol = previousCol - 1;
+                            } else {
+                                // Move right (to same column, previousCol)
+                                newCol = previousCol;
+                            }
                         }
-                        
-                        // Move by exactly 1 position (no more, no less) - this is the ONLY movement
-                        const newCol = currentCol + bounceDirection;
                         
                         // Final validation - ensure result is within bounds
-                        const finalCol = Math.max(0, Math.min(maxColForNewRow, newCol));
+                        newCol = Math.max(0, Math.min(maxColForNewRow, newCol));
                         
-                        // Verify the movement was exactly 1 position
-                        const actualMovement = Math.abs(finalCol - currentCol);
-                        if (actualMovement > 1) {
-                            console.error('Illegal move detected! Ball moved', actualMovement, 'positions. From col', currentCol, 'to col', finalCol, 'Row:', newRow);
-                            // Force it to be exactly 1 position in the correct direction
-                            ball.currentCol = currentCol + bounceDirection;
-                            // Clamp to bounds
-                            ball.currentCol = Math.max(0, Math.min(maxColForNewRow, ball.currentCol));
-                        } else {
-                            // Update ball's column position
-                            ball.currentCol = finalCol;
-                        }
+                        // Update ball's column position
+                        ball.currentCol = newCol;
                         
                         updateBallPosition(ball);
                     });
