@@ -169,12 +169,10 @@ $(document).ready(function() {
                     } else {
                         $('#result').html(`<div class="alert alert-error">${betData.message}</div>`);
                     }
+                    
+                    isRolling = false;
+                    $('#rollBtn').prop('disabled', false);
                 }, 'json');
-                
-                }
-                
-                isRolling = false;
-                $('#rollBtn').prop('disabled', false);
             }, rollDuration + (6 * staggerDelay) + 200); // Wait for all dice to finish rolling
         }, 'json');
     });

@@ -118,27 +118,22 @@ $(document).ready(function() {
                     ballElement.attr('data-ball-id', ballId);
                     board.append(ballElement);
                     
-                    // Slight horizontal offset for visual separation (spread across center)
-                    const offsetRange = 0.8; // Max offset from center
-                    const offset = (i - (ballCount - 1) / 2) * (offsetRange / Math.max(1, ballCount - 1));
-                    
+                    // Start at the top center of the triangle (row 0, col 0)
                     const ballData = {
                         id: ballId,
                         element: ballElement,
-                        position: {row: 0, col: 4.5 + offset},
                         currentRow: 0,
-                        velocity: 0.1 + Math.random() * 0.05, // Slight variation in starting velocity
-                        horizontalVelocity: 0,
-                        completed: false
+                        currentCol: 0, // Column index within the current row (0 to currentRow)
+                        completed: false,
+                        stepDelay: 0 // Delay counter for step-by-step movement
                     };
                     
                     activeBalls.push(ballData);
                     updateBallPosition(ballData);
                 }
                 
-                // Animate all balls dropping with smooth physics
-                const gravity = 0.02;
-                const bounceDamping = 0.7;
+                // Animate all balls dropping step by step
+                const stepDelay = 150; // Milliseconds between steps
                 
                 const dropInterval = setInterval(function() {
                     let allCompleted = true;
@@ -148,9 +143,22 @@ $(document).ready(function() {
                         
                         allCompleted = false;
                         
+                        // Wait for step delay
+                        ball.stepDelay += 50; // Update interval is 50ms
+                        if (ball.stepDelay < stepDelay) {
+                            return;
+                        }
+                        ball.stepDelay = 0;
+                        
+                        // Check if ball reached the bottom
                         if (ball.currentRow >= rows) {
                             // Ball reached bottom, determine final slot
-                            const finalSlot = Math.round(ball.position.col);
+                            // Map the column position from the last peg row to slot index (0 to cols-1)
+                            // At row (rows-1), there are 'rows' pegs (columns 0 to rows-1)
+                            // We need to map to cols slots (0 to cols-1)
+                            const lastPegRow = rows - 1;
+                            const colRatio = ball.currentCol / Math.max(1, lastPegRow);
+                            const finalSlot = Math.round(colRatio * (cols - 1));
                             const finalSlotClamped = Math.max(0, Math.min(cols - 1, finalSlot));
                             const multiplier = multipliers[finalSlotClamped];
                             const winAmount = betAmount * multiplier;
@@ -205,30 +213,16 @@ $(document).ready(function() {
                             return;
                         }
                         
-                        // Apply gravity
-                        ball.velocity += gravity;
-                        ball.currentRow += ball.velocity;
-                        ball.position.row = ball.currentRow;
+                        // Move to next row (one step at a time)
+                        ball.currentRow++;
                         
-                        // When ball hits a peg (every row), bounce randomly
-                        if (Math.floor(ball.currentRow) > Math.floor(ball.position.row - ball.velocity)) {
-                            // Simulate peg bounce - random horizontal direction
-                            const bounceStrength = 0.3 + Math.random() * 0.4; // 0.3 to 0.7
-                            ball.horizontalVelocity = (Math.random() < 0.5 ? -1 : 1) * bounceStrength;
-                        }
+                        // When ball hits a peg, randomly bounce left or right
+                        // But keep within triangle bounds: col must be between 0 and currentRow
+                        const bounceDirection = Math.random() < 0.5 ? -1 : 1;
+                        ball.currentCol += bounceDirection;
                         
-                        // Apply horizontal movement with damping
-                        ball.position.col += ball.horizontalVelocity;
-                        ball.horizontalVelocity *= 0.95; // Friction/damping
-                        
-                        // Keep ball within bounds (with slight bounce at edges)
-                        if (ball.position.col < 0) {
-                            ball.position.col = 0;
-                            ball.horizontalVelocity *= -bounceDamping;
-                        } else if (ball.position.col > cols - 1) {
-                            ball.position.col = cols - 1;
-                            ball.horizontalVelocity *= -bounceDamping;
-                        }
+                        // Clamp column to valid range for this row (0 to currentRow)
+                        ball.currentCol = Math.max(0, Math.min(ball.currentRow, ball.currentCol));
                         
                         updateBallPosition(ball);
                     });
@@ -236,7 +230,7 @@ $(document).ready(function() {
                     if (allCompleted && completedBalls < ballCount) {
                         clearInterval(dropInterval);
                     }
-                }, 50); // Faster updates for smoother animation
+                }, 50); // Update interval
             }, 'json');
         }, 'json');
     }
@@ -244,14 +238,38 @@ $(document).ready(function() {
     function updateBallPosition(ball) {
         if (!ball || !ball.element) return;
         
-        const leftPercent = (ball.position.col / (cols - 1)) * 100;
-        const topPercent = (ball.position.row / rows) * 100 + 10;
+        // Calculate position within the triangle
+        // For row r, there are r+1 pegs (columns 0 to r)
+        const currentRow = ball.currentRow;
+        const currentCol = ball.currentCol;
         
-        ball.element.css({
-            left: leftPercent + '%',
-            top: topPercent + '%',
-            transition: 'left 0.05s linear, top 0.05s linear'
-        });
+        if (currentRow >= rows) {
+            // Ball reached bottom, map to final slot position
+            // Map column from last peg row to slot position
+            const lastPegRow = rows - 1;
+            const colRatio = currentCol / Math.max(1, lastPegRow);
+            const slotIndex = Math.round(colRatio * (cols - 1));
+            const leftPercent = (slotIndex / (cols - 1)) * 100;
+            const topPercent = 100; // At the bottom
+            ball.element.css({
+                left: leftPercent + '%',
+                top: topPercent + '%',
+                transition: 'left 0.15s ease-out, top 0.15s ease-out'
+            });
+        } else {
+            // Calculate position based on triangle structure
+            const pegsInRow = currentRow + 1;
+            const rowWidth = pegsInRow * 8; // Approximate width per peg
+            const startOffset = (100 - rowWidth) / 2; // Center the row
+            const leftPercent = startOffset + (currentCol * (rowWidth / pegsInRow)) + 4; // 4% for peg width
+            const topPercent = (currentRow * 12 + 10); // Match peg positioning
+            
+            ball.element.css({
+                left: leftPercent + '%',
+                top: topPercent + '%',
+                transition: 'left 0.15s ease-out, top 0.15s ease-out'
+            });
+        }
     }
     
     // Initialize board
