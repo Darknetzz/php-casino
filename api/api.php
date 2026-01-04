@@ -99,6 +99,7 @@ switch ($action) {
             'max_deposit' => floatval(getSetting('max_deposit', 10000)),
             'default_bet' => $defaultBet,
             'slots_multipliers' => $slotsMultipliers,
+            'slots_num_reels' => intval(getSetting('slots_num_reels', 3)),
             'slots_win_row' => intval(getSetting('slots_win_row', 1)),
             'slots_bet_rows' => intval(getSetting('slots_bet_rows', 1)),
             'slots_duration' => intval(getSetting('slots_duration', 2500)),
@@ -145,6 +146,12 @@ switch ($action) {
         $user = getCurrentUser();
         $winLoss = $db->getTotalWinLoss($user['id']);
         echo json_encode(['success' => true, 'winLoss' => $winLoss]);
+        break;
+        
+    case 'getTotalDeposits':
+        $user = getCurrentUser();
+        $totalDeposits = $db->getTotalDeposits($user['id']);
+        echo json_encode(['success' => true, 'totalDeposits' => $totalDeposits]);
         break;
         
     case 'resetStats':

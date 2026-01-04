@@ -64,6 +64,10 @@ include __DIR__ . '/../includes/navbar.php';
                     </div>
                     <div id="winLossDisplay" class="win-loss-info">
                         <div class="win-loss-item">
+                            <label>Total Deposits:</label>
+                            <span id="totalDeposits" class="win-loss-value">$0.00</span>
+                        </div>
+                        <div class="win-loss-item">
                             <label>Total Bets:</label>
                             <span id="totalBets" class="win-loss-value">$0.00</span>
                         </div>
@@ -234,6 +238,19 @@ include __DIR__ . '/../includes/navbar.php';
             }, 5000);
         });
         
+        // Function to load total deposits
+        function loadTotalDeposits() {
+            $.get(getApiPath('getTotalDeposits'), function(data) {
+                if (data.success && data.totalDeposits !== undefined) {
+                    $('#totalDeposits').text('$' + parseFloat(data.totalDeposits).toFixed(2));
+                } else {
+                    console.error('Failed to load total deposits:', data);
+                }
+            }, 'json').fail(function(xhr, status, error) {
+                console.error('Error loading total deposits:', status, error);
+            });
+        }
+        
         // Function to load total win/loss
         function loadWinLoss() {
             $.get(getApiPath('getTotalWinLoss'), function(data) {
@@ -329,6 +346,7 @@ include __DIR__ . '/../includes/navbar.php';
         // Load statistics only when on statistics tab
         $(document).ready(function() {
             <?php if ($currentTab === 'statistics'): ?>
+            loadTotalDeposits();
             loadWinLoss();
             loadWinRates();
             

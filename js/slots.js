@@ -6,6 +6,7 @@ $(document).ready(function() {
     let multipliers = {};
     let twoOfKindMultiplier = 1.0;
     let customCombinations = [];
+    let numReels = 3;
     let slotsDuration = 2500; // Default spin duration in milliseconds
     
     // Function to update total bet display (defined early so it's available everywhere)
@@ -39,6 +40,9 @@ $(document).ready(function() {
             if (data.settings.slots_duration) {
                 slotsDuration = parseInt(data.settings.slots_duration) || 2500;
             }
+            if (data.settings.slots_num_reels) {
+                numReels = parseInt(data.settings.slots_num_reels) || 3;
+            }
             if (data.settings.slots_multipliers && data.settings.slots_multipliers.symbols) {
                 // Build symbols array and multipliers map from dynamic configuration
                 symbols = [];
@@ -49,6 +53,9 @@ $(document).ready(function() {
                 });
                 twoOfKindMultiplier = data.settings.slots_multipliers.two_of_kind || 1.0;
                 customCombinations = data.settings.slots_multipliers.custom_combinations || [];
+                
+                // Generate reel containers if needed
+                generateReelContainers();
                 
                 // Initialize reels with symbols
                 initializeReels();
@@ -64,35 +71,39 @@ $(document).ready(function() {
         }
     }, 'json');
     
+    function generateReelContainers() {
+        const $container = $('#slotsReelsContainer');
+        $container.empty();
+        for (let i = 1; i <= numReels; i++) {
+            $container.append(
+                $('<div class="reel-container">').append(
+                    $('<div class="reel" id="reel' + i + '">')
+                )
+            );
+        }
+    }
+    
     function initializeReels() {
         // Initialize each reel with 3 different symbols
-        ['#reel1', '#reel2', '#reel3'].forEach(function(reelId) {
-            const $reel = $(reelId);
+        for (let i = 1; i <= numReels; i++) {
+            const $reel = $('#reel' + i);
             $reel.empty();
             const threeSymbols = getThreeDifferentSymbols();
-            for (let i = 0; i < 3; i++) {
-                $reel.append($('<div class="symbol">' + threeSymbols[i] + '</div>'));
+            for (let j = 0; j < 3; j++) {
+                $reel.append($('<div class="symbol">' + threeSymbols[j] + '</div>'));
             }
-        });
+        }
     }
     
     function updatePayoutsTable() {
         const tbody = $('.slots-payout-table tbody');
         tbody.empty();
         
-        // Add custom combinations first
+        // Add custom combinations first (ordered array)
         customCombinations.forEach(function(combination) {
             if (combination.symbols && Array.isArray(combination.symbols)) {
-                let comboText = '';
-                combination.symbols.forEach(function(reqSymbol, index) {
-                    const emoji = reqSymbol.emoji || '';
-                    const count = parseInt(reqSymbol.count) || 1;
-                    if (index > 0) comboText += ' + ';
-                    // Repeat emoji by concatenating
-                    for (let i = 0; i < count; i++) {
-                        comboText += emoji;
-                    }
-                });
+                // Just concatenate emojis in order
+                const comboText = combination.symbols.join('');
                 const multiplier = parseFloat(combination.multiplier) || 0;
                 tbody.append(
                     $('<tr>').append(

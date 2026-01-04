@@ -58,36 +58,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 
                 if ($slotsTwoOfKind < 0) $errors[] = 'Slots Two of Kind multiplier must be greater than or equal to 0';
                 
-                // Handle custom combinations
+                // Handle custom combinations (ordered array)
                 $slotsCustomCombinationsJson = isset($_POST['slots_custom_combinations']) ? $_POST['slots_custom_combinations'] : '[]';
                 $slotsCustomCombinations = json_decode($slotsCustomCombinationsJson, true);
                 
                 if (!is_array($slotsCustomCombinations)) {
                     $slotsCustomCombinations = [];
                 } else {
+                    // Get number of reels to validate against
+                    $numReels = isset($_POST['slots_num_reels']) ? intval($_POST['slots_num_reels']) : 3;
                     foreach ($slotsCustomCombinations as $index => $combination) {
                         if (!isset($combination['symbols']) || !is_array($combination['symbols']) || empty($combination['symbols'])) {
                             $errors[] = "Custom combination #" . ($index + 1) . " must have at least one symbol";
                         } else {
-                            $totalCount = 0;
-                            foreach ($combination['symbols'] as $symbolIndex => $symbol) {
-                                if (empty($symbol['emoji'])) {
-                                    $errors[] = "Custom combination #" . ($index + 1) . ", symbol #" . ($symbolIndex + 1) . " emoji cannot be empty";
-                                }
-                                $count = intval($symbol['count'] ?? 1);
-                                if ($count < 1 || $count > 3) {
-                                    $errors[] = "Custom combination #" . ($index + 1) . ", symbol #" . ($symbolIndex + 1) . " count must be between 1 and 3";
-                                }
-                                $totalCount += $count;
+                            // Validate that symbols array matches number of reels
+                            if (count($combination['symbols']) !== $numReels) {
+                                $errors[] = "Custom combination #" . ($index + 1) . " must have exactly " . $numReels . " symbols (one per reel)";
                             }
-                            if ($totalCount !== 3) {
-                                $errors[] = "Custom combination #" . ($index + 1) . " must have exactly 3 symbols total (sum of counts)";
+                            foreach ($combination['symbols'] as $symbolIndex => $symbol) {
+                                if (empty($symbol)) {
+                                    $errors[] = "Custom combination #" . ($index + 1) . ", position #" . ($symbolIndex + 1) . " emoji cannot be empty";
+                                }
                             }
                         }
                         if (!isset($combination['multiplier']) || floatval($combination['multiplier']) < 0) {
                             $errors[] = "Custom combination #" . ($index + 1) . " multiplier must be greater than or equal to 0";
                         }
                     }
+                }
+                
+                // Handle number of reels
+                $slotsNumReels = isset($_POST['slots_num_reels']) ? intval($_POST['slots_num_reels']) : 3;
+                if ($slotsNumReels < 3 || $slotsNumReels > 10) {
+                    $errors[] = 'Number of reels must be between 3 and 10';
                 }
                 
                 $slotsDuration = isset($_POST['slots_duration']) ? intval($_POST['slots_duration']) : 2500;
@@ -99,6 +102,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $db->setSetting('slots_symbols', json_encode($slotsSymbols));
                     $db->setSetting('slots_two_of_kind_multiplier', $slotsTwoOfKind);
                     $db->setSetting('slots_custom_combinations', json_encode($slotsCustomCombinations));
+                    $db->setSetting('slots_num_reels', $slotsNumReels);
                     $db->setSetting('slots_win_row', $slotsWinRow);
                     $db->setSetting('slots_bet_rows', $slotsBetRows);
                     $db->setSetting('slots_duration', $slotsDuration);
@@ -370,12 +374,12 @@ include __DIR__ . '/../includes/navbar.php';
                     </div>
                     
                     <h4 style="margin-top: 30px; margin-bottom: 15px; color: #667eea;">Custom Combinations</h4>
-                    <p style="margin-bottom: 15px; color: #666;">Define custom winning combinations (e.g., 2 of 🔥 and 1 of ❤️). Each combination must have exactly 3 symbols total.</p>
+                    <p style="margin-bottom: 15px; color: #666;">Define custom winning combinations with exact order (e.g., 🔥🔥❤️). Symbols are matched in order from left to right.</p>
                     <div id="slotsCustomCombinationsContainer">
                         <table class="multiplier-table" id="slotsCustomCombinationsTable">
                             <thead>
                                 <tr>
-                                    <th>Symbols</th>
+                                    <th>Symbols (Ordered)</th>
                                     <th>Multiplier</th>
                                     <th>Actions</th>
                                 </tr>
@@ -384,6 +388,7 @@ include __DIR__ . '/../includes/navbar.php';
                                 <?php
                                 $slotsCustomCombinationsJson = $settings['slots_custom_combinations'] ?? '[]';
                                 $slotsCustomCombinations = json_decode($slotsCustomCombinationsJson, true);
+                                $numReels = intval($settings['slots_num_reels'] ?? 3);
                                 if (empty($slotsCustomCombinations) || !is_array($slotsCustomCombinations)) {
                                     $slotsCustomCombinations = [];
                                 }
@@ -393,19 +398,19 @@ include __DIR__ . '/../includes/navbar.php';
                                     <td>
                                         <div class="custom-combination-symbols" style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center;">
                                             <?php
-                                            if (isset($combination['symbols']) && is_array($combination['symbols'])) {
-                                                foreach ($combination['symbols'] as $symbolIndex => $symbol) {
-                                                    $emoji = htmlspecialchars($symbol['emoji'] ?? '');
-                                                    $count = intval($symbol['count'] ?? 1);
-                                                    echo '<div style="display: flex; align-items: center; gap: 5px;">';
-                                                    echo '<input type="text" class="custom-combo-emoji" value="' . $emoji . '" maxlength="2" style="width: 60px; padding: 5px; font-size: 18px; text-align: center;" placeholder="🎰" required>';
-                                                    echo '<span style="font-size: 16px;">×</span>';
-                                                    echo '<input type="number" class="custom-combo-count" value="' . $count . '" min="1" max="3" style="width: 50px; padding: 5px; text-align: center;" required>';
-                                                    echo '</div>';
-                                                }
+                                            $comboSymbols = isset($combination['symbols']) && is_array($combination['symbols']) ? $combination['symbols'] : [];
+                                            // Pad to numReels if needed
+                                            while (count($comboSymbols) < $numReels) {
+                                                $comboSymbols[] = '';
+                                            }
+                                            for ($i = 0; $i < $numReels; $i++) {
+                                                $emoji = isset($comboSymbols[$i]) ? htmlspecialchars($comboSymbols[$i]) : '';
+                                                echo '<div style="display: flex; align-items: center; gap: 5px;">';
+                                                echo '<span style="font-size: 14px; color: #666;">#' . ($i + 1) . '</span>';
+                                                echo '<input type="text" class="custom-combo-emoji" data-position="' . $i . '" value="' . $emoji . '" maxlength="2" style="width: 60px; padding: 5px; font-size: 18px; text-align: center;" placeholder="🎰" required>';
+                                                echo '</div>';
                                             }
                                             ?>
-                                            <button type="button" class="btn btn-secondary" onclick="addSymbolToCustomCombination(this)" style="padding: 5px 10px; font-size: 12px;">+ Symbol</button>
                                         </div>
                                     </td>
                                     <td>
@@ -425,6 +430,13 @@ include __DIR__ . '/../includes/navbar.php';
                     </div>
                     
                     <h3 style="margin-top: 30px; margin-bottom: 15px; color: #667eea;">Slots Settings</h3>
+                    <div class="form-group">
+                        <label for="slots_num_reels">Number of Reels:</label>
+                        <input type="number" id="slots_num_reels" name="slots_num_reels" min="3" max="10" 
+                               value="<?php echo htmlspecialchars($settings['slots_num_reels'] ?? '3'); ?>" 
+                               required style="width: 100px; padding: 8px;">
+                        <small style="display: block; margin-top: 5px; color: #666;">Number of reels/columns in the slot machine (3-10)</small>
+                    </div>
                     <div class="form-group">
                         <label for="slots_bet_rows">Bet Rows:</label>
                         <select id="slots_bet_rows" name="slots_bet_rows" required style="width: 200px; padding: 8px;">
@@ -760,23 +772,19 @@ include __DIR__ . '/../includes/navbar.php';
                 });
                 $('#slots_symbols_json').val(JSON.stringify(symbols));
                 
-                // Serialize custom combinations
+                // Serialize custom combinations (ordered array)
                 const customCombinations = [];
+                const numReels = parseInt($('#slots_num_reels').val()) || 3;
                 $('#slotsCustomCombinationsBody tr').each(function() {
                     const symbols = [];
-                    $(this).find('.custom-combination-symbols > div').each(function() {
-                        const emojiInput = $(this).find('.custom-combo-emoji');
-                        const countInput = $(this).find('.custom-combo-count');
-                        if (emojiInput.length && countInput.length) {
-                            const emoji = emojiInput.val().trim();
-                            const count = parseInt(countInput.val()) || 1;
-                            if (emoji) {
-                                symbols.push({emoji: emoji, count: count});
-                            }
-                        }
+                    // Get symbols in order (one per reel)
+                    $(this).find('.custom-combo-emoji').each(function() {
+                        const emoji = $(this).val().trim();
+                        symbols.push(emoji || '');
                     });
                     const multiplier = parseFloat($(this).find('.custom-combo-multiplier').val()) || 0;
-                    if (symbols.length > 0) {
+                    // Only add if we have the right number of symbols
+                    if (symbols.length === numReels && symbols.some(s => s)) {
                         customCombinations.push({symbols: symbols, multiplier: multiplier});
                     }
                 });
@@ -784,27 +792,26 @@ include __DIR__ . '/../includes/navbar.php';
             }
         });
         
-        // Custom combinations management
+        // Custom combinations management (ordered array)
         function addCustomCombination() {
             const tbody = document.getElementById('slotsCustomCombinationsBody');
             const index = tbody.children.length;
+            const numReels = parseInt($('#slots_num_reels').val()) || 3;
             const row = document.createElement('tr');
             row.setAttribute('data-index', index);
+            
+            let symbolsHtml = '<div class="custom-combination-symbols" style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center;">';
+            for (let i = 0; i < numReels; i++) {
+                symbolsHtml += '<div style="display: flex; align-items: center; gap: 5px;">';
+                symbolsHtml += '<span style="font-size: 14px; color: #666;">#' + (i + 1) + '</span>';
+                symbolsHtml += '<input type="text" class="custom-combo-emoji" data-position="' + i + '" value="' + (i === 0 ? '🔥' : i === 1 ? '🔥' : '❤️') + '" maxlength="2" style="width: 60px; padding: 5px; font-size: 18px; text-align: center;" placeholder="🎰" required>';
+                symbolsHtml += '</div>';
+            }
+            symbolsHtml += '</div>';
+            
             row.innerHTML = `
                 <td>
-                    <div class="custom-combination-symbols" style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center;">
-                        <div style="display: flex; align-items: center; gap: 5px;">
-                            <input type="text" class="custom-combo-emoji" value="🔥" maxlength="2" style="width: 60px; padding: 5px; font-size: 18px; text-align: center;" placeholder="🎰" required>
-                            <span style="font-size: 16px;">×</span>
-                            <input type="number" class="custom-combo-count" value="2" min="1" max="3" style="width: 50px; padding: 5px; text-align: center;" required>
-                        </div>
-                        <div style="display: flex; align-items: center; gap: 5px;">
-                            <input type="text" class="custom-combo-emoji" value="❤️" maxlength="2" style="width: 60px; padding: 5px; font-size: 18px; text-align: center;" placeholder="🎰" required>
-                            <span style="font-size: 16px;">×</span>
-                            <input type="number" class="custom-combo-count" value="1" min="1" max="3" style="width: 50px; padding: 5px; text-align: center;" required>
-                        </div>
-                        <button type="button" class="btn btn-secondary" onclick="addSymbolToCustomCombination(this)" style="padding: 5px 10px; font-size: 12px;">+ Symbol</button>
-                    </div>
+                    ${symbolsHtml}
                 </td>
                 <td>
                     <input type="number" class="custom-combo-multiplier" value="5" min="0" step="0.1" style="width: 100px; padding: 8px;" required>
@@ -823,28 +830,35 @@ include __DIR__ . '/../includes/navbar.php';
             updateCustomCombinationsIndices();
         }
         
-        function addSymbolToCustomCombination(button) {
-            const symbolsContainer = $(button).closest('.custom-combination-symbols');
-            const symbolDiv = $('<div style="display: flex; align-items: center; gap: 5px;">');
-            symbolDiv.html(`
-                <input type="text" class="custom-combo-emoji" value="🎰" maxlength="2" style="width: 60px; padding: 5px; font-size: 18px; text-align: center;" placeholder="🎰" required>
-                <span style="font-size: 16px;">×</span>
-                <input type="number" class="custom-combo-count" value="1" min="1" max="3" style="width: 50px; padding: 5px; text-align: center;" required>
-                <button type="button" class="btn btn-secondary" onclick="removeSymbolFromCustomCombination(this)" style="padding: 3px 8px; font-size: 11px;">×</button>
-            `);
-            $(button).before(symbolDiv);
-        }
-        
-        function removeSymbolFromCustomCombination(button) {
-            $(button).closest('div').remove();
-        }
-        
         function updateCustomCombinationsIndices() {
             const tbody = document.getElementById('slotsCustomCombinationsBody');
             Array.from(tbody.children).forEach((row, index) => {
                 row.setAttribute('data-index', index);
             });
         }
+        
+        // Update custom combinations when number of reels changes
+        $('#slots_num_reels').on('change', function() {
+            const numReels = parseInt($(this).val()) || 3;
+            // Update all existing combinations to have the right number of symbol inputs
+            $('#slotsCustomCombinationsBody tr').each(function() {
+                const $row = $(this);
+                const $symbolsContainer = $row.find('.custom-combination-symbols');
+                const currentInputs = $symbolsContainer.find('.custom-combo-emoji');
+                const currentValues = currentInputs.map(function() { return $(this).val(); }).get();
+                
+                $symbolsContainer.empty();
+                for (let i = 0; i < numReels; i++) {
+                    const value = i < currentValues.length ? currentValues[i] : '';
+                    $symbolsContainer.append(
+                        $('<div style="display: flex; align-items: center; gap: 5px;">').html(
+                            '<span style="font-size: 14px; color: #666;">#' + (i + 1) + '</span>' +
+                            '<input type="text" class="custom-combo-emoji" data-position="' + i + '" value="' + value + '" maxlength="2" style="width: 60px; padding: 5px; font-size: 18px; text-align: center;" placeholder="🎰" required>'
+                        )
+                    );
+                }
+            });
+        });
         
         $(document).ready(function() {
             // Close modal when clicking outside
