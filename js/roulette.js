@@ -234,6 +234,18 @@ $(document).ready(function() {
                 
                 // Check if round changed
                 const roundChanged = !currentRound || currentRound.id !== round.id || currentRound.status !== round.status;
+                
+                // Store previous status before updating
+                const previousStatus = currentRound ? currentRound.status : null;
+                const isNewRound = !currentRound || currentRound.id !== round.id;
+                
+                // Clear bets when round status changes from betting to spinning/finished, or when a new round starts
+                if (isNewRound || (previousStatus === 'betting' && round.status !== 'betting')) {
+                    numberBets = [];
+                    colorBets = [];
+                    updateActiveBetsDisplay();
+                }
+                
                 currentRound = round;
                 
                 // Update round status display
@@ -733,6 +745,10 @@ $(document).ready(function() {
         $.get('../api/api.php?action=getBalance', function(data) {
             if (!data.success || parseFloat(data.balance) < totalBetAmount) {
                 $('#result').html('<div class="alert alert-error">Insufficient funds</div>');
+                // Clear bets if insufficient funds
+                numberBets = [];
+                colorBets = [];
+                updateActiveBetsDisplay();
                 return;
             }
             
@@ -742,7 +758,10 @@ $(document).ready(function() {
             
             function placeNextBet() {
                 if (betsPlaced >= betsToPlace) {
-                    // All bets placed
+                    // All bets placed successfully - clear the arrays since they're now on the server
+                    numberBets = [];
+                    colorBets = [];
+                    updateActiveBetsDisplay();
                     updateBalance();
                     $('#result').html('<div class="alert alert-success">All bets placed!</div>');
                     return;
@@ -773,12 +792,20 @@ $(document).ready(function() {
                         placeNextBet();
                     } else {
                         $('#result').html('<div class="alert alert-error">' + (data.message || 'Failed to place bet') + '</div>');
+                        // Clear all bets if placement fails
+                        numberBets = [];
+                        colorBets = [];
+                        updateActiveBetsDisplay();
                         // Stop trying to place more bets
                         betsPlaced = betsToPlace;
                     }
                 }, 'json').fail(function(xhr, status, error) {
                     console.error('Failed to place bet:', status, error);
                     $('#result').html('<div class="alert alert-error">Error placing bet. Please try again.</div>');
+                    // Clear all bets if placement fails
+                    numberBets = [];
+                    colorBets = [];
+                    updateActiveBetsDisplay();
                     betsPlaced = betsToPlace;
                 });
             }
