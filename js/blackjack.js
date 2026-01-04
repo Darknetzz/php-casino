@@ -106,9 +106,10 @@ $(document).ready(function() {
             return;
         }
         
+        // Check if user has enough balance
         $.get('../api/api.php?action=getBalance', function(data) {
             if (!data.success || parseFloat(data.balance) < bet) {
-                $('#result').html('<div class="alert alert-error">Insufficient funds</div>');
+                $('#result').html('<div class="alert alert-error">Insufficient funds. Your balance is $' + (data.success ? parseFloat(data.balance).toFixed(2) : '0.00') + '</div>');
                 return;
             }
             

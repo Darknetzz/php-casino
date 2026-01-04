@@ -13,9 +13,32 @@ $user = getCurrentUser();
     <link rel="stylesheet" href="../style.css">
 </head>
 <body>
-    <nav class="navbar">
+    <?php include __DIR__ . '/../includes/navbar.php'; ?>
         <div class="nav-container">
             <h2>🎰 Casino</h2>
+            <div class="nav-center">
+                <div class="games-menu">
+                    <button class="games-menu-btn" id="gamesMenuBtn">
+                        <span>🎮</span>
+                        <span>Games</span>
+                        <span class="dropdown-arrow">▼</span>
+                    </button>
+                    <div class="games-dropdown" id="gamesDropdown">
+                        <a href="slots.php" class="dropdown-item">
+                            <span>🎰</span> Slots
+                        </a>
+                        <a href="blackjack.php" class="dropdown-item">
+                            <span>🃏</span> Blackjack
+                        </a>
+                        <a href="roulette.php" class="dropdown-item">
+                            <span>🎲</span> Roulette
+                        </a>
+                        <a href="plinko.php" class="dropdown-item">
+                            <span>⚪</span> Plinko
+                        </a>
+                    </div>
+                </div>
+            </div>
             <div class="nav-right">
                 <span class="balance">Balance: $<span id="balance"><?php echo number_format($user['balance'], 2); ?></span></span>
                 <a href="../index.php" class="btn btn-secondary">Home</a>
@@ -81,22 +104,7 @@ $user = getCurrentUser();
     </div>
     
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script>
-        $(document).ready(function() {
-            // User menu dropdown toggle
-            $('#userMenuBtn').on('click', function(e) {
-                e.stopPropagation();
-                $('.user-menu').toggleClass('active');
-            });
-            
-            // Close dropdown when clicking outside
-            $(document).on('click', function(e) {
-                if (!$(e.target).closest('.user-menu').length) {
-                    $('.user-menu').removeClass('active');
-                }
-            });
-        });
-    </script>
+    <script src="../js/navbar.js"></script>
     <script src="../js/plinko.js"></script>
 </body>
 </html>

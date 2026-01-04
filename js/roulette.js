@@ -152,11 +152,18 @@ $(document).ready(function() {
             return;
         }
         
-        isSpinning = true;
-        $('#spinBtn').prop('disabled', true);
-        $('#result').html('');
-        
-        // Determine winning number
+        // Check if user has enough balance
+        $.get('../api/api.php?action=getBalance', function(data) {
+            if (!data.success || parseFloat(data.balance) < betAmount) {
+                $('#result').html('<div class="alert alert-error">Insufficient funds. Your balance is $' + (data.success ? parseFloat(data.balance).toFixed(2) : '0.00') + '</div>');
+                return;
+            }
+            
+            isSpinning = true;
+            $('#spinBtn').prop('disabled', true);
+            $('#result').html('');
+            
+            // Determine winning number
         const resultNum = Math.floor(Math.random() * 37);
         const resultColor = getNumberColor(resultNum);
         
@@ -241,6 +248,7 @@ $(document).ready(function() {
                 $('#numberBet').val('');
             }
         }, 100);
+        }, 'json');
     });
     
     // Update balance periodically

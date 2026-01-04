@@ -66,12 +66,19 @@ $(document).ready(function() {
             return;
         }
         
-        isDropping = true;
-        $('#dropBtn').prop('disabled', true);
-        $('#result').html('');
-        
-        // Deduct bet first
-        $.post('../api/api.php?action=updateBalance', {
+        // Check if user has enough balance
+        $.get('../api/api.php?action=getBalance', function(data) {
+            if (!data.success || parseFloat(data.balance) < betAmount) {
+                $('#result').html('<div class="alert alert-error">Insufficient funds. Your balance is $' + (data.success ? parseFloat(data.balance).toFixed(2) : '0.00') + '</div>');
+                return;
+            }
+            
+            isDropping = true;
+            $('#dropBtn').prop('disabled', true);
+            $('#result').html('');
+            
+            // Deduct bet first
+            $.post('../api/api.php?action=updateBalance', {
             amount: -betAmount,
             type: 'bet',
             description: 'Plinko bet'
@@ -164,6 +171,7 @@ $(document).ready(function() {
                 
                 updateBallPosition();
             }, 50); // Faster updates for smoother animation
+        }, 'json');
         }, 'json');
     }
     

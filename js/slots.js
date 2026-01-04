@@ -128,9 +128,16 @@ $(document).ready(function() {
             return;
         }
         
-        isSpinning = true;
-        $('#spinBtn').prop('disabled', true);
-        $('#result').html('');
+        // Check if user has enough balance
+        $.get('../api/api.php?action=getBalance', function(data) {
+            if (!data.success || parseFloat(data.balance) < betAmount) {
+                $('#result').html('<div class="alert alert-error">Insufficient funds. Your balance is $' + (data.success ? parseFloat(data.balance).toFixed(2) : '0.00') + '</div>');
+                return;
+            }
+            
+            isSpinning = true;
+            $('#spinBtn').prop('disabled', true);
+            $('#result').html('');
         
         // Determine final symbols
         const s1 = getRandomSymbol();
@@ -190,6 +197,7 @@ $(document).ready(function() {
             isSpinning = false;
             $('#spinBtn').prop('disabled', false);
         }, reel3StopTime + 100); // Wait for all reels to stop
+        }, 'json');
     });
     
     // Update balance periodically

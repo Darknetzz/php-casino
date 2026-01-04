@@ -32,6 +32,13 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 20px;
+}
+
+.nav-center {
+    flex: 1;
+    display: flex;
+    justify-content: center;
 }
 
 .navbar h2 {
@@ -49,6 +56,65 @@ body {
     font-weight: bold;
     font-size: 18px;
     color: #28a745;
+}
+
+/* Games Menu Dropdown */
+.games-menu {
+    position: relative;
+}
+
+.games-menu-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: rgba(255, 255, 255, 0.9);
+    color: #667eea;
+    border: 2px solid #667eea;
+    border-radius: 25px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2);
+}
+
+.games-menu-btn:hover {
+    background: #667eea;
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.games-menu-btn span:first-child {
+    font-size: 18px;
+}
+
+.games-menu.active .games-menu-btn .dropdown-arrow {
+    transform: rotate(180deg);
+}
+
+.games-dropdown {
+    position: absolute;
+    top: calc(100% + 10px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    min-width: 180px;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateX(-50%) translateY(-10px);
+    transition: all 0.3s ease;
+    z-index: 1000;
+    overflow: hidden;
+}
+
+.games-menu.active .games-dropdown {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(0);
 }
 
 /* User Menu Dropdown */
@@ -1169,6 +1235,12 @@ body {
         gap: 15px;
     }
     
+    .nav-center {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .games-menu-btn,
     .user-menu-btn {
         padding: 6px 12px;
         font-size: 12px;
@@ -1176,6 +1248,16 @@ body {
     
     .username {
         max-width: 80px;
+    }
+    
+    .games-dropdown {
+        left: 50%;
+        right: auto;
+        transform: translateX(-50%) translateY(-10px);
+    }
+    
+    .games-menu.active .games-dropdown {
+        transform: translateX(-50%) translateY(0);
     }
     
     .user-dropdown {
