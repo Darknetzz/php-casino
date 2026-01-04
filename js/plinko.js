@@ -202,6 +202,7 @@ $(document).ready(function() {
                             
                             totalWins += winAmount;
                             ball.completed = true;
+                            ball.multiplier = multiplier; // Store multiplier for this ball
                             
                             // Highlight winning slot briefly
                             $('.plinko-slot').eq(finalSlotClamped).addClass('winning');
@@ -220,10 +221,19 @@ $(document).ready(function() {
                                 setTimeout(function() {
                                     // Update balance with total winnings
                                     if (totalWins > 0) {
+                                        // Collect multipliers from all balls
+                                        const ballMultipliers = activeBalls.map(b => b.multiplier).filter(m => m !== undefined);
+                                        const avgMultiplier = ballMultipliers.length > 0 
+                                            ? (ballMultipliers.reduce((a, b) => a + b, 0) / ballMultipliers.length).toFixed(2)
+                                            : '0';
+                                        const multiplierText = ballMultipliers.length === 1 
+                                            ? `${ballMultipliers[0]}x`
+                                            : `${avgMultiplier}x avg (${ballMultipliers.map(m => m.toFixed(1)).join(', ')})`;
+                                        
                                         $.post('../api/api.php?action=updateBalance', {
                                             amount: totalWins,
                                             type: 'win',
-                                            description: `Plinko win: ${ballCount} ball${ballCount > 1 ? 's' : ''}`,
+                                            description: `Plinko win: ${ballCount} ball${ballCount > 1 ? 's' : ''} (${multiplierText})`,
                                             game: 'plinko'
                                         }, function(data) {
                                             if (data.success) {

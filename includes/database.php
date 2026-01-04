@@ -264,10 +264,31 @@ class Database {
         $stmt->execute($params);
         $totalGames = intval($stmt->fetch(PDO::FETCH_ASSOC)['total']);
         
-        // Get total wins
-        $stmt = $this->db->prepare("SELECT COUNT(*) as wins FROM transactions WHERE user_id = ? AND type = 'win' $gameClause");
+        // Get all win transactions with descriptions to filter by multiplier
+        $stmt = $this->db->prepare("SELECT description FROM transactions WHERE user_id = ? AND type = 'win' $gameClause");
         $stmt->execute($params);
-        $wins = intval($stmt->fetch(PDO::FETCH_ASSOC)['wins']);
+        $winTransactions = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        // Count only wins with multiplier >= 1
+        $wins = 0;
+        foreach ($winTransactions as $win) {
+            $description = $win['description'] ?? '';
+            
+            // Extract multiplier from description
+            // Patterns: "Xx", "X.x", "(Xx)", "(X.x)", "Xx avg", "0.5x - 2 of a kind", etc.
+            $multiplier = null;
+            
+            // Try to find multiplier in various formats - look for number followed by 'x'
+            // This handles: "0.5x", "(0.5x)", "2x", "2.0x avg", "0.5x - 2 of a kind", etc.
+            if (preg_match('/(\d+\.?\d*)\s*x/i', $description, $matches)) {
+                $multiplier = floatval($matches[1]);
+            }
+            
+            // Only count as win if multiplier >= 1 (or if no multiplier found, count it to be safe)
+            if ($multiplier === null || $multiplier >= 1) {
+                $wins++;
+            }
+        }
         
         if ($totalGames == 0) {
             return ['wins' => 0, 'total' => 0, 'rate' => 0];
