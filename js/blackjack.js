@@ -149,7 +149,8 @@ $(document).ready(function() {
                     $('#gameControls').show();
                     $('#result').html('');
                     $('#newGameBtn').prop('disabled', true).text('Game in Progress...').addClass('game-disabled');
-                    $('.game-container button, .game-container .btn').not('[onclick*="openModal"]').addClass('game-disabled');
+                    // Disable buttons but keep Hit, Stand, and info buttons active
+                    $('.game-container button, .game-container .btn').not('[onclick*="openModal"], #hitBtn, #standBtn').addClass('game-disabled');
                     
                     // Check for blackjack
                     if (calculateHand(playerHand) === 21) {
@@ -267,7 +268,8 @@ $(document).ready(function() {
         $('#result').html(`<div class="alert ${won ? 'alert-success' : 'alert-error'}">${message} <button class="btn btn-primary" id="newGameFromResult" style="margin-left: 10px; margin-top: 5px;">New Game</button></div>`);
         $('#gameControls').hide();
         $('#newGameBtn').prop('disabled', false).text('New Game').removeClass('game-disabled');
-        $('.game-container button, .game-container .btn').not('[onclick*="openModal"]').removeClass('game-disabled');
+        // Remove disabled class from buttons (Hit and Stand were never disabled)
+        $('.game-container button, .game-container .btn').not('[onclick*="openModal"], #hitBtn, #standBtn').removeClass('game-disabled');
         
         // Add click handler for new game button in result
         $('#newGameFromResult').click(function() {

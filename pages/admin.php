@@ -34,7 +34,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         
         // Check if this is multipliers update
-        if (isset($_POST['slots_symbols']) || isset($_POST['plinko_multiplier_0']) || isset($_POST['dice_num_dice']) || isset($_POST['crash_speed'])) {
+        if (isset($_POST['slots_symbols']) || isset($_POST['plinko_multiplier_0']) || isset($_POST['dice_num_dice']) || isset($_POST['crash_speed']) || isset($_POST['blackjack_regular_multiplier'])) {
             // Slots multipliers (dynamic symbols)
             if (isset($_POST['slots_symbols'])) {
                 $slotsSymbolsJson = $_POST['slots_symbols'];
@@ -224,6 +224,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             }
             
+            // Blackjack settings
+            if (isset($_POST['blackjack_regular_multiplier'])) {
+                $blackjackRegularMultiplier = floatval($_POST['blackjack_regular_multiplier'] ?? 2.0);
+                $blackjackBlackjackMultiplier = floatval($_POST['blackjack_blackjack_multiplier'] ?? 2.5);
+                $blackjackDealerStand = intval($_POST['blackjack_dealer_stand'] ?? 17);
+                
+                if ($blackjackRegularMultiplier < 0) {
+                    $errors[] = 'Blackjack regular win multiplier must be greater than or equal to 0';
+                }
+                if ($blackjackBlackjackMultiplier < 0) {
+                    $errors[] = 'Blackjack blackjack multiplier must be greater than or equal to 0';
+                }
+                if ($blackjackDealerStand < 1 || $blackjackDealerStand > 21) {
+                    $errors[] = 'Dealer stand threshold must be between 1 and 21';
+                }
+                
+                if (empty($errors)) {
+                    $db->setSetting('blackjack_regular_multiplier', $blackjackRegularMultiplier);
+                    $db->setSetting('blackjack_blackjack_multiplier', $blackjackBlackjackMultiplier);
+                    $db->setSetting('blackjack_dealer_stand', $blackjackDealerStand);
+                }
+            }
+            
             if (empty($errors)) {
                 // Determine which game was updated
                 $gameParam = 'slots'; // default
@@ -235,6 +258,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $gameParam = 'dice';
                 } elseif (isset($_POST['crash_speed'])) {
                     $gameParam = 'crash';
+                } elseif (isset($_POST['blackjack_regular_multiplier'])) {
+                    $gameParam = 'blackjack';
                 }
                 header('Location: admin.php?tab=multipliers&game=' . $gameParam . '&success=1');
                 exit;
@@ -338,6 +363,9 @@ include __DIR__ . '/../includes/navbar.php';
                 </a>
                 <a href="admin.php?tab=multipliers&game=crash" class="admin-subtab <?php echo $currentGame === 'crash' ? 'active' : ''; ?>">
                     <span>🚀</span> Crash
+                </a>
+                <a href="admin.php?tab=multipliers&game=blackjack" class="admin-subtab <?php echo $currentGame === 'blackjack' ? 'active' : ''; ?>">
+                    <span>🃏</span> Blackjack
                 </a>
             </div>
             <?php endif; ?>
@@ -840,6 +868,65 @@ include __DIR__ . '/../includes/navbar.php';
                         </ul>
                     </div>
                     <button type="submit" name="update_settings" class="btn btn-primary" style="margin-top: 20px;">Update Crash Settings</button>
+                </form>
+                <?php endif; ?>
+                
+                <!-- Blackjack Settings -->
+                <?php if ($currentGame === 'blackjack'): ?>
+                <form method="POST" action="admin.php?tab=multipliers&game=blackjack" class="admin-form">
+                    <h3 style="margin-top: 20px; margin-bottom: 15px; color: #667eea;">Blackjack Game Settings</h3>
+                    <p style="margin-bottom: 15px; color: #666;">Configure the blackjack game mechanics:</p>
+                    <table class="multiplier-table">
+                        <thead>
+                            <tr>
+                                <th>Setting</th>
+                                <th>Value</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Regular Win Multiplier</td>
+                                <td>
+                                    <input type="number" id="blackjack_regular_multiplier" name="blackjack_regular_multiplier"
+                                           min="0" step="0.1" 
+                                           value="<?php echo htmlspecialchars($settings['blackjack_regular_multiplier'] ?? '2.0'); ?>"
+                                           required style="width: 100px; padding: 8px;">
+                                </td>
+                                <td>Multiplier for regular wins (beating dealer without blackjack). Default: 2.0 (2x bet)</td>
+                            </tr>
+                            <tr>
+                                <td>Blackjack Multiplier</td>
+                                <td>
+                                    <input type="number" id="blackjack_blackjack_multiplier" name="blackjack_blackjack_multiplier"
+                                           min="0" step="0.1" 
+                                           value="<?php echo htmlspecialchars($settings['blackjack_blackjack_multiplier'] ?? '2.5'); ?>"
+                                           required style="width: 100px; padding: 8px;">
+                                </td>
+                                <td>Multiplier for blackjack wins (21 with first 2 cards). Default: 2.5 (2.5x bet)</td>
+                            </tr>
+                            <tr>
+                                <td>Dealer Stand Threshold</td>
+                                <td>
+                                    <input type="number" id="blackjack_dealer_stand" name="blackjack_dealer_stand"
+                                           min="1" max="21" step="1" 
+                                           value="<?php echo htmlspecialchars($settings['blackjack_dealer_stand'] ?? '17'); ?>"
+                                           required style="width: 100px; padding: 8px;">
+                                </td>
+                                <td>Dealer must stand when reaching this score or higher (1-21). Default: 17</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div style="margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 5px;">
+                        <h4 style="margin-top: 0; color: #667eea;">Blackjack Rules</h4>
+                        <ul style="margin: 0; padding-left: 20px; color: #666; font-size: 14px;">
+                            <li><strong>Regular Win:</strong> Player beats dealer without going over 21. Payout = bet × Regular Win Multiplier</li>
+                            <li><strong>Blackjack:</strong> Player gets 21 with first 2 cards (Ace + 10-value card). Payout = bet × Blackjack Multiplier</li>
+                            <li><strong>Dealer Stand:</strong> Dealer must hit until reaching the stand threshold, then must stand</li>
+                            <li><strong>Push:</strong> If player and dealer have the same score (both ≤ 21), bet is returned</li>
+                        </ul>
+                    </div>
+                    <button type="submit" name="update_settings" class="btn btn-primary" style="margin-top: 20px;">Update Blackjack Settings</button>
                 </form>
                 <?php endif; ?>
             </div>

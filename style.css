@@ -924,6 +924,10 @@ button.game-disabled,
     color: #333;
 }
 
+.slots-payout-table td:first-child {
+    font-size: 1.8em;
+}
+
 .slots-payout-table tbody tr:last-child td {
     border-bottom: none;
 }
@@ -2227,6 +2231,10 @@ body.dark-mode .multiplier-table td,
 body.dark-mode .multiplier-table th {
     border-color: #555;
     color: #e0e0e0;
+}
+
+body.dark-mode .slots-payout-table td:first-child {
+    font-size: 1.8em;
 }
 
 body.dark-mode .slots-payout-table thead,
