@@ -369,5 +369,21 @@ class Database {
         $stmt = $this->db->prepare("DELETE FROM transactions WHERE user_id = ? AND type IN ('bet', 'win') AND game IS NOT NULL");
         return $stmt->execute([$userId]);
     }
+    
+    public function getTotalDeposits($userId) {
+        // Get starting balance (the balance users get when they're created)
+        $startingBalance = floatval($this->getSetting('starting_balance', 1000));
+        
+        // Get all deposit transactions
+        $stmt = $this->db->prepare("SELECT SUM(amount) as total FROM transactions WHERE user_id = ? AND type = 'deposit'");
+        $stmt->execute([$userId]);
+        $depositResult = $stmt->fetch(PDO::FETCH_ASSOC);
+        $totalDeposits = floatval($depositResult['total'] ?? 0);
+        
+        // Total deposit = starting balance + all deposit transactions
+        $totalDeposit = $startingBalance + $totalDeposits;
+        
+        return round($totalDeposit, 2);
+    }
 }
 ?>

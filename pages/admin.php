@@ -588,18 +588,22 @@ include __DIR__ . '/../includes/navbar.php';
                                 <th>Username</th>
                                 <th>Email</th>
                                 <th>Balance</th>
+                                <th>Total Deposits</th>
                                 <th>Admin</th>
                                 <th>Created</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <?php foreach ($users as $u): ?>
+                            <?php foreach ($users as $u): 
+                                $totalDeposits = $db->getTotalDeposits($u['id']);
+                            ?>
                             <tr>
                                 <td><?php echo $u['id']; ?></td>
                                 <td><?php echo htmlspecialchars($u['username']); ?></td>
                                 <td><?php echo htmlspecialchars($u['email']); ?></td>
                                 <td>$<?php echo number_format($u['balance'], 2); ?></td>
+                                <td>$<?php echo number_format($totalDeposits, 2); ?></td>
                                 <td><?php echo $u['is_admin'] ? 'Yes' : 'No'; ?></td>
                                 <td><?php echo date('Y-m-d', strtotime($u['created_at'])); ?></td>
                                 <td class="action-buttons">
