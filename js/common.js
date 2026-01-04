@@ -65,26 +65,38 @@ function loadDarkMode() {
 // Add bet adjustment buttons to bet inputs
 function addBetAdjustButtons(inputSelector) {
     const $input = $(inputSelector);
-    if ($input.length === 0 || $input.closest('.bet-input-group').length > 0) {
+    if ($input.length === 0 || $input.closest('.form-group').length > 0) {
         return; // Already has buttons or input doesn't exist
     }
     
-    const $wrapper = $('<div class="bet-input-group"></div>');
-    $input.wrap($wrapper);
+    // Wrap input in form-group structure
+    const $formGroup = $('<div class="form-group"></div>');
+    $input.wrap($formGroup);
     
-    const $buttons = $('<div class="bet-adjust-buttons"></div>');
+    // Create input wrapper
+    const $inputWrapper = $('<div class="form-input-wrapper"></div>');
+    $input.wrap($inputWrapper);
+    
+    // Create button groups - positive and negative
+    const $buttonGroups = $('<div class="form-button-groups"></div>');
+    
+    const $positiveGroup = $('<div class="button-group button-group-positive"></div>');
+    const $negativeGroup = $('<div class="button-group button-group-negative"></div>');
+    
     const adjustments = [1000, 100, 10, -10, -100, -1000];
     
     adjustments.forEach(function(adjust) {
-        const $btn = $('<button type="button" class="bet-adjust-btn"></button>');
+        const $btn = $('<button type="button" class="btn btn-sm bet-adjust-btn"></button>');
         $btn.text(adjust > 0 ? '+' + adjust : adjust);
         $btn.attr('data-adjust', adjust);
         
         // Add class for positive/negative buttons
         if (adjust > 0) {
             $btn.addClass('bet-adjust-positive');
+            $positiveGroup.append($btn);
         } else {
             $btn.addClass('bet-adjust-negative');
+            $negativeGroup.append($btn);
         }
         
         $btn.on('click', function(e) {
@@ -95,10 +107,11 @@ function addBetAdjustButtons(inputSelector) {
             const newValue = Math.max(min, Math.min(max, current + adjust));
             $input.val(newValue).trigger('change');
         });
-        $buttons.append($btn);
     });
     
-    $input.after($buttons);
+    $buttonGroups.append($positiveGroup);
+    $buttonGroups.append($negativeGroup);
+    $inputWrapper.after($buttonGroups);
 }
 
 // Initialize bet adjustment buttons for all bet inputs

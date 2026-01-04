@@ -199,7 +199,7 @@ include __DIR__ . '/../includes/navbar.php';
             
             <!-- Settings Section -->
             <?php if ($currentTab === 'settings'): ?>
-            <div class="admin-section">
+            <div class="admin-section section">
                 <h2>📊 Casino Settings</h2>
                 <form method="POST" action="admin.php?tab=settings" class="admin-form">
                     <div class="form-group">
@@ -230,7 +230,7 @@ include __DIR__ . '/../includes/navbar.php';
             
             <!-- Game Multipliers Section -->
             <?php if ($currentTab === 'multipliers'): ?>
-            <div class="admin-section">
+            <div class="admin-section section">
                 <h2>🎰 Game Multipliers</h2>
                 <form method="POST" action="admin.php?tab=multipliers" class="admin-form">
                     <h3 style="margin-top: 20px; margin-bottom: 15px; color: #667eea;">Slot Machine Symbols</h3>
@@ -420,7 +420,7 @@ include __DIR__ . '/../includes/navbar.php';
             
             <!-- User Management Section -->
             <?php if ($currentTab === 'users'): ?>
-            <div class="admin-section">
+            <div class="admin-section section">
                 <h2>👥 User Management</h2>
                 <div class="users-table-container">
                     <table class="admin-table">

@@ -11,7 +11,7 @@ if (strpos($_SERVER['PHP_SELF'], '/games/') !== false) {
 ?>
 <nav class="navbar">
     <div class="nav-container">
-        <h2>🎰 Casino</h2>
+        <h2><a href="<?php echo $basePath; ?>index.php">🎰 Casino</a></h2>
         <div class="nav-center">
             <div class="games-menu">
                 <button class="games-menu-btn" id="gamesMenuBtn">
@@ -27,7 +27,7 @@ if (strpos($_SERVER['PHP_SELF'], '/games/') !== false) {
                         <span>🃏</span> Blackjack
                     </a>
                     <a href="<?php echo $basePath; ?>games/roulette.php" class="dropdown-item">
-                        <span>🎲</span> Roulette
+                        <span>🛞</span> Roulette
                     </a>
                     <a href="<?php echo $basePath; ?>games/plinko.php" class="dropdown-item">
                         <span>⚪</span> Plinko

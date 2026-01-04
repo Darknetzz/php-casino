@@ -9,7 +9,7 @@ include __DIR__ . '/../includes/navbar.php';
 ?>
     
     <div class="container">
-        <div class="profile-container">
+        <div class="profile-container section">
             <h1>👤 Your Profile</h1>
             
             <div class="profile-info">
@@ -31,7 +31,7 @@ include __DIR__ . '/../includes/navbar.php';
                 </div>
             </div>
             
-            <div class="win-rates-section">
+            <div class="win-rates-section section">
                 <h2>📊 Win Rates</h2>
                 <div id="winRatesDisplay" class="win-rates-grid">
                     <div class="win-rate-card">
@@ -50,7 +50,7 @@ include __DIR__ . '/../includes/navbar.php';
                         <div class="win-rate-games" id="blackjackGames">- games</div>
                     </div>
                     <div class="win-rate-card">
-                        <h4>🎲 Roulette</h4>
+                        <h4>🛞 Roulette</h4>
                         <div class="win-rate-value" id="rouletteRate">-</div>
                         <div class="win-rate-games" id="rouletteGames">- games</div>
                     </div>
@@ -62,7 +62,7 @@ include __DIR__ . '/../includes/navbar.php';
                 </div>
             </div>
             
-            <div class="refill-section">
+            <div class="refill-section section">
                 <h2>⚙️ Default Bet Amount</h2>
                 <div id="defaultBetMessage"></div>
                 
@@ -78,7 +78,7 @@ include __DIR__ . '/../includes/navbar.php';
                 </form>
             </div>
             
-            <div class="refill-section">
+            <div class="refill-section section">
                 <h2>💰 Refill Balance</h2>
                 <div id="refillMessage"></div>
                 

@@ -418,6 +418,11 @@ body {
     color: #666;
 }
 
+/* Section - Unified padding for all section containers */
+.section {
+    padding: 30px !important;
+}
+
 /* Game Container */
 .game-container {
     background: white;
@@ -537,18 +542,48 @@ body {
     font-size: 16px;
 }
 
-/* Bet Input Group - Groups input with adjustment buttons */
-.bet-input-group {
+/* Form Group - Semantic structure for bet inputs with adjustment buttons */
+.bet-controls .form-group {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 10px;
+    margin-bottom: 0; /* Override default form-group margin */
+    align-items: flex-start; /* Align items to start within form-group */
 }
 
-.bet-adjust-buttons {
+.form-input-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+}
+
+.form-input-wrapper input {
+    flex: 0 0 auto; /* Don't let input grow, keep its width */
+}
+
+.form-button-groups {
     display: flex;
     flex-wrap: wrap;
-    gap: 5px;
+    gap: 10px;
     justify-content: center;
+    align-items: center;
+}
+
+.button-group {
+    display: flex;
+    gap: 5px;
+    flex-wrap: wrap;
+}
+
+.button-group-positive {
+    border-left: 3px solid #28a745;
+    padding-left: 8px;
+}
+
+.button-group-negative {
+    border-left: 3px solid #dc3545;
+    padding-left: 8px;
 }
 
 .bet-adjust-btn {
@@ -573,6 +608,10 @@ body {
     box-shadow: 0 2px 4px rgba(40, 167, 69, 0.3);
 }
 
+.bet-adjust-positive:active {
+    transform: translateY(0);
+}
+
 .bet-adjust-negative {
     background: #dc3545;
     color: white;
@@ -582,6 +621,10 @@ body {
     background: #c82333;
     transform: translateY(-1px);
     box-shadow: 0 2px 4px rgba(220, 53, 69, 0.3);
+}
+
+.bet-adjust-negative:active {
+    transform: translateY(0);
 }
 
 .result-message {
@@ -2274,9 +2317,48 @@ body.dark-mode .active-bets-display h4 {
     color: #8a9eff;
 }
 
+body.dark-mode .bet-options {
+    background: rgba(40, 40, 60, 0.8) !important;
+    border: 1px solid #555;
+    color: #e0e0e0;
+}
+
+body.dark-mode .bet-options h3,
+body.dark-mode .bet-options h4 {
+    color: #8a9eff;
+}
+
+body.dark-mode .active-bets-list {
+    background: rgba(40, 40, 60, 0.8) !important;
+    border: 1px solid #555;
+    color: #e0e0e0;
+}
+
+body.dark-mode .color-bet-amount label,
+body.dark-mode .color-bets-section h4,
+body.dark-mode .number-bets-section h4 {
+    color: #e0e0e0;
+}
+
+body.dark-mode .color-bet-amount small {
+    color: #aaa;
+}
+
 body.dark-mode .total-bet-display {
     color: #8a9eff;
     font-weight: bold;
+}
+
+body.dark-mode .form-group {
+    color: #e0e0e0;
+}
+
+body.dark-mode .button-group-positive {
+    border-left-color: #28a745;
+}
+
+body.dark-mode .button-group-negative {
+    border-left-color: #dc3545;
 }
 
 body.dark-mode .bet-adjust-positive {

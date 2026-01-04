@@ -9,7 +9,7 @@ include __DIR__ . '/includes/navbar.php';
 ?>
     
     <div class="container">
-        <div class="welcome-section">
+        <div class="welcome-section section">
             <h1>Welcome, <?php echo htmlspecialchars($user['username']); ?>!</h1>
             <p class="subtitle">Choose a game to play with your fake money</p>
         </div>
@@ -28,7 +28,7 @@ include __DIR__ . '/includes/navbar.php';
             </div>
             
             <div class="game-card" onclick="window.location.href='games/roulette.php'">
-                <div class="game-icon">🎲</div>
+                <div class="game-icon">🛞</div>
                 <h3>Roulette</h3>
                 <p>Bet on your lucky number!</p>
             </div>
@@ -46,7 +46,7 @@ include __DIR__ . '/includes/navbar.php';
             </div>
         </div>
         
-        <div class="transactions-section">
+        <div class="transactions-section section">
             <h2>Recent Transactions</h2>
             <div id="transactions">
                 <p>Loading...</p>

@@ -9,7 +9,7 @@ include __DIR__ . '/../includes/navbar.php';
 ?>
     
     <div class="container">
-        <div class="game-container">
+        <div class="game-container section">
             <h1>🎲 Dice Roll</h1>
             
             <div class="dice-game">
@@ -48,7 +48,7 @@ include __DIR__ . '/../includes/navbar.php';
                 <div id="result" class="result-message"></div>
             </div>
             
-            <div class="win-rate-section" style="margin: 20px 0; padding: 15px; background: #f8f9fa; border-radius: 8px;">
+            <div class="win-rate-section section" style="margin: 20px 0; background: #f8f9fa; border-radius: 8px;">
                 <h4 style="margin: 0 0 10px 0; color: #667eea;">📊 Your Stats</h4>
                 <div id="winRateDisplay" style="color: #666;">
                     <span>Win Rate: <strong id="winRate">-</strong>%</span>
@@ -57,7 +57,7 @@ include __DIR__ . '/../includes/navbar.php';
                 </div>
             </div>
             
-            <div class="game-info">
+            <div class="game-info section">
                 <h3>How to Play:</h3>
                 <table class="slots-info-table">
                     <tr>

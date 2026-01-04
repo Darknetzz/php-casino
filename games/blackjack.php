@@ -9,7 +9,7 @@ include __DIR__ . '/../includes/navbar.php';
 ?>
     
     <div class="container">
-        <div class="game-container">
+        <div class="game-container section">
             <h1>🃏 Blackjack</h1>
             
             <div class="blackjack-game">
@@ -21,13 +21,13 @@ include __DIR__ . '/../includes/navbar.php';
                 </div>
                 
                 <div class="blackjack-board">
-                    <div class="dealer-section">
+                    <div class="dealer-section section">
                         <h3>Dealer</h3>
                         <div class="hand" id="dealerHand"></div>
                         <div class="score" id="dealerScore">Score: 0</div>
                     </div>
                     
-                    <div class="player-section">
+                    <div class="player-section section">
                         <h3>You</h3>
                         <div class="hand" id="playerHand"></div>
                         <div class="score" id="playerScore">Score: 0</div>
@@ -42,7 +42,7 @@ include __DIR__ . '/../includes/navbar.php';
                 <div id="result" class="result-message"></div>
             </div>
             
-            <div class="win-rate-section" style="margin: 20px 0; padding: 15px; background: #f8f9fa; border-radius: 8px;">
+            <div class="win-rate-section section" style="margin: 20px 0; background: #f8f9fa; border-radius: 8px;">
                 <h4 style="margin: 0 0 10px 0; color: #667eea;">📊 Your Stats</h4>
                 <div id="winRateDisplay" style="color: #666;">
                     <span>Win Rate: <strong id="winRate">-</strong>%</span>
@@ -51,7 +51,7 @@ include __DIR__ . '/../includes/navbar.php';
                 </div>
             </div>
             
-            <div class="game-info">
+            <div class="game-info section">
                 <h3>How to Play:</h3>
                 <table class="slots-info-table">
                     <tr>

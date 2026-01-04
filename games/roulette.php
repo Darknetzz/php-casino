@@ -9,15 +9,15 @@ include __DIR__ . '/../includes/navbar.php';
 ?>
     
     <div class="container">
-        <div class="game-container">
-            <h1>🎲 Roulette</h1>
+        <div class="game-container section">
+            <h1>🛞 Roulette</h1>
             
             <div class="roulette-game">
                 <div class="bet-controls">
                     <small>Max bet per number: $<span id="maxBet">100</span></small>
                 </div>
                 
-                <div class="bet-options">
+                <div class="bet-options section">
                     <h3>Place Your Bets:</h3>
                     <div class="color-bets-section">
                         <h4>Color & Range Bets (2x payout):</h4>
@@ -69,7 +69,7 @@ include __DIR__ . '/../includes/navbar.php';
                 <div id="result" class="result-message"></div>
             </div>
             
-            <div class="win-rate-section" style="margin: 20px 0; padding: 15px; background: #f8f9fa; border-radius: 8px;">
+            <div class="win-rate-section section" style="margin: 20px 0; background: #f8f9fa; border-radius: 8px;">
                 <h4 style="margin: 0 0 10px 0; color: #667eea;">📊 Your Stats</h4>
                 <div id="winRateDisplay" style="color: #666;">
                     <span>Win Rate: <strong id="winRate">-</strong>%</span>
@@ -78,7 +78,7 @@ include __DIR__ . '/../includes/navbar.php';
                 </div>
             </div>
             
-            <div class="game-info">
+            <div class="game-info section">
                 <h3>How to Play:</h3>
                 <table class="slots-info-table">
                     <tr>
