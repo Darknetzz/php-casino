@@ -137,6 +137,16 @@ switch ($action) {
         echo json_encode(['success' => true, 'winLoss' => $winLoss]);
         break;
         
+    case 'resetStats':
+        $user = getCurrentUser();
+        $result = $db->resetStats($user['id']);
+        if ($result) {
+            echo json_encode(['success' => true, 'message' => 'Stats reset successfully']);
+        } else {
+            echo json_encode(['success' => false, 'message' => 'Failed to reset stats']);
+        }
+        break;
+        
     case 'getDarkMode':
         $user = getCurrentUser();
         $darkMode = $db->getDarkMode($user['id']);

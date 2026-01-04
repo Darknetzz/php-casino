@@ -338,5 +338,11 @@ class Database {
             'netWinLoss' => round($netWinLoss, 2)
         ];
     }
+    
+    public function resetStats($userId) {
+        // Delete all bet and win transactions for the user
+        $stmt = $this->db->prepare("DELETE FROM transactions WHERE user_id = ? AND type IN ('bet', 'win') AND game IS NOT NULL");
+        return $stmt->execute([$userId]);
+    }
 }
 ?>

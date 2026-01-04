@@ -32,7 +32,10 @@ include __DIR__ . '/../includes/navbar.php';
             </div>
             
             <div class="win-loss-section section">
-                <h2>💰 Total Win/Loss</h2>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <h2 style="margin: 0;">💰 Total Win/Loss</h2>
+                    <button id="resetWinLossBtn" class="btn btn-secondary btn-sm">Reset Win/Loss</button>
+                </div>
                 <div id="winLossDisplay" class="win-loss-info">
                     <div class="win-loss-item">
                         <label>Total Bets:</label>
@@ -50,7 +53,10 @@ include __DIR__ . '/../includes/navbar.php';
             </div>
             
             <div class="win-rates-section section">
-                <h2>📊 Win Rates</h2>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <h2 style="margin: 0;">📊 Win Rates</h2>
+                    <button id="resetWinRatesBtn" class="btn btn-secondary btn-sm">Reset Win Rates</button>
+                </div>
                 <div id="winRatesDisplay" class="win-rates-grid">
                     <div class="win-rate-card">
                         <h4>Overall</h4>
@@ -190,8 +196,8 @@ include __DIR__ . '/../includes/navbar.php';
             }, 5000);
         });
         
-        // Load total win/loss
-        $(document).ready(function() {
+        // Function to load total win/loss
+        function loadWinLoss() {
             $.get(getApiPath('getTotalWinLoss'), function(data) {
                 if (data.success && data.winLoss) {
                     const winLoss = data.winLoss;
@@ -216,10 +222,10 @@ include __DIR__ . '/../includes/navbar.php';
             }, 'json').fail(function(xhr, status, error) {
                 console.error('Error loading win/loss:', status, error);
             });
-        });
+        }
         
-        // Load win rates
-        $(document).ready(function() {
+        // Function to load win rates
+        function loadWinRates() {
             $.get(getApiPath('getWinRates'), function(data) {
                 if (data.success && data.winRates) {
                     const rates = data.winRates;
@@ -280,6 +286,49 @@ include __DIR__ . '/../includes/navbar.php';
                 $('.win-rate-value').text('0%');
                 $('.win-rate-games').text('0 games (0 wins)');
             });
+        }
+        
+        // Load total win/loss
+        $(document).ready(function() {
+            loadWinLoss();
+        });
+        
+        // Reset win/loss button
+        $('#resetWinLossBtn').on('click', function() {
+            if (!confirm('Are you sure you want to reset your win/loss statistics? This will delete all bet and win transaction records. This action cannot be undone.')) {
+                return;
+            }
+            
+            $.post(getApiPath('resetStats'), {}, function(data) {
+                if (data.success) {
+                    alert('Win/Loss statistics reset successfully!');
+                    loadWinLoss();
+                } else {
+                    alert('Failed to reset statistics: ' + (data.message || 'Unknown error'));
+                }
+            }, 'json');
+        });
+        
+        // Reset win rates button (same as reset win/loss since they use the same data)
+        $('#resetWinRatesBtn').on('click', function() {
+            if (!confirm('Are you sure you want to reset your win rate statistics? This will delete all bet and win transaction records. This action cannot be undone.')) {
+                return;
+            }
+            
+            $.post(getApiPath('resetStats'), {}, function(data) {
+                if (data.success) {
+                    alert('Win rate statistics reset successfully!');
+                    loadWinRates();
+                    loadWinLoss();
+                } else {
+                    alert('Failed to reset statistics: ' + (data.message || 'Unknown error'));
+                }
+            }, 'json');
+        });
+        
+        // Load win rates
+        $(document).ready(function() {
+            loadWinRates();
         });
     </script>
 <?php include __DIR__ . '/../includes/footer.php'; ?>
