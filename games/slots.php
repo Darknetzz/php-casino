@@ -63,38 +63,9 @@ include __DIR__ . '/../includes/navbar.php';
                 </div>
             </div>
             
-            <div class="game-info section">
-                <h3>How to Play:</h3>
-                <table class="slots-info-table">
-                    <tr>
-                        <td>1. Set your bet amount</td>
-                    </tr>
-                    <tr>
-                        <td>2. Choose to bet on 1 row (middle) or all 3 rows</td>
-                    </tr>
-                    <tr>
-                        <td>3. Click SPIN to play</td>
-                    </tr>
-                    <tr>
-                        <td>4. Match 3 symbols to win!</td>
-                    </tr>
-                </table>
-                <p style="margin-top: 10px; color: #666; font-size: 14px;">
-                    <strong>Note:</strong> Betting on all 3 rows costs 3× your bet amount, but you can win on multiple rows!
-                </p>
-                <h4 style="margin-top: 20px; margin-bottom: 10px;">Payouts:</h4>
-                <table class="slots-payout-table">
-                    <thead>
-                        <tr>
-                            <th>Symbols</th>
-                            <th>Payout</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <!-- Payouts will be dynamically loaded by slots.js -->
-                        <tr><td colspan="2" style="text-align: center; color: #999;">Loading payouts...</td></tr>
-                    </tbody>
-                </table>
+            <div class="game-info section" style="text-align: center;">
+                <button class="btn btn-secondary" onclick="openModal('slotsHowToPlayModal')" style="margin: 5px;">How to Play</button>
+                <button class="btn btn-secondary" onclick="openModal('slotsPayoutsModal')" style="margin: 5px;">Payouts</button>
             </div>
         </div>
     </div>
@@ -122,4 +93,49 @@ include __DIR__ . '/../includes/navbar.php';
             });
         });
     </script>
+    
+    <!-- How to Play Modal -->
+    <div id="slotsHowToPlayModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('slotsHowToPlayModal')">&times;</span>
+            <h3>How to Play:</h3>
+            <table class="slots-info-table">
+                <tr>
+                    <td>1. Set your bet amount</td>
+                </tr>
+                <tr>
+                    <td>2. Choose to bet on 1 row (middle) or all 3 rows</td>
+                </tr>
+                <tr>
+                    <td>3. Click SPIN to play</td>
+                </tr>
+                <tr>
+                    <td>4. Match 3 symbols to win!</td>
+                </tr>
+            </table>
+            <p style="margin-top: 10px; color: #666; font-size: 14px;">
+                <strong>Note:</strong> Betting on all 3 rows costs 3× your bet amount, but you can win on multiple rows!
+            </p>
+        </div>
+    </div>
+    
+    <!-- Payouts Modal -->
+    <div id="slotsPayoutsModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('slotsPayoutsModal')">&times;</span>
+            <h3>Payouts:</h3>
+            <table class="slots-payout-table">
+                <thead>
+                    <tr>
+                        <th>Symbols</th>
+                        <th>Payout</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Payouts will be dynamically loaded by slots.js -->
+                    <tr><td colspan="2" style="text-align: center; color: #999;">Loading payouts...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
 <?php include __DIR__ . '/../includes/footer.php'; ?>

@@ -57,46 +57,9 @@ include __DIR__ . '/../includes/navbar.php';
                 </div>
             </div>
             
-            <div class="game-info section">
-                <h3>How to Play:</h3>
-                <table class="slots-info-table">
-                    <tr>
-                        <td>1. Set your bet amount</td>
-                    </tr>
-                    <tr>
-                        <td>2. Click ROLL DICE to roll 6 dice</td>
-                    </tr>
-                    <tr>
-                        <td>3. Match dice to win!</td>
-                    </tr>
-                </table>
-                <h4 style="margin-top: 20px; margin-bottom: 10px;">Payouts:</h4>
-                <table class="slots-payout-table">
-                    <thead>
-                        <tr>
-                            <th>Combination</th>
-                            <th>Payout</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>3 of a kind</td>
-                            <td>2x bet</td>
-                        </tr>
-                        <tr>
-                            <td>4 of a kind</td>
-                            <td>5x bet</td>
-                        </tr>
-                        <tr>
-                            <td>5 of a kind</td>
-                            <td>10x bet</td>
-                        </tr>
-                        <tr>
-                            <td>6 of a kind</td>
-                            <td>20x bet</td>
-                        </tr>
-                    </tbody>
-                </table>
+            <div class="game-info section" style="text-align: center;">
+                <button class="btn btn-secondary" onclick="openModal('diceHowToPlayModal')" style="margin: 5px;">How to Play</button>
+                <button class="btn btn-secondary" onclick="openModal('dicePayoutsModal')" style="margin: 5px;">Payouts</button>
             </div>
         </div>
     </div>
@@ -126,4 +89,57 @@ include __DIR__ . '/../includes/navbar.php';
             });
         });
     </script>
+    
+    <!-- How to Play Modal -->
+    <div id="diceHowToPlayModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('diceHowToPlayModal')">&times;</span>
+            <h3>How to Play:</h3>
+            <table class="slots-info-table">
+                <tr>
+                    <td>1. Set your bet amount</td>
+                </tr>
+                <tr>
+                    <td>2. Click ROLL DICE to roll 6 dice</td>
+                </tr>
+                <tr>
+                    <td>3. Match dice to win!</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+    
+    <!-- Payouts Modal -->
+    <div id="dicePayoutsModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('dicePayoutsModal')">&times;</span>
+            <h3>Payouts:</h3>
+            <table class="slots-payout-table">
+                <thead>
+                    <tr>
+                        <th>Combination</th>
+                        <th>Payout</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>3 of a kind</td>
+                        <td>2x bet</td>
+                    </tr>
+                    <tr>
+                        <td>4 of a kind</td>
+                        <td>5x bet</td>
+                    </tr>
+                    <tr>
+                        <td>5 of a kind</td>
+                        <td>10x bet</td>
+                    </tr>
+                    <tr>
+                        <td>6 of a kind</td>
+                        <td>20x bet</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
 <?php include __DIR__ . '/../includes/footer.php'; ?>

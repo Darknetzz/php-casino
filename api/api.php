@@ -69,9 +69,17 @@ switch ($action) {
             ];
         }
         
+        // Get custom combinations
+        $slotsCustomCombinationsJson = getSetting('slots_custom_combinations', '[]');
+        $slotsCustomCombinations = json_decode($slotsCustomCombinationsJson, true);
+        if (empty($slotsCustomCombinations) || !is_array($slotsCustomCombinations)) {
+            $slotsCustomCombinations = [];
+        }
+        
         $slotsMultipliers = [
             'symbols' => $slotsSymbols,
-            'two_of_kind' => floatval(getSetting('slots_two_of_kind_multiplier', 1.0))
+            'two_of_kind' => floatval(getSetting('slots_two_of_kind_multiplier', 1.0)),
+            'custom_combinations' => $slotsCustomCombinations
         ];
         
         // Get plinko multipliers

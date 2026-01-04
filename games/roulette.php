@@ -77,39 +77,9 @@ include __DIR__ . '/../includes/navbar.php';
                 </div>
             </div>
             
-            <div class="game-info section">
-                <h3>How to Play:</h3>
-                <table class="slots-info-table">
-                    <tr>
-                        <td>1. Choose your bet type and amount</td>
-                    </tr>
-                    <tr>
-                        <td>2. Click SPIN to play</td>
-                    </tr>
-                </table>
-                <h4 style="margin-top: 20px; margin-bottom: 10px;">Payouts:</h4>
-                <table class="slots-payout-table">
-                    <thead>
-                        <tr>
-                            <th>Bet Type</th>
-                            <th>Payout</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>Red / Black / Even / Odd / Low (1-18) / High (19-36)</td>
-                            <td>2x bet</td>
-                        </tr>
-                        <tr>
-                            <td>Green (0)</td>
-                            <td>36x bet</td>
-                        </tr>
-                        <tr>
-                            <td>Specific number (0-36)</td>
-                            <td>36x bet</td>
-                        </tr>
-                    </tbody>
-                </table>
+            <div class="game-info section" style="text-align: center;">
+                <button class="btn btn-secondary" onclick="openModal('rouletteHowToPlayModal')" style="margin: 5px;">How to Play</button>
+                <button class="btn btn-secondary" onclick="openModal('roulettePayoutsModal')" style="margin: 5px;">Payouts</button>
             </div>
         </div>
     </div>
@@ -137,4 +107,50 @@ include __DIR__ . '/../includes/navbar.php';
             });
         });
     </script>
+    
+    <!-- How to Play Modal -->
+    <div id="rouletteHowToPlayModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('rouletteHowToPlayModal')">&times;</span>
+            <h3>How to Play:</h3>
+            <table class="slots-info-table">
+                <tr>
+                    <td>1. Choose your bet type and amount</td>
+                </tr>
+                <tr>
+                    <td>2. Click SPIN to play</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+    
+    <!-- Payouts Modal -->
+    <div id="roulettePayoutsModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('roulettePayoutsModal')">&times;</span>
+            <h3>Payouts:</h3>
+            <table class="slots-payout-table">
+                <thead>
+                    <tr>
+                        <th>Bet Type</th>
+                        <th>Payout</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Red / Black / Even / Odd / Low (1-18) / High (19-36)</td>
+                        <td>2x bet</td>
+                    </tr>
+                    <tr>
+                        <td>Green (0)</td>
+                        <td>36x bet</td>
+                    </tr>
+                    <tr>
+                        <td>Specific number (0-36)</td>
+                        <td>36x bet</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
 <?php include __DIR__ . '/../includes/footer.php'; ?>

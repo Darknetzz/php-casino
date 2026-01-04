@@ -227,3 +227,28 @@ $(document).ready(function() {
         initBetAdjustButtons();
     }, 500);
 });
+
+// Close modal by ID
+function closeModal(modalId) {
+    $('#' + modalId).hide();
+}
+
+// Open modal by ID
+function openModal(modalId) {
+    $('#' + modalId).show();
+}
+
+// Close modal when clicking outside of it
+$(document).ready(function() {
+    $(document).on('click', '.modal', function(e) {
+        // If clicking directly on the modal (background), close it
+        if ($(e.target).hasClass('modal')) {
+            $(this).hide();
+        }
+    });
+    
+    // Prevent modal content clicks from closing the modal
+    $(document).on('click', '.modal-content', function(e) {
+        e.stopPropagation();
+    });
+});

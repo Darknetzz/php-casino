@@ -5,6 +5,7 @@ $(document).ready(function() {
     let settings = {};
     let multipliers = {};
     let twoOfKindMultiplier = 1.0;
+    let customCombinations = [];
     let slotsDuration = 2500; // Default spin duration in milliseconds
     
     // Function to update total bet display (defined early so it's available everywhere)
@@ -47,6 +48,7 @@ $(document).ready(function() {
                     multipliers[symbol.emoji] = parseFloat(symbol.multiplier) || 0;
                 });
                 twoOfKindMultiplier = data.settings.slots_multipliers.two_of_kind || 1.0;
+                customCombinations = data.settings.slots_multipliers.custom_combinations || [];
                 
                 // Initialize reels with symbols
                 initializeReels();

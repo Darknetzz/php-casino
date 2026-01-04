@@ -51,38 +51,9 @@ include __DIR__ . '/../includes/navbar.php';
                 </div>
             </div>
             
-            <div class="game-info section">
-                <h3>How to Play:</h3>
-                <table class="slots-info-table">
-                    <tr>
-                        <td>Get as close to 21 as possible without going over</td>
-                    </tr>
-                    <tr>
-                        <td>Face cards (J, Q, K) are worth 10</td>
-                    </tr>
-                    <tr>
-                        <td>Aces are worth 1 or 11 (whichever is better)</td>
-                    </tr>
-                </table>
-                <h4 style="margin-top: 20px; margin-bottom: 10px;">Payouts:</h4>
-                <table class="slots-payout-table">
-                    <thead>
-                        <tr>
-                            <th>Result</th>
-                            <th>Payout</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>Beat the dealer</td>
-                            <td>2x bet</td>
-                        </tr>
-                        <tr>
-                            <td>Blackjack (21 with first 2 cards)</td>
-                            <td>2.5x bet</td>
-                        </tr>
-                    </tbody>
-                </table>
+            <div class="game-info section" style="text-align: center;">
+                <button class="btn btn-secondary" onclick="openModal('blackjackHowToPlayModal')" style="margin: 5px;">How to Play</button>
+                <button class="btn btn-secondary" onclick="openModal('blackjackPayoutsModal')" style="margin: 5px;">Payouts</button>
             </div>
         </div>
     </div>
@@ -110,4 +81,49 @@ include __DIR__ . '/../includes/navbar.php';
             });
         });
     </script>
+    
+    <!-- How to Play Modal -->
+    <div id="blackjackHowToPlayModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('blackjackHowToPlayModal')">&times;</span>
+            <h3>How to Play:</h3>
+            <table class="slots-info-table">
+                <tr>
+                    <td>Get as close to 21 as possible without going over</td>
+                </tr>
+                <tr>
+                    <td>Face cards (J, Q, K) are worth 10</td>
+                </tr>
+                <tr>
+                    <td>Aces are worth 1 or 11 (whichever is better)</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+    
+    <!-- Payouts Modal -->
+    <div id="blackjackPayoutsModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('blackjackPayoutsModal')">&times;</span>
+            <h3>Payouts:</h3>
+            <table class="slots-payout-table">
+                <thead>
+                    <tr>
+                        <th>Result</th>
+                        <th>Payout</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Beat the dealer</td>
+                        <td>2x bet</td>
+                    </tr>
+                    <tr>
+                        <td>Blackjack (21 with first 2 cards)</td>
+                        <td>2.5x bet</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
 <?php include __DIR__ . '/../includes/footer.php'; ?>

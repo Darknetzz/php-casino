@@ -45,34 +45,9 @@ include __DIR__ . '/../includes/navbar.php';
                 </div>
             </div>
             
-            <div class="game-info section">
-                <h3>How to Play:</h3>
-                <table class="slots-info-table">
-                    <tr>
-                        <td>1. Set your bet amount</td>
-                    </tr>
-                    <tr>
-                        <td>2. Click "DROP BALL" to release a ball</td>
-                    </tr>
-                    <tr>
-                        <td>3. Watch the ball bounce down through the pegs</td>
-                    </tr>
-                    <tr>
-                        <td>4. Win based on which slot the ball lands in!</td>
-                    </tr>
-                </table>
-                <h4 style="margin-top: 20px; margin-bottom: 10px;">Multipliers:</h4>
-                <table class="slots-payout-table" id="plinkoMultipliersTable">
-                    <thead>
-                        <tr>
-                            <th>Slot Position</th>
-                            <th>Multiplier</th>
-                        </tr>
-                    </thead>
-                    <tbody id="plinkoMultipliersBody">
-                        <tr><td colspan="2">Loading...</td></tr>
-                    </tbody>
-                </table>
+            <div class="game-info section" style="text-align: center;">
+                <button class="btn btn-secondary" onclick="openModal('plinkoHowToPlayModal')" style="margin: 5px;">How to Play</button>
+                <button class="btn btn-secondary" onclick="openModal('plinkoMultipliersModal')" style="margin: 5px;">Multipliers</button>
             </div>
         </div>
     </div>
@@ -117,4 +92,45 @@ include __DIR__ . '/../includes/navbar.php';
             }, 'json');
         });
     </script>
+    
+    <!-- How to Play Modal -->
+    <div id="plinkoHowToPlayModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('plinkoHowToPlayModal')">&times;</span>
+            <h3>How to Play:</h3>
+            <table class="slots-info-table">
+                <tr>
+                    <td>1. Set your bet amount</td>
+                </tr>
+                <tr>
+                    <td>2. Click "DROP BALL" to release a ball</td>
+                </tr>
+                <tr>
+                    <td>3. Watch the ball bounce down through the pegs</td>
+                </tr>
+                <tr>
+                    <td>4. Win based on which slot the ball lands in!</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+    
+    <!-- Multipliers Modal -->
+    <div id="plinkoMultipliersModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('plinkoMultipliersModal')">&times;</span>
+            <h3>Multipliers:</h3>
+            <table class="slots-payout-table" id="plinkoMultipliersTable">
+                <thead>
+                    <tr>
+                        <th>Slot Position</th>
+                        <th>Multiplier</th>
+                    </tr>
+                </thead>
+                <tbody id="plinkoMultipliersBody">
+                    <tr><td colspan="2">Loading...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
 <?php include __DIR__ . '/../includes/footer.php'; ?>
