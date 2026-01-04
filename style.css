@@ -1324,6 +1324,66 @@ body {
     background: #f8f9fa;
 }
 
+.multiplier-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+}
+
+.multiplier-table thead {
+    background: #667eea;
+    color: white;
+}
+
+.multiplier-table th {
+    padding: 15px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.multiplier-table td {
+    padding: 12px 15px;
+    border-bottom: 1px solid #e0e0e0;
+    color: #333;
+}
+
+.multiplier-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.multiplier-table tbody tr:hover {
+    background: #f8f9fa;
+}
+
+.multiplier-table td:first-child {
+    font-size: 24px;
+    text-align: center;
+    width: 60px;
+}
+
+.multiplier-table td:nth-child(2) {
+    font-size: 18px;
+    text-align: center;
+}
+
+.multiplier-table input[type="number"] {
+    border: 2px solid #667eea;
+    border-radius: 5px;
+    font-size: 14px;
+    text-align: center;
+}
+
+.multiplier-table input[type="number"]:focus {
+    outline: none;
+    border-color: #764ba2;
+    box-shadow: 0 0 5px rgba(102, 126, 234, 0.3);
+}
+
 .action-buttons {
     display: flex;
     gap: 5px;
