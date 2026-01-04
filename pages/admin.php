@@ -2031,6 +2031,45 @@ include __DIR__ . '/../includes/navbar.php';
             updateRoundsMonitor();
             roundsPollInterval = setInterval(updateRoundsMonitor, 2000); // Poll every 2 seconds
             
+            // Update predictions immediately (they don't change often, but update on page load)
+            if (rouletteMode === 'central') {
+                $.get('../api/api.php?action=getUpcomingPredictions&game=roulette&count=10', function(data) {
+                    if (data.success && data.predictions) {
+                        if (data.predictions.length === 0) {
+                            $('#rouletteUpcomingTable').html('<p style="color: #999; text-align: center;">No predictions available</p>');
+                        } else {
+                            let html = '<table class="admin-table" style="font-size: 0.9em; width: 100%;"><thead><tr><th>Round</th><th>Predicted Result</th></tr></thead><tbody>';
+                            data.predictions.forEach(function(pred) {
+                                html += '<tr><td>#' + pred.round_number + '</td><td><strong style="color: #28a745;">' + pred.predicted_result + '</strong></td></tr>';
+                            });
+                            html += '</tbody></table>';
+                            $('#rouletteUpcomingTable').html(html);
+                        }
+                    }
+                }, 'json');
+            }
+            
+            if (crashMode === 'central') {
+                $.get('../api/api.php?action=getUpcomingPredictions&game=crash&count=10', function(data) {
+                    if (data.success && data.predictions) {
+                        if (data.predictions.length === 0) {
+                            $('#crashUpcomingTable').html('<p style="color: #999; text-align: center;">No predictions available</p>');
+                        } else {
+                            let html = '<table class="admin-table" style="font-size: 0.9em; width: 100%;"><thead><tr><th>Round</th><th>Predicted Crash</th></tr></thead><tbody>';
+                            data.predictions.forEach(function(pred) {
+                                const multValue = parseFloat(pred.predicted_crash_point);
+                                let color = '#dc3545'; // Red for low
+                                if (multValue >= 5) color = '#ffc107'; // Yellow for medium
+                                if (multValue >= 10) color = '#28a745'; // Green for high
+                                html += '<tr><td>#' + pred.round_number + '</td><td><strong style="color: ' + color + ';">' + parseFloat(pred.predicted_crash_point).toFixed(2) + 'x</strong></td></tr>';
+                            });
+                            html += '</tbody></table>';
+                            $('#crashUpcomingTable').html(html);
+                        }
+                    }
+                }, 'json');
+            }
+            
             // Cleanup on page unload
             $(window).on('beforeunload', function() {
                 if (roundsPollInterval) {

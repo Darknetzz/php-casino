@@ -496,6 +496,21 @@ switch ($action) {
         }
         echo json_encode(['success' => true, 'round' => $round]);
         break;
+    
+    case 'getUpcomingPredictions':
+        requireAdmin();
+        require_once __DIR__ . '/../includes/provably_fair.php';
+        $game = $_GET['game'] ?? 'roulette';
+        $count = intval($_GET['count'] ?? 10);
+        
+        if (!in_array($game, ['roulette', 'crash'])) {
+            echo json_encode(['success' => false, 'message' => 'Invalid game']);
+            break;
+        }
+        
+        $predictions = ProvablyFair::getUpcomingPredictions($db, $game, $count);
+        echo json_encode(['success' => true, 'predictions' => $predictions]);
+        break;
         
     default:
         echo json_encode(['success' => false, 'message' => 'Invalid action']);
