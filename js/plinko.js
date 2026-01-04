@@ -135,15 +135,19 @@ $(document).ready(function() {
                     ballElement.attr('data-ball-id', ballId);
                     board.append(ballElement);
                     
-                    // Start at the top center of the triangle (row 0, col 0)
+                    // Start at the top of the triangle (row 0)
+                    // For row 0, there's only 1 peg at col 0, so ball must start there
                     const ballData = {
                         id: ballId,
                         element: ballElement,
                         currentRow: 0,
                         currentCol: 0, // Column index within the current row (0 to currentRow)
                         completed: false,
-                        stepDelay: 0 // Delay counter for step-by-step movement
+                        stepDelay: 0, // Delay counter for step-by-step movement
+                        moveHistory: [] // Track moves for debugging
                     };
+                    
+                    console.log(`[Plinko Debug] ===== Ball ${ballId} created at row 0, col 0 =====`);
                     
                     activeBalls.push(ballData);
                     updateBallPosition(ballData);
@@ -179,6 +183,16 @@ $(document).ready(function() {
                             const finalSlotClamped = Math.max(0, Math.min(cols - 1, finalSlot));
                             const multiplier = multipliers[finalSlotClamped];
                             const winAmount = betAmount * multiplier;
+                            
+                            // Debug: Print move statistics
+                            const leftMoves = ball.moveHistory.filter(m => m.direction === 'LEFT').length;
+                            const rightMoves = ball.moveHistory.filter(m => m.direction === 'RIGHT').length;
+                            const stayMoves = ball.moveHistory.filter(m => m.direction === 'STAY').length;
+                            console.log(`[Plinko Debug] ===== Ball ${ball.id} completed =====`);
+                            console.log(`[Plinko Debug] Total moves: ${ball.moveHistory.length}`);
+                            console.log(`[Plinko Debug] LEFT moves: ${leftMoves}, RIGHT moves: ${rightMoves}, STAY moves: ${stayMoves}`);
+                            console.log(`[Plinko Debug] Final slot: ${finalSlotClamped}, Multiplier: ${multiplier}x`);
+                            console.log(`[Plinko Debug] ==========================================`);
                             
                             totalWins += winAmount;
                             ball.completed = true;
@@ -246,37 +260,63 @@ $(document).ready(function() {
                         
                         // From a peg at (previousRow, previousCol), the ball can only move to:
                         // - The peg directly below-left: (newRow, previousCol - 1) if previousCol > 0
-                        // - The peg directly below-right: (newRow, previousCol) if previousCol <= newRow
-                        // These are the only two valid positions directly below the current peg
+                        // - The peg directly below-right: (newRow, previousCol + 1) if previousCol + 1 <= newRow
+                        // OR if we're thinking of it differently:
+                        // - Below-left: (newRow, previousCol - 1) if previousCol > 0
+                        // - Below-right: (newRow, previousCol) if previousCol <= newRow
+                        // Actually, in Plinko, from peg (r,c), ball goes to (r+1, c) OR (r+1, c+1)
+                        // But user said "left or right", so maybe: (r+1, c-1) OR (r+1, c)
                         
+                        // Let's use: from (r,c), can go to (r+1, c-1) left OR (r+1, c) right
                         let newCol;
                         const canMoveLeft = previousCol > 0; // Can move to col (previousCol - 1)
                         const canMoveRight = previousCol <= newRow; // Can move to col (previousCol)
                         
+                        // DEBUG: Log the decision process
+                        console.log(`[Plinko Debug] Ball at row ${previousRow}, col ${previousCol} -> moving to row ${newRow}`);
+                        console.log(`[Plinko Debug] canMoveLeft: ${canMoveLeft} (to col ${previousCol - 1}), canMoveRight: ${canMoveRight} (to col ${previousCol})`);
+                        
                         if (!canMoveLeft && !canMoveRight) {
                             // Should never happen, but safety fallback
+                            console.warn(`[Plinko Debug] WARNING: Cannot move left or right! Using fallback.`);
                             newCol = Math.max(0, Math.min(newRow, previousCol));
                         } else if (!canMoveLeft) {
                             // Can only move right (to same column)
+                            console.log(`[Plinko Debug] Only right available -> col ${previousCol}`);
                             newCol = previousCol;
                         } else if (!canMoveRight) {
                             // Can only move left (to previousCol - 1)
+                            console.log(`[Plinko Debug] Only left available -> col ${previousCol - 1}`);
                             newCol = previousCol - 1;
                         } else {
                             // Can move either left or right - randomly choose (50/50 chance)
                             // Use Math.random() which should be uniformly distributed
                             const randomValue = Math.random();
+                            console.log(`[Plinko Debug] Random value: ${randomValue.toFixed(4)} (${randomValue < 0.5 ? 'LEFT' : 'RIGHT'})`);
                             if (randomValue < 0.5) {
                                 // Move left (to previousCol - 1)
                                 newCol = previousCol - 1;
+                                console.log(`[Plinko Debug] Chose LEFT -> col ${newCol}`);
                             } else {
                                 // Move right (to same column, previousCol)
                                 newCol = previousCol;
+                                console.log(`[Plinko Debug] Chose RIGHT -> col ${newCol}`);
                             }
                         }
                         
                         // Final validation - ensure result is within bounds
                         newCol = Math.max(0, Math.min(maxColForNewRow, newCol));
+                        
+                        // Track the move direction for statistics
+                        const moveDirection = newCol < previousCol ? 'LEFT' : (newCol > previousCol ? 'RIGHT' : 'STAY');
+                        ball.moveHistory.push({
+                            from: {row: previousRow, col: previousCol},
+                            to: {row: newRow, col: newCol},
+                            direction: moveDirection
+                        });
+                        
+                        console.log(`[Plinko Debug] Final position: row ${newRow}, col ${newCol} (${moveDirection})`);
+                        console.log(`[Plinko Debug] ---`);
                         
                         // Update ball's column position
                         ball.currentCol = newCol;
