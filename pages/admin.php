@@ -1241,7 +1241,7 @@ include __DIR__ . '/../includes/navbar.php';
                 <h3 style="margin-top: 0; margin-bottom: 15px; color: #667eea;">Game Modes</h3>
                 <p class="admin-description" style="margin-bottom: 20px;">Choose whether games run locally (client-side) or centrally (synchronized for all users).</p>
                 
-                <form method="POST" action="admin.php?tab=rounds" class="admin-form" style="margin-bottom: 30px;">
+                <form method="POST" action="admin.php?tab=rounds" class="admin-form game-modes-form" style="margin-bottom: 30px;">
                     <table class="game-modes-table">
                         <thead>
                             <tr>

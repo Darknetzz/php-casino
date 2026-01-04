@@ -3827,6 +3827,10 @@ body.dark-mode .worker-section-separator {
 }
 
 /* Game Modes Table */
+.game-modes-form {
+    max-width: 100% !important;
+}
+
 .game-modes-table {
     width: 100%;
     border-collapse: collapse;
