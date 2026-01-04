@@ -6,9 +6,6 @@
  */
 
 $(document).ready(function() {
-    // Storage key for localStorage
-    const STORAGE_KEY = 'casino_notifications';
-    
     // Track which page we're on
     const currentPage = window.location.pathname;
     const isRoulettePage = currentPage.includes('roulette.php');
@@ -29,55 +26,69 @@ $(document).ready(function() {
     // Polling interval (every 3 seconds)
     const POLL_INTERVAL = 3000;
     let pollInterval = null;
+    let notificationPollInterval = null;
     
     /**
-     * Load notifications from localStorage
+     * Load notifications from API
      */
-    function loadNotificationsFromStorage() {
-        try {
-            const stored = localStorage.getItem(STORAGE_KEY);
-            if (stored) {
-                const parsed = JSON.parse(stored);
-                // Convert timestamp strings back to Date objects
-                return parsed.map(n => {
-                    n.timestamp = new Date(n.timestamp);
-                    return n;
-                });
+    function loadNotificationsFromAPI(callback) {
+        $.get(getApiPath('getNotifications') + '&limit=200', function(data) {
+            if (data.success && data.notifications) {
+                // Convert database format to our format
+                notifications = data.notifications.map(n => ({
+                    id: parseInt(n.id),
+                    title: n.title,
+                    message: n.message,
+                    type: n.type,
+                    game: n.game,
+                    read: n.read === 1 || n.read === '1',
+                    timestamp: new Date(n.created_at)
+                }));
+                
+                unreadCount = notifications.filter(n => !n.read).length;
+                
+                // Update global references
+                window.notifications = notifications;
+                window.unreadCount = unreadCount;
+                
+                if (callback) callback();
             }
-        } catch (e) {
-            console.error('Error loading notifications from storage:', e);
-        }
-        return [];
+        }, 'json').fail(function() {
+            console.error('Failed to load notifications');
+            if (callback) callback();
+        });
     }
     
     /**
-     * Save notifications to localStorage
+     * Create notification via API
      */
-    function saveNotificationsToStorage() {
-        try {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(notifications));
-        } catch (e) {
-            console.error('Error saving notifications to storage:', e);
-            // If storage is full, remove oldest notifications
-            if (e.name === 'QuotaExceededError') {
-                // Keep only last 100 notifications
-                notifications = notifications.slice(-100);
-                try {
-                    localStorage.setItem(STORAGE_KEY, JSON.stringify(notifications));
-                } catch (e2) {
-                    console.error('Error after cleanup:', e2);
-                }
+    function createNotificationAPI(title, message, type, game, callback) {
+        $.post(getApiPath('createNotification'), {
+            title: title,
+            message: message,
+            type: type,
+            game: game
+        }, function(data) {
+            if (data.success) {
+                // Reload notifications to get the new one
+                loadNotificationsFromAPI(function() {
+                    updateNotificationDropdown();
+                    if (callback) callback();
+                });
+            } else {
+                console.error('Failed to create notification:', data.message);
+                if (callback) callback();
             }
-        }
+        }, 'json').fail(function() {
+            console.error('Error creating notification');
+            if (callback) callback();
+        });
     }
     
     // Load notifications on page load
-    notifications = loadNotificationsFromStorage();
-    unreadCount = notifications.filter(n => !n.read).length;
-    
-    // Make notifications accessible globally for notifications page
-    window.notifications = notifications;
-    window.unreadCount = unreadCount;
+    loadNotificationsFromAPI(function() {
+        updateNotificationDropdown();
+    });
     
     /**
      * Get game URL based on current page location
@@ -97,43 +108,18 @@ $(document).ready(function() {
     }
     
     /**
-     * Add notification to storage and update UI
+     * Add notification to database and update UI
      */
     function addNotification(title, message, type = 'info', game = null) {
-        const notificationData = {
-            id: Date.now() + Math.random(),
-            title: title,
-            message: message,
-            type: type,
-            game: game,
-            timestamp: new Date(),
-            read: false
-        };
-        
-        notifications.unshift(notificationData); // Add to beginning
-        unreadCount++;
-        
-        // Keep only last 200 notifications to prevent storage issues
-        if (notifications.length > 200) {
-            // Remove oldest notifications
-            notifications = notifications.slice(-200);
-        }
-        
-        // Update unread count
-        unreadCount = notifications.filter(n => !n.read).length;
-        
-        // Save to localStorage
-        saveNotificationsToStorage();
-        
-        // Update global references
-        window.notifications = notifications;
-        window.unreadCount = unreadCount;
-        
-        // Update dropdown
-        updateNotificationDropdown();
-        
-        // Show toast notification
-        showNotificationToast(notificationData);
+        // Create notification via API
+        createNotificationAPI(title, message, type, game, function() {
+            // Find the newly created notification (it will be the first unread one)
+            const newNotification = notifications.find(n => !n.read && n.title === title && n.message === message);
+            if (newNotification) {
+                // Show toast notification
+                showNotificationToast(newNotification);
+            }
+        });
     }
     
     /**
@@ -210,17 +196,21 @@ $(document).ready(function() {
     function markAsRead(notificationId) {
         const notification = notifications.find(n => n.id === notificationId);
         if (notification && !notification.read) {
-            notification.read = true;
-            unreadCount = Math.max(0, unreadCount - 1);
-            
-            // Save to localStorage
-            saveNotificationsToStorage();
-            
-            // Update global references
-            window.notifications = notifications;
-            window.unreadCount = unreadCount;
-            
-            updateNotificationDropdown();
+            // Update via API
+            $.post(getApiPath('markNotificationAsRead'), {
+                notification_id: notificationId
+            }, function(data) {
+                if (data.success) {
+                    notification.read = true;
+                    unreadCount = Math.max(0, unreadCount - 1);
+                    
+                    // Update global references
+                    window.notifications = notifications;
+                    window.unreadCount = unreadCount;
+                    
+                    updateNotificationDropdown();
+                }
+            }, 'json');
         }
     }
     
@@ -228,21 +218,22 @@ $(document).ready(function() {
      * Mark all notifications as read
      */
     function markAllAsRead() {
-        notifications.forEach(n => {
-            if (!n.read) {
-                n.read = true;
+        $.post(getApiPath('markAllNotificationsAsRead'), {}, function(data) {
+            if (data.success) {
+                notifications.forEach(n => {
+                    if (!n.read) {
+                        n.read = true;
+                    }
+                });
+                unreadCount = 0;
+                
+                // Update global references
+                window.notifications = notifications;
+                window.unreadCount = unreadCount;
+                
+                updateNotificationDropdown();
             }
-        });
-        unreadCount = 0;
-        
-        // Save to localStorage
-        saveNotificationsToStorage();
-        
-        // Update global references
-        window.notifications = notifications;
-        window.unreadCount = unreadCount;
-        
-        updateNotificationDropdown();
+        }, 'json');
     }
     
     // Make markAllAsRead accessible globally
@@ -549,10 +540,32 @@ $(document).ready(function() {
     window.updateNotificationDropdown = updateNotificationDropdown;
     window.markAllAsRead = markAllAsRead;
     
+    /**
+     * Poll for unread notification count
+     */
+    function pollUnreadCount() {
+        $.get(getApiPath('getUnreadNotificationCount'), function(data) {
+            if (data.success) {
+                const newCount = data.count;
+                if (newCount !== unreadCount) {
+                    // Count changed, reload notifications
+                    loadNotificationsFromAPI(function() {
+                        updateNotificationDropdown();
+                    });
+                }
+            }
+        }, 'json').fail(function() {
+            // Silently fail
+        });
+    }
+    
     // Initialize
     initNotificationContainer();
     updateNotificationDropdown();
     startPolling();
+    
+    // Poll for notification updates every 5 seconds
+    notificationPollInterval = setInterval(pollUnreadCount, 5000);
     
     // Handle notification dropdown toggle
     $('#notificationBtn').on('click', function(e) {
@@ -581,6 +594,9 @@ $(document).ready(function() {
     // Cleanup on page unload
     $(window).on('beforeunload', function() {
         stopPolling();
+        if (notificationPollInterval) {
+            clearInterval(notificationPollInterval);
+        }
     });
     
     // Pause polling when page is hidden (browser tab)
