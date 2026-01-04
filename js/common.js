@@ -65,7 +65,7 @@ function loadDarkMode() {
 // Add bet adjustment buttons to bet inputs
 function addBetAdjustButtons(inputSelector) {
     const $input = $(inputSelector);
-    if ($input.length === 0 || $input.closest('.form-group').length > 0) {
+    if ($input.length === 0 || $input.closest('.form-input-wrapper').length > 0) {
         return; // Already has buttons or input doesn't exist
     }
     
