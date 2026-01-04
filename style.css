@@ -1326,6 +1326,7 @@ body {
 
 .multiplier-table {
     width: 100%;
+    max-width: 600px;
     border-collapse: collapse;
     background: white;
     border-radius: 8px;
@@ -1346,10 +1347,20 @@ body {
     font-size: 14px;
 }
 
+.multiplier-table th:first-child {
+    width: 60%;
+}
+
+.multiplier-table th:last-child {
+    width: 40%;
+}
+
 .multiplier-table td {
     padding: 12px 15px;
     border-bottom: 1px solid #e0e0e0;
     color: #333;
+    font-size: 14px;
+    white-space: nowrap;
 }
 
 .multiplier-table tbody tr:last-child td {
@@ -1361,13 +1372,13 @@ body {
 }
 
 .multiplier-table td:first-child {
-    font-size: 24px;
+    font-size: 20px;
     text-align: center;
     width: 60px;
 }
 
 .multiplier-table td:nth-child(2) {
-    font-size: 18px;
+    font-size: 14px;
     text-align: center;
 }
 
