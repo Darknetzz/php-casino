@@ -101,16 +101,40 @@ switch ($action) {
         $plinkoMultipliersStr = getSetting('plinko_multipliers', '0.2,0.5,0.8,1.0,2.0,1.0,0.8,0.5,0.2');
         $plinkoMultipliers = array_map('floatval', explode(',', $plinkoMultipliersStr));
         
-        // Get dice multipliers
-        $diceMultipliers = [
-            3 => floatval(getSetting('dice_3_of_kind_multiplier', 2)),
-            4 => floatval(getSetting('dice_4_of_kind_multiplier', 5)),
-            5 => floatval(getSetting('dice_5_of_kind_multiplier', 10)),
-            6 => floatval(getSetting('dice_6_of_kind_multiplier', 20))
-        ];
-        
         // Get number of dice
         $diceNumDice = intval(getSetting('dice_num_dice', 6));
+        
+        // Get dice multipliers from JSON or fallback to individual settings
+        $diceMultipliersJson = getSetting('dice_multipliers', null);
+        $diceMultipliers = [];
+        if ($diceMultipliersJson) {
+            $decoded = json_decode($diceMultipliersJson, true);
+            if (is_array($decoded)) {
+                // Convert all values to floats
+                foreach ($decoded as $key => $value) {
+                    $diceMultipliers[intval($key)] = floatval($value);
+                }
+            }
+        }
+        // Fallback to individual settings for backward compatibility
+        if (empty($diceMultipliers)) {
+            $diceMultipliers = [
+                1 => floatval(getSetting('dice_1_of_kind_multiplier', 0)),
+                2 => floatval(getSetting('dice_2_of_kind_multiplier', 0)),
+                3 => floatval(getSetting('dice_3_of_kind_multiplier', 2)),
+                4 => floatval(getSetting('dice_4_of_kind_multiplier', 5)),
+                5 => floatval(getSetting('dice_5_of_kind_multiplier', 10)),
+                6 => floatval(getSetting('dice_6_of_kind_multiplier', 20))
+            ];
+        }
+        // Ensure we have multipliers for all dice counts up to dice_num_dice
+        for ($i = 1; $i <= $diceNumDice; $i++) {
+            if (!isset($diceMultipliers[$i])) {
+                $diceMultipliers[$i] = 0.0;
+            } else {
+                $diceMultipliers[$i] = floatval($diceMultipliers[$i]);
+            }
+        }
         
         // Get crash settings
         $crashSpeed = floatval(getSetting('crash_speed', 0.02));

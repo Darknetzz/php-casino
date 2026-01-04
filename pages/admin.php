@@ -34,7 +34,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         
         // Check if this is multipliers update
-        if (isset($_POST['slots_symbols']) || isset($_POST['plinko_multiplier_0']) || isset($_POST['dice_3_of_kind']) || isset($_POST['crash_speed'])) {
+        if (isset($_POST['slots_symbols']) || isset($_POST['plinko_multiplier_0']) || isset($_POST['dice_num_dice']) || isset($_POST['crash_speed'])) {
             // Slots multipliers (dynamic symbols)
             if (isset($_POST['slots_symbols'])) {
                 $slotsSymbolsJson = $_POST['slots_symbols'];
@@ -175,24 +175,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             
             // Dice multipliers
-            if (isset($_POST['dice_3_of_kind'])) {
-                $dice3OfKind = floatval($_POST['dice_3_of_kind'] ?? 0);
-                $dice4OfKind = floatval($_POST['dice_4_of_kind'] ?? 0);
-                $dice5OfKind = floatval($_POST['dice_5_of_kind'] ?? 0);
-                $dice6OfKind = floatval($_POST['dice_6_of_kind'] ?? 0);
+            if (isset($_POST['dice_num_dice']) || isset($_POST['dice_3_of_kind'])) {
                 $diceNumDice = intval($_POST['dice_num_dice'] ?? 6);
                 
-                if ($dice3OfKind < 0) $errors[] = 'Dice 3 of a kind multiplier must be greater than or equal to 0';
-                if ($dice4OfKind < 0) $errors[] = 'Dice 4 of a kind multiplier must be greater than or equal to 0';
-                if ($dice5OfKind < 0) $errors[] = 'Dice 5 of a kind multiplier must be greater than or equal to 0';
-                if ($dice6OfKind < 0) $errors[] = 'Dice 6 of a kind multiplier must be greater than or equal to 0';
-                if ($diceNumDice < 1 || $diceNumDice > 20) $errors[] = 'Number of dice must be between 1 and 20';
+                if ($diceNumDice < 1 || $diceNumDice > 20) {
+                    $errors[] = 'Number of dice must be between 1 and 20';
+                }
                 
-                if (empty($errors)) {
-                    $db->setSetting('dice_3_of_kind_multiplier', $dice3OfKind);
-                    $db->setSetting('dice_4_of_kind_multiplier', $dice4OfKind);
-                    $db->setSetting('dice_5_of_kind_multiplier', $dice5OfKind);
-                    $db->setSetting('dice_6_of_kind_multiplier', $dice6OfKind);
+                // Collect all multipliers (1 through dice_num_dice)
+                $diceMultipliers = [];
+                $hasErrors = false;
+                for ($i = 1; $i <= $diceNumDice; $i++) {
+                    $multiplier = floatval($_POST['dice_' . $i . '_of_kind'] ?? 0);
+                    if ($multiplier < 0) {
+                        $errors[] = "Dice $i of a kind multiplier must be greater than or equal to 0";
+                        $hasErrors = true;
+                    }
+                    $diceMultipliers[$i] = $multiplier;
+                }
+                
+                if (empty($errors) && !$hasErrors) {
+                    // Store multipliers as JSON
+                    $db->setSetting('dice_multipliers', json_encode($diceMultipliers));
                     $db->setSetting('dice_num_dice', $diceNumDice);
                 }
             }
@@ -227,7 +231,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $gameParam = 'slots';
                 } elseif (isset($_POST['plinko_multiplier_0'])) {
                     $gameParam = 'plinko';
-                } elseif (isset($_POST['dice_3_of_kind'])) {
+                } elseif (isset($_POST['dice_num_dice'])) {
                     $gameParam = 'dice';
                 } elseif (isset($_POST['crash_speed'])) {
                     $gameParam = 'crash';
@@ -666,64 +670,113 @@ include __DIR__ . '/../includes/navbar.php';
                 <?php endif; ?>
                 
                 <!-- Dice Multipliers -->
-                <?php if ($currentGame === 'dice'): ?>
+                <?php if ($currentGame === 'dice'): 
+                    // Load existing multipliers from JSON or fallback to individual settings
+                    $diceMultipliersJson = $settings['dice_multipliers'] ?? null;
+                    $diceMultipliers = [];
+                    if ($diceMultipliersJson) {
+                        $decoded = json_decode($diceMultipliersJson, true);
+                        if (is_array($decoded)) {
+                            $diceMultipliers = $decoded;
+                        }
+                    }
+                    // Fallback to individual settings for backward compatibility
+                    if (empty($diceMultipliers)) {
+                        $diceMultipliers = [
+                            1 => floatval($settings['dice_1_of_kind_multiplier'] ?? 0),
+                            2 => floatval($settings['dice_2_of_kind_multiplier'] ?? 0),
+                            3 => floatval($settings['dice_3_of_kind_multiplier'] ?? 2),
+                            4 => floatval($settings['dice_4_of_kind_multiplier'] ?? 5),
+                            5 => floatval($settings['dice_5_of_kind_multiplier'] ?? 10),
+                            6 => floatval($settings['dice_6_of_kind_multiplier'] ?? 20)
+                        ];
+                    }
+                    $diceNumDice = intval($settings['dice_num_dice'] ?? 6);
+                ?>
                 <form method="POST" action="admin.php?tab=multipliers&game=dice" class="admin-form">
-                    <h3 style="margin-top: 20px; margin-bottom: 15px; color: #667eea;">Dice Roll Multipliers</h3>
-                    <p style="margin-bottom: 15px; color: #666;">Configure multipliers for matching dice combinations:</p>
-                    <table class="multiplier-table">
+                    <h3 style="margin-top: 20px; margin-bottom: 15px; color: #667eea;">Dice Roll Settings</h3>
+                    
+                    <h4 style="margin-top: 20px; margin-bottom: 15px; color: #667eea;">Dice Settings</h4>
+                    <div class="form-group">
+                        <label for="dice_num_dice">Number of Dice:</label>
+                        <input type="number" id="dice_num_dice" name="dice_num_dice" min="1" max="20" 
+                               value="<?php echo htmlspecialchars($diceNumDice); ?>" 
+                               required style="width: 100px; padding: 8px;">
+                        <small style="display: block; margin-top: 5px; color: #666;">Number of dice to roll (1-20). Changing this will update the multiplier table below.</small>
+                    </div>
+                    
+                    <h4 style="margin-top: 30px; margin-bottom: 15px; color: #667eea;">Multipliers</h4>
+                    <p style="margin-bottom: 15px; color: #666;">Configure multipliers for matching dice combinations (1 through <?php echo $diceNumDice; ?> of a kind):</p>
+                    <table class="multiplier-table" id="diceMultipliersTable">
                         <thead>
                             <tr>
                                 <th>Combination</th>
                                 <th>Multiplier</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody id="diceMultipliersBody">
+                            <?php for ($i = 1; $i <= $diceNumDice; $i++): 
+                                $multiplier = isset($diceMultipliers[$i]) ? $diceMultipliers[$i] : 0;
+                            ?>
                             <tr>
-                                <td>3 of a kind</td>
+                                <td><?php echo $i; ?> of a kind</td>
                                 <td>
-                                    <input type="number" id="dice_3_of_kind" name="dice_3_of_kind" 
-                                           min="0" step="0.1" value="<?php echo htmlspecialchars($settings['dice_3_of_kind_multiplier'] ?? '2'); ?>" 
+                                    <input type="number" id="dice_<?php echo $i; ?>_of_kind" name="dice_<?php echo $i; ?>_of_kind" 
+                                           min="0" step="0.1" value="<?php echo htmlspecialchars($multiplier); ?>" 
                                            required style="width: 100px; padding: 8px;">
                                 </td>
                             </tr>
-                            <tr>
-                                <td>4 of a kind</td>
-                                <td>
-                                    <input type="number" id="dice_4_of_kind" name="dice_4_of_kind" 
-                                           min="0" step="0.1" value="<?php echo htmlspecialchars($settings['dice_4_of_kind_multiplier'] ?? '5'); ?>" 
-                                           required style="width: 100px; padding: 8px;">
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>5 of a kind</td>
-                                <td>
-                                    <input type="number" id="dice_5_of_kind" name="dice_5_of_kind" 
-                                           min="0" step="0.1" value="<?php echo htmlspecialchars($settings['dice_5_of_kind_multiplier'] ?? '10'); ?>" 
-                                           required style="width: 100px; padding: 8px;">
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>6 of a kind</td>
-                                <td>
-                                    <input type="number" id="dice_6_of_kind" name="dice_6_of_kind" 
-                                           min="0" step="0.1" value="<?php echo htmlspecialchars($settings['dice_6_of_kind_multiplier'] ?? '20'); ?>" 
-                                           required style="width: 100px; padding: 8px;">
-                                </td>
-                            </tr>
+                            <?php endfor; ?>
                         </tbody>
                     </table>
                     
-                    <h4 style="margin-top: 30px; margin-bottom: 15px; color: #667eea;">Dice Settings</h4>
-                    <div class="form-group">
-                        <label for="dice_num_dice">Number of Dice:</label>
-                        <input type="number" id="dice_num_dice" name="dice_num_dice" min="1" max="20" 
-                               value="<?php echo htmlspecialchars($settings['dice_num_dice'] ?? '6'); ?>" 
-                               required style="width: 100px; padding: 8px;">
-                        <small style="display: block; margin-top: 5px; color: #666;">Number of dice to roll (1-20)</small>
-                    </div>
-                    
                     <button type="submit" name="update_settings" class="btn btn-primary" style="margin-top: 20px;">Update Dice Settings</button>
                 </form>
+                
+                <script>
+                    // Update multiplier table when number of dice changes
+                    $(document).ready(function() {
+                        const $numDiceInput = $('#dice_num_dice');
+                        const $multipliersBody = $('#diceMultipliersBody');
+                        
+                        // Store current multipliers
+                        let currentMultipliers = {};
+                        $multipliersBody.find('input[type="number"]').each(function() {
+                            const name = $(this).attr('name');
+                            const match = name.match(/dice_(\d+)_of_kind/);
+                            if (match) {
+                                currentMultipliers[parseInt(match[1])] = parseFloat($(this).val()) || 0;
+                            }
+                        });
+                        
+                        $numDiceInput.on('change', function() {
+                            const newNumDice = parseInt($(this).val()) || 6;
+                            if (newNumDice < 1 || newNumDice > 20) {
+                                alert('Number of dice must be between 1 and 20');
+                                $(this).val(6);
+                                return;
+                            }
+                            
+                            // Update table
+                            $multipliersBody.empty();
+                            for (let i = 1; i <= newNumDice; i++) {
+                                const multiplier = currentMultipliers[i] !== undefined ? currentMultipliers[i] : 0;
+                                const row = $('<tr>').html(
+                                    '<td>' + i + ' of a kind</td>' +
+                                    '<td>' +
+                                    '<input type="number" id="dice_' + i + '_of_kind" name="dice_' + i + '_of_kind" ' +
+                                    'min="0" step="0.1" value="' + multiplier + '" ' +
+                                    'required style="width: 100px; padding: 8px;">' +
+                                    '</td>'
+                                );
+                                $multipliersBody.append(row);
+                            }
+                            
+                            // Update description
+                            $('h4:contains("Multipliers")').next('p').text('Configure multipliers for matching dice combinations (1 through ' + newNumDice + ' of a kind):');
+                        });
+                    });
+                </script>
                 <?php endif; ?>
                 
                 <!-- Crash Settings -->

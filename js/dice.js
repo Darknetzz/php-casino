@@ -5,13 +5,8 @@ $(document).ready(function() {
     let maxBet = 100;
     let settings = {};
     
-    // Multipliers for different combinations
-    let multipliers = {
-        3: 2,  // 3 of a kind
-        4: 5,  // 4 of a kind
-        5: 10, // 5 of a kind
-        6: 20  // 6 of a kind
-    };
+    // Multipliers for different combinations (will be loaded from settings)
+    let multipliers = {};
     
     // Number of dice (will be set from settings, fallback to counting dice on page)
     let numDice = $('.dice').length || 6;
@@ -28,19 +23,24 @@ $(document).ready(function() {
             if (data.settings.default_bet) {
                 $('#betAmount').val(data.settings.default_bet);
             }
-            if (data.settings.dice_multipliers) {
-                multipliers = {
-                    3: data.settings.dice_multipliers[3] || 2,
-                    4: data.settings.dice_multipliers[4] || 5,
-                    5: data.settings.dice_multipliers[5] || 10,
-                    6: data.settings.dice_multipliers[6] || 20
-                };
-            }
             if (data.settings.dice_num_dice) {
                 numDice = parseInt(data.settings.dice_num_dice) || 6;
             } else {
                 // Fallback: count dice elements on page
                 numDice = $('.dice').length || 6;
+            }
+            // Load all multipliers dynamically
+            if (data.settings.dice_multipliers) {
+                multipliers = {};
+                for (let i = 1; i <= numDice; i++) {
+                    multipliers[i] = parseFloat(data.settings.dice_multipliers[i]) || 0;
+                }
+            } else {
+                // Fallback: initialize with zeros
+                multipliers = {};
+                for (let i = 1; i <= numDice; i++) {
+                    multipliers[i] = 0;
+                }
             }
         }
     }, 'json');
