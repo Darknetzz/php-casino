@@ -175,9 +175,13 @@ $(document).ready(function() {
                 
                 if (!round) {
                     // No active round
-                    $('#multiplierDisplay').text('1.00x');
-                    $('#placeBetBtn').prop('disabled', true).text('WAITING FOR ROUND');
+                    $('#multiplierDisplay').text('Waiting for next round...');
+                    $('#placeBetBtn').hide();
+                    $('#roundCountdown').show();
+                    $('#countdownText').html('Waiting for next round...');
                     $('#crashControls').hide();
+                    currentRound = null;
+                    // Continue polling to catch when a round starts
                     return;
                 }
                 

@@ -207,8 +207,11 @@ $(document).ready(function() {
                 if (!round) {
                     // No active round - worker might not be running
                     $('#rouletteResult').html('Waiting for next round...<br><small style="color: #999;">Make sure the game rounds worker is running</small>');
-                    $('#spinBtn').prop('disabled', true).text('WAITING FOR ROUND');
+                    $('#spinBtn').hide();
+                    $('#roundCountdown').show();
+                    $('#countdownText').html('Waiting for next round...');
                     currentRound = null;
+                    // Continue polling to catch when a round starts
                     return;
                 }
                 

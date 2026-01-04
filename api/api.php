@@ -440,6 +440,26 @@ switch ($action) {
         require_once __DIR__ . '/../includes/provably_fair.php';
         $round = $db->getCurrentRouletteRound();
         if ($round) {
+            $now = time();
+            $bettingEndsAt = strtotime($round['betting_ends_at']);
+            $timeUntilBettingEnds = max(0, $bettingEndsAt - $now);
+            
+            // Calculate time until round starts/finishes
+            $timeUntilStart = 0;
+            $timeUntilFinish = 0;
+            if ($round['status'] === 'betting') {
+                $timeUntilStart = $timeUntilBettingEnds;
+            } elseif ($round['status'] === 'spinning' && $round['started_at']) {
+                $spinningDuration = intval(getSetting('roulette_spinning_duration', 4));
+                $startedAt = strtotime($round['started_at']);
+                $finishesAt = $startedAt + $spinningDuration;
+                $timeUntilFinish = max(0, $finishesAt - $now);
+            }
+            
+            $round['time_until_betting_ends'] = $timeUntilBettingEnds;
+            $round['time_until_start'] = $timeUntilStart;
+            $round['time_until_finish'] = $timeUntilFinish;
+            
             // Admins can see the server seed and predict the result
             if ($round['status'] === 'betting' || $round['status'] === 'spinning') {
                 $predictedResult = ProvablyFair::generateRouletteResult($round['server_seed'], $round['client_seed'] ?? '');
@@ -454,6 +474,19 @@ switch ($action) {
         require_once __DIR__ . '/../includes/provably_fair.php';
         $round = $db->getCurrentCrashRound();
         if ($round) {
+            $now = time();
+            $bettingEndsAt = strtotime($round['betting_ends_at']);
+            $timeUntilBettingEnds = max(0, $bettingEndsAt - $now);
+            
+            // Calculate time until round starts
+            $timeUntilStart = 0;
+            if ($round['status'] === 'betting') {
+                $timeUntilStart = $timeUntilBettingEnds;
+            }
+            
+            $round['time_until_betting_ends'] = $timeUntilBettingEnds;
+            $round['time_until_start'] = $timeUntilStart;
+            
             // Admins can see the server seed and predict the crash point
             if ($round['status'] === 'betting') {
                 $distributionParam = floatval(getSetting('crash_distribution_param', 0.99));

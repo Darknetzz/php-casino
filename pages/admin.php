@@ -219,6 +219,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $crashSpeed = floatval($_POST['crash_speed'] ?? 0.02);
                 $crashMaxMultiplier = floatval($_POST['crash_max_multiplier'] ?? 0);
                 $crashDistributionParam = floatval($_POST['crash_distribution_param'] ?? 0.99);
+                $crashBettingDuration = intval($_POST['crash_betting_duration'] ?? 15);
+                $crashRoundInterval = intval($_POST['crash_round_interval'] ?? 5);
                 
                 if ($crashSpeed <= 0 || $crashSpeed > 1) {
                     $errors[] = 'Crash speed must be between 0 and 1';
@@ -229,11 +231,42 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if ($crashDistributionParam <= 0 || $crashDistributionParam >= 1) {
                     $errors[] = 'Crash distribution parameter must be between 0 and 1 (exclusive)';
                 }
+                if ($crashBettingDuration < 5 || $crashBettingDuration > 300) {
+                    $errors[] = 'Crash betting duration must be between 5 and 300 seconds';
+                }
+                if ($crashRoundInterval < 1 || $crashRoundInterval > 300) {
+                    $errors[] = 'Crash round interval must be between 1 and 300 seconds';
+                }
                 
                 if (empty($errors)) {
                     $db->setSetting('crash_speed', $crashSpeed);
                     $db->setSetting('crash_max_multiplier', $crashMaxMultiplier);
                     $db->setSetting('crash_distribution_param', $crashDistributionParam);
+                    $db->setSetting('crash_betting_duration', $crashBettingDuration);
+                    $db->setSetting('crash_round_interval', $crashRoundInterval);
+                }
+            }
+            
+            // Roulette settings
+            if (isset($_POST['roulette_betting_duration'])) {
+                $rouletteBettingDuration = intval($_POST['roulette_betting_duration'] ?? 15);
+                $rouletteSpinningDuration = intval($_POST['roulette_spinning_duration'] ?? 4);
+                $rouletteRoundInterval = intval($_POST['roulette_round_interval'] ?? 5);
+                
+                if ($rouletteBettingDuration < 5 || $rouletteBettingDuration > 300) {
+                    $errors[] = 'Roulette betting duration must be between 5 and 300 seconds';
+                }
+                if ($rouletteSpinningDuration < 1 || $rouletteSpinningDuration > 30) {
+                    $errors[] = 'Roulette spinning duration must be between 1 and 30 seconds';
+                }
+                if ($rouletteRoundInterval < 1 || $rouletteRoundInterval > 300) {
+                    $errors[] = 'Roulette round interval must be between 1 and 300 seconds';
+                }
+                
+                if (empty($errors)) {
+                    $db->setSetting('roulette_betting_duration', $rouletteBettingDuration);
+                    $db->setSetting('roulette_spinning_duration', $rouletteSpinningDuration);
+                    $db->setSetting('roulette_round_interval', $rouletteRoundInterval);
                 }
             }
             
@@ -269,6 +302,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $gameParam = 'plinko';
                 } elseif (isset($_POST['dice_num_dice'])) {
                     $gameParam = 'dice';
+                } elseif (isset($_POST['roulette_betting_duration'])) {
+                    $gameParam = 'roulette';
                 } elseif (isset($_POST['crash_speed'])) {
                     $gameParam = 'crash';
                 } elseif (isset($_POST['blackjack_regular_multiplier'])) {
@@ -376,6 +411,9 @@ include __DIR__ . '/../includes/navbar.php';
                 </a>
                 <a href="admin.php?tab=multipliers&game=dice" class="admin-subtab <?php echo $currentGame === 'dice' ? 'active' : ''; ?>">
                     <span>🎲</span> Dice Roll
+                </a>
+                <a href="admin.php?tab=multipliers&game=roulette" class="admin-subtab <?php echo $currentGame === 'roulette' ? 'active' : ''; ?>">
+                    <span>🛞</span> Roulette
                 </a>
                 <a href="admin.php?tab=multipliers&game=crash" class="admin-subtab <?php echo $currentGame === 'crash' ? 'active' : ''; ?>">
                     <span>🚀</span> Crash
@@ -847,6 +885,59 @@ include __DIR__ . '/../includes/navbar.php';
                 </script>
                 <?php endif; ?>
                 
+                <!-- Roulette Settings -->
+                <?php if ($currentGame === 'roulette'): ?>
+                <form method="POST" action="admin.php?tab=multipliers&game=roulette" class="admin-form">
+                    <h3 style="margin-top: 20px; margin-bottom: 15px; color: #667eea;">Roulette Game Settings</h3>
+                    <p style="margin-bottom: 15px; color: #666;">Configure roulette game settings:</p>
+                    
+                    <h4 style="margin-top: 20px; margin-bottom: 15px; color: #667eea;">Central Mode Settings (Synchronized Rounds)</h4>
+                    <p style="margin-bottom: 15px; color: #666; font-size: 14px;">These settings only apply when Roulette Mode is set to "Central" in Casino Settings.</p>
+                    <table class="multiplier-table">
+                        <thead>
+                            <tr>
+                                <th>Setting</th>
+                                <th>Value</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Betting Duration (seconds)</td>
+                                <td>
+                                    <input type="number" id="roulette_betting_duration" name="roulette_betting_duration"
+                                           min="5" max="300" step="1" 
+                                           value="<?php echo htmlspecialchars($settings['roulette_betting_duration'] ?? '15'); ?>"
+                                           required style="width: 100px; padding: 8px;">
+                                </td>
+                                <td>How long users can place bets before the wheel spins. Default: 15 seconds</td>
+                            </tr>
+                            <tr>
+                                <td>Spinning Duration (seconds)</td>
+                                <td>
+                                    <input type="number" id="roulette_spinning_duration" name="roulette_spinning_duration"
+                                           min="1" max="30" step="1" 
+                                           value="<?php echo htmlspecialchars($settings['roulette_spinning_duration'] ?? '4'); ?>"
+                                           required style="width: 100px; padding: 8px;">
+                                </td>
+                                <td>How long the wheel spins before showing the result. Default: 4 seconds</td>
+                            </tr>
+                            <tr>
+                                <td>Round Interval (seconds)</td>
+                                <td>
+                                    <input type="number" id="roulette_round_interval" name="roulette_round_interval"
+                                           min="1" max="300" step="1" 
+                                           value="<?php echo htmlspecialchars($settings['roulette_round_interval'] ?? '5'); ?>"
+                                           required style="width: 100px; padding: 8px;">
+                                </td>
+                                <td>Time between rounds. Default: 5 seconds</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <button type="submit" name="update_settings" class="btn btn-primary" style="margin-top: 20px;">Update Roulette Settings</button>
+                </form>
+                <?php endif; ?>
+                
                 <!-- Crash Settings -->
                 <?php if ($currentGame === 'crash'): ?>
                 <form method="POST" action="admin.php?tab=multipliers&game=crash" class="admin-form">
@@ -890,6 +981,40 @@ include __DIR__ . '/../includes/navbar.php';
                                            required style="width: 100px; padding: 8px;">
                                 </td>
                                 <td>Distribution curve parameter (0.01-0.999). Lower = more high multipliers, Higher = more low multipliers. Default: 0.99</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    
+                    <h4 style="margin-top: 30px; margin-bottom: 15px; color: #667eea;">Central Mode Settings (Synchronized Rounds)</h4>
+                    <p style="margin-bottom: 15px; color: #666; font-size: 14px;">These settings only apply when Crash Mode is set to "Central" in Casino Settings.</p>
+                    <table class="multiplier-table">
+                        <thead>
+                            <tr>
+                                <th>Setting</th>
+                                <th>Value</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Betting Duration (seconds)</td>
+                                <td>
+                                    <input type="number" id="crash_betting_duration" name="crash_betting_duration"
+                                           min="5" max="300" step="1" 
+                                           value="<?php echo htmlspecialchars($settings['crash_betting_duration'] ?? '15'); ?>"
+                                           required style="width: 100px; padding: 8px;">
+                                </td>
+                                <td>How long users can place bets before the round starts. Default: 15 seconds</td>
+                            </tr>
+                            <tr>
+                                <td>Round Interval (seconds)</td>
+                                <td>
+                                    <input type="number" id="crash_round_interval" name="crash_round_interval"
+                                           min="1" max="300" step="1" 
+                                           value="<?php echo htmlspecialchars($settings['crash_round_interval'] ?? '5'); ?>"
+                                           required style="width: 100px; padding: 8px;">
+                                </td>
+                                <td>Time between rounds. Default: 5 seconds</td>
                             </tr>
                         </tbody>
                     </table>
@@ -1131,51 +1256,55 @@ include __DIR__ . '/../includes/navbar.php';
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
                         <div>
                             <h4>Roulette (Last 10)</h4>
-                            <table class="admin-table" style="font-size: 0.9em;">
-                                <thead>
-                                    <tr>
-                                        <th>Round</th>
-                                        <th>Result</th>
-                                        <th>Finished</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <?php 
-                                    $rouletteHistory = $db->getRouletteRoundsHistory(10);
-                                    foreach ($rouletteHistory as $round): 
-                                    ?>
-                                    <tr>
-                                        <td>#<?php echo $round['round_number']; ?></td>
-                                        <td><strong><?php echo $round['result_number'] !== null ? $round['result_number'] : '-'; ?></strong></td>
-                                        <td><?php echo $round['finished_at'] ? date('H:i:s', strtotime($round['finished_at'])) : '-'; ?></td>
-                                    </tr>
-                                    <?php endforeach; ?>
-                                </tbody>
-                            </table>
+                            <div id="rouletteHistoryTable">
+                                <table class="admin-table" style="font-size: 0.9em;">
+                                    <thead>
+                                        <tr>
+                                            <th>Round</th>
+                                            <th>Result</th>
+                                            <th>Finished</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php 
+                                        $rouletteHistory = $db->getRouletteRoundsHistory(10);
+                                        foreach ($rouletteHistory as $round): 
+                                        ?>
+                                        <tr>
+                                            <td>#<?php echo $round['round_number']; ?></td>
+                                            <td><strong><?php echo $round['result_number'] !== null ? $round['result_number'] : '-'; ?></strong></td>
+                                            <td><?php echo $round['finished_at'] ? date('H:i:s', strtotime($round['finished_at'])) : '-'; ?></td>
+                                        </tr>
+                                        <?php endforeach; ?>
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                         <div>
                             <h4>Crash (Last 10)</h4>
-                            <table class="admin-table" style="font-size: 0.9em;">
-                                <thead>
-                                    <tr>
-                                        <th>Round</th>
-                                        <th>Crash Point</th>
-                                        <th>Finished</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <?php 
-                                    $crashHistory = $db->getCrashRoundsHistory(10);
-                                    foreach ($crashHistory as $round): 
-                                    ?>
-                                    <tr>
-                                        <td>#<?php echo $round['round_number']; ?></td>
-                                        <td><strong><?php echo $round['crash_point'] ? number_format($round['crash_point'], 2) . 'x' : '-'; ?></strong></td>
-                                        <td><?php echo $round['finished_at'] ? date('H:i:s', strtotime($round['finished_at'])) : '-'; ?></td>
-                                    </tr>
-                                    <?php endforeach; ?>
-                                </tbody>
-                            </table>
+                            <div id="crashHistoryTable">
+                                <table class="admin-table" style="font-size: 0.9em;">
+                                    <thead>
+                                        <tr>
+                                            <th>Round</th>
+                                            <th>Crash Point</th>
+                                            <th>Finished</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php 
+                                        $crashHistory = $db->getCrashRoundsHistory(10);
+                                        foreach ($crashHistory as $round): 
+                                        ?>
+                                        <tr>
+                                            <td>#<?php echo $round['round_number']; ?></td>
+                                            <td><strong><?php echo $round['crash_point'] ? number_format($round['crash_point'], 2) . 'x' : '-'; ?></strong></td>
+                                            <td><?php echo $round['finished_at'] ? date('H:i:s', strtotime($round['finished_at'])) : '-'; ?></td>
+                                        </tr>
+                                        <?php endforeach; ?>
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1630,6 +1759,166 @@ include __DIR__ . '/../includes/navbar.php';
                     event.target.style.display = 'none';
                 }
             };
+            
+            // Auto-update rounds monitor if on rounds tab
+            <?php if ($currentTab === 'rounds'): ?>
+            let roundsPollInterval = null;
+            const rouletteMode = '<?php echo $rouletteMode; ?>';
+            const crashMode = '<?php echo $crashMode; ?>';
+            
+            function updateRoundsMonitor() {
+                // Only poll if in central mode
+                if (rouletteMode === 'central') {
+                    // Update roulette round
+                    $.get('../api/api.php?action=getRouletteRoundAdmin', function(data) {
+                        if (data.success) {
+                            if (data.round) {
+                                const round = data.round;
+                                let html = '';
+                                
+                                if (round.status === 'betting') {
+                                    const timeLeft = round.time_until_betting_ends || 0;
+                                    
+                                    html = '<p><strong>Round #' + round.round_number + '</strong></p>';
+                                    html += '<p>Status: <strong>Betting</strong></p>';
+                                    if (round.predicted_result !== undefined) {
+                                        html += '<p style="color: #28a745; font-weight: bold; margin-top: 10px;">';
+                                        html += '🔮 Predicted Result: <span style="font-size: 1.2em;">' + round.predicted_result + '</span></p>';
+                                    }
+                                    html += '<p style="margin-top: 10px; font-size: 1.1em; color: #667eea;">';
+                                    html += 'Next spin in: <strong>' + Math.ceil(timeLeft) + 's</strong></p>';
+                                } else if (round.status === 'spinning') {
+                                    const timeLeft = round.time_until_finish || 0;
+                                    
+                                    html = '<p><strong>Round #' + round.round_number + '</strong></p>';
+                                    html += '<p>Status: <strong>Spinning</strong></p>';
+                                    if (round.predicted_result !== undefined) {
+                                        html += '<p style="color: #ffc107; font-weight: bold; margin-top: 10px;">';
+                                        html += '🔮 Predicted Result: <span style="font-size: 1.2em;">' + round.predicted_result + '</span></p>';
+                                    }
+                                    html += '<p style="margin-top: 10px; font-size: 1.1em; color: #ffc107;">';
+                                    html += 'Spinning... Result in: <strong>' + Math.ceil(timeLeft) + 's</strong></p>';
+                                } else if (round.status === 'finished' && round.result_number !== null) {
+                                    html = '<p><strong>Round #' + round.round_number + '</strong></p>';
+                                    html += '<p>Status: <strong>Finished</strong></p>';
+                                    html += '<p style="color: #667eea; font-weight: bold; margin-top: 10px;">';
+                                    html += 'Result: <span style="font-size: 1.2em;">' + round.result_number + '</span></p>';
+                                } else {
+                                    html = '<p><strong>Round #' + round.round_number + '</strong></p>';
+                                    html += '<p>Status: <strong>' + round.status.charAt(0).toUpperCase() + round.status.slice(1) + '</strong></p>';
+                                }
+                                
+                                html += '<p style="font-size: 0.9em; margin-top: 10px;" class="rounds-seed-hash">';
+                                html += 'Server Seed Hash: <code style="font-size: 0.8em;">' + (round.server_seed_hash ? round.server_seed_hash.substring(0, 16) : '') + '...</code></p>';
+                                
+                                $('#rouletteRoundInfo').html(html);
+                            } else {
+                                $('#rouletteRoundInfo').html('<p>No active round - worker may not be running</p>');
+                            }
+                        }
+                    }, 'json').fail(function() {
+                        console.error('Failed to update roulette round');
+                    });
+                } else {
+                    $('#rouletteRoundInfo').html('<p style="color: #999;">Local mode - no synchronized rounds</p>');
+                }
+                
+                // Only poll if in central mode
+                if (crashMode === 'central') {
+                    // Update crash round
+                    $.get('../api/api.php?action=getCrashRoundAdmin', function(data) {
+                        if (data.success) {
+                            if (data.round) {
+                                const round = data.round;
+                                let html = '';
+                                
+                                if (round.status === 'betting') {
+                                    const timeLeft = round.time_until_betting_ends || 0;
+                                    
+                                    html = '<p><strong>Round #' + round.round_number + '</strong></p>';
+                                    html += '<p>Status: <strong>Betting</strong></p>';
+                                    if (round.predicted_crash_point !== undefined) {
+                                        html += '<p style="color: #28a745; font-weight: bold; margin-top: 10px;">';
+                                        html += '🔮 Predicted Crash Point: <span style="font-size: 1.2em;">' + parseFloat(round.predicted_crash_point).toFixed(2) + 'x</span></p>';
+                                    }
+                                    html += '<p style="margin-top: 10px; font-size: 1.1em; color: #667eea;">';
+                                    html += 'Next round in: <strong>' + Math.ceil(timeLeft) + 's</strong></p>';
+                                } else if (round.status === 'running' && round.crash_point) {
+                                    html = '<p><strong>Round #' + round.round_number + '</strong></p>';
+                                    html += '<p>Status: <strong>Running</strong></p>';
+                                    html += '<p style="color: #ffc107; font-weight: bold; margin-top: 10px;">';
+                                    html += 'Crash Point: <span style="font-size: 1.2em;">' + parseFloat(round.crash_point).toFixed(2) + 'x</span></p>';
+                                    html += '<p style="margin-top: 10px; font-size: 1.1em; color: #ffc107;">Round in progress...</p>';
+                                } else if (round.status === 'finished' && round.crash_point) {
+                                    html = '<p><strong>Round #' + round.round_number + '</strong></p>';
+                                    html += '<p>Status: <strong>Finished</strong></p>';
+                                    html += '<p style="color: #667eea; font-weight: bold; margin-top: 10px;">';
+                                    html += 'Crashed at: <span style="font-size: 1.2em;">' + parseFloat(round.crash_point).toFixed(2) + 'x</span></p>';
+                                } else {
+                                    html = '<p><strong>Round #' + round.round_number + '</strong></p>';
+                                    html += '<p>Status: <strong>' + round.status.charAt(0).toUpperCase() + round.status.slice(1) + '</strong></p>';
+                                }
+                                
+                                html += '<p style="font-size: 0.9em; margin-top: 10px;" class="rounds-seed-hash">';
+                                html += 'Server Seed Hash: <code style="font-size: 0.8em;">' + (round.server_seed_hash ? round.server_seed_hash.substring(0, 16) : '') + '...</code></p>';
+                                
+                                $('#crashRoundInfo').html(html);
+                            } else {
+                                $('#crashRoundInfo').html('<p>No active round - worker may not be running</p>');
+                            }
+                        }
+                    }, 'json').fail(function() {
+                        console.error('Failed to update crash round');
+                    });
+                } else {
+                    $('#crashRoundInfo').html('<p style="color: #999;">Local mode - no synchronized rounds</p>');
+                }
+                
+                // Update history (always, regardless of mode)
+                $.get('../api/api.php?action=getRouletteHistory&limit=10', function(data) {
+                    if (data.success && data.history) {
+                        let html = '<table class="admin-table" style="font-size: 0.9em; width: 100%;"><thead><tr><th>Round</th><th>Result</th><th>Finished</th></tr></thead><tbody>';
+                        if (data.history.length === 0) {
+                            html += '<tr><td colspan="3" style="text-align: center; color: #999;">No history yet</td></tr>';
+                        } else {
+                            data.history.forEach(function(round) {
+                                const finishedTime = round.finished_at ? new Date(round.finished_at).toLocaleTimeString() : '-';
+                                html += '<tr><td>#' + round.round_number + '</td><td><strong>' + (round.result_number !== null ? round.result_number : '-') + '</strong></td><td>' + finishedTime + '</td></tr>';
+                            });
+                        }
+                        html += '</tbody></table>';
+                        $('#rouletteHistoryTable').html(html);
+                    }
+                }, 'json');
+                
+                $.get('../api/api.php?action=getCrashHistory&limit=10', function(data) {
+                    if (data.success && data.history) {
+                        let html = '<table class="admin-table" style="font-size: 0.9em; width: 100%;"><thead><tr><th>Round</th><th>Crash Point</th><th>Finished</th></tr></thead><tbody>';
+                        if (data.history.length === 0) {
+                            html += '<tr><td colspan="3" style="text-align: center; color: #999;">No history yet</td></tr>';
+                        } else {
+                            data.history.forEach(function(round) {
+                                const finishedTime = round.finished_at ? new Date(round.finished_at).toLocaleTimeString() : '-';
+                                html += '<tr><td>#' + round.round_number + '</td><td><strong>' + (round.crash_point ? parseFloat(round.crash_point).toFixed(2) + 'x' : '-') + '</strong></td><td>' + finishedTime + '</td></tr>';
+                            });
+                        }
+                        html += '</tbody></table>';
+                        $('#crashHistoryTable').html(html);
+                    }
+                }, 'json');
+            }
+            
+            // Start polling
+            updateRoundsMonitor();
+            roundsPollInterval = setInterval(updateRoundsMonitor, 2000); // Poll every 2 seconds
+            
+            // Cleanup on page unload
+            $(window).on('beforeunload', function() {
+                if (roundsPollInterval) {
+                    clearInterval(roundsPollInterval);
+                }
+            });
+            <?php endif; ?>
         });
     </script>
 <?php include __DIR__ . '/../includes/footer.php'; ?>
