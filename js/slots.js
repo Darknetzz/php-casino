@@ -5,6 +5,7 @@ $(document).ready(function() {
     let settings = {};
     let multipliers = {};
     let twoOfKindMultiplier = 1.0;
+    let slotsDuration = 2500; // Default spin duration in milliseconds
     
     // Function to update total bet display (defined early so it's available everywhere)
     function updateTotalBetDisplay() {
@@ -33,6 +34,9 @@ $(document).ready(function() {
             }
             if (data.settings.default_bet) {
                 $('#betAmount').val(data.settings.default_bet).trigger('change');
+            }
+            if (data.settings.slots_duration) {
+                slotsDuration = parseInt(data.settings.slots_duration) || 2500;
             }
             if (data.settings.slots_multipliers && data.settings.slots_multipliers.symbols) {
                 // Build symbols array and multipliers map from dynamic configuration
@@ -236,7 +240,7 @@ $(document).ready(function() {
         const s3 = getRandomSymbol();
         
         // Spin animation with staggered timing for visual effect (left to right, slower stops)
-        const spinDuration = 2500;
+        const spinDuration = slotsDuration;
         const reel1Delay = 0;
         const reel2Delay = 200;
         const reel3Delay = 400;

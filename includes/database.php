@@ -123,8 +123,12 @@ class Database {
             'slots_win_row' => '1',
             // Slots bet rows (1 = middle row only, 3 = all rows)
             'slots_bet_rows' => '1',
+            // Slots spin duration (milliseconds)
+            'slots_duration' => '2500',
             // Plinko multipliers (9 slots, comma-separated)
-            'plinko_multipliers' => '0.2,0.5,0.8,1.0,2.0,1.0,0.8,0.5,0.2'
+            'plinko_multipliers' => '0.2,0.5,0.8,1.0,2.0,1.0,0.8,0.5,0.2',
+            // Plinko step delay (milliseconds between ball movement steps)
+            'plinko_duration' => '350'
         ];
         
         foreach ($defaultSettings as $key => $value) {

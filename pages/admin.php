@@ -58,11 +58,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 
                 if ($slotsTwoOfKind < 0) $errors[] = 'Slots Two of Kind multiplier must be greater than or equal to 0';
                 
+                $slotsDuration = isset($_POST['slots_duration']) ? intval($_POST['slots_duration']) : 2500;
+                if ($slotsDuration < 500 || $slotsDuration > 10000) {
+                    $errors[] = 'Slots duration must be between 500 and 10000 milliseconds';
+                }
+                
                 if (empty($errors)) {
                     $db->setSetting('slots_symbols', json_encode($slotsSymbols));
                     $db->setSetting('slots_two_of_kind_multiplier', $slotsTwoOfKind);
                     $db->setSetting('slots_win_row', $slotsWinRow);
                     $db->setSetting('slots_bet_rows', $slotsBetRows);
+                    $db->setSetting('slots_duration', $slotsDuration);
                 }
             }
             
@@ -84,8 +90,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     }
                 }
                 
+                $plinkoDuration = isset($_POST['plinko_duration']) ? intval($_POST['plinko_duration']) : 350;
+                if ($plinkoDuration < 50 || $plinkoDuration > 2000) {
+                    $errors[] = 'Plinko duration must be between 50 and 2000 milliseconds';
+                }
+                
                 if (empty($errors)) {
                     $db->setSetting('plinko_multipliers', $plinkoMultipliers);
+                    $db->setSetting('plinko_duration', $plinkoDuration);
                 }
             }
             
@@ -343,6 +355,15 @@ include __DIR__ . '/../includes/navbar.php';
                         <small style="display: block; margin-top: 5px; color: #666;">Which single row to check when Bet Rows is set to 1</small>
                     </div>
                     
+                    <h4 style="margin-top: 30px; margin-bottom: 15px; color: #667eea;">Animation Settings</h4>
+                    <div class="form-group">
+                        <label for="slots_duration">Spin Duration (milliseconds):</label>
+                        <input type="number" id="slots_duration" name="slots_duration" min="500" max="10000" step="100" 
+                               value="<?php echo htmlspecialchars($settings['slots_duration'] ?? '2500'); ?>" 
+                               required style="width: 150px; padding: 8px;">
+                        <small style="display: block; margin-top: 5px; color: #666;">Duration of the slot machine spin animation (500-10000ms)</small>
+                    </div>
+                    
                     <button type="submit" name="update_settings" class="btn btn-primary" style="margin-top: 20px;">Update Slots Multipliers</button>
                 </form>
                 <?php endif; ?>
@@ -400,6 +421,16 @@ include __DIR__ . '/../includes/navbar.php';
                             </tr>
                         </tbody>
                     </table>
+                    
+                    <h4 style="margin-top: 30px; margin-bottom: 15px; color: #667eea;">Animation Settings</h4>
+                    <div class="form-group">
+                        <label for="plinko_duration">Step Delay (milliseconds):</label>
+                        <input type="number" id="plinko_duration" name="plinko_duration" min="50" max="2000" step="50" 
+                               value="<?php echo htmlspecialchars($settings['plinko_duration'] ?? '350'); ?>" 
+                               required style="width: 150px; padding: 8px;">
+                        <small style="display: block; margin-top: 5px; color: #666;">Delay between ball movement steps (50-2000ms). Lower = faster animation</small>
+                    </div>
+                    
                     <button type="submit" name="update_settings" class="btn btn-primary" style="margin-top: 20px;">Update Plinko Multipliers</button>
                 </form>
                 <?php endif; ?>

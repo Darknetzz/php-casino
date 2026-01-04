@@ -7,6 +7,7 @@ $(document).ready(function() {
     
     // Multipliers for each slot (0-8, left to right) - will be loaded from settings
     let multipliers = [0.2, 0.5, 0.8, 1.0, 2.0, 1.0, 0.8, 0.5, 0.2];
+    let plinkoStepDelay = 350; // Default step delay in milliseconds
     
     // Load max bet, default bet, and multipliers from settings
     $.get('../api/api.php?action=getSettings', function(data) {
@@ -18,6 +19,9 @@ $(document).ready(function() {
             }
             if (data.settings.default_bet) {
                 $('#betAmount').val(data.settings.default_bet);
+            }
+            if (data.settings.plinko_duration) {
+                plinkoStepDelay = parseInt(data.settings.plinko_duration) || 350;
             }
             if (data.settings.plinko_multipliers && Array.isArray(data.settings.plinko_multipliers) && data.settings.plinko_multipliers.length === 9) {
                 multipliers = data.settings.plinko_multipliers;
@@ -160,7 +164,7 @@ $(document).ready(function() {
                 updateBallCounters();
                 
                 // Animate all balls dropping step by step
-                const stepDelay = 350; // Milliseconds between steps (slower movement)
+                const stepDelay = plinkoStepDelay; // Milliseconds between steps (slower movement)
                 
                 const dropInterval = setInterval(function() {
                     let allCompleted = true;
