@@ -5,6 +5,7 @@ $(document).ready(function() {
     let currentRotation = 0;
     let maxBet = 100;
     let currentRound = null;
+    let lastRoundResult = null; // Store the last round result
     let pollInterval = null;
     let bettingCountdownInterval = null;
     
@@ -205,11 +206,23 @@ $(document).ready(function() {
                 const round = data.round;
                 
                 if (!round) {
-                    // No active round - worker might not be running
-                    $('#rouletteResult').html('Waiting for next round...<br><small style="color: #999;">Make sure the game rounds worker is running</small>');
-                    $('#spinBtn').hide();
-                    $('#roundCountdown').show();
-                    $('#countdownText').html('Waiting for next round...');
+                    // No active round - show last result if available, otherwise show waiting message
+                    if (lastRoundResult !== null) {
+                        // Keep showing the last result during interval
+                        // Don't call showRoundResult again to avoid re-animating
+                        const resultColor = getNumberColor(lastRoundResult);
+                        // Always update to ensure it's displayed correctly
+                        $('#rouletteResult').html(`<span class="roulette-number roulette-${resultColor}">${lastRoundResult}</span>`);
+                        $('#spinBtn').hide();
+                        $('#roundCountdown').show();
+                        $('#countdownText').html('Next round starting soon...');
+                    } else {
+                        // No previous result - worker might not be running
+                        $('#rouletteResult').html('Waiting for next round...<br><small style="color: #999;">Make sure the game rounds worker is running</small>');
+                        $('#spinBtn').hide();
+                        $('#roundCountdown').show();
+                        $('#countdownText').html('Waiting for next round...');
+                    }
                     currentRound = null;
                     // Update status display
                     updateRoundStatusDisplay(null);
@@ -228,6 +241,8 @@ $(document).ready(function() {
                 
                 // Update round info display
                 if (round.status === 'betting') {
+                    // Clear last result when new round starts
+                    lastRoundResult = null;
                     const timeLeft = round.time_until_betting_ends || 0;
                     $('#rouletteResult').html(`Round #${round.round_number} - Betting ends in ${Math.ceil(timeLeft)}s`);
                     // Hide spin button, show countdown in central mode
@@ -262,7 +277,11 @@ $(document).ready(function() {
                     }
                 } else if (round.status === 'finished') {
                     if (round.result_number !== null) {
+                        lastRoundResult = round.result_number; // Store the result
                         showRoundResult(round.result_number);
+                        // Show countdown until next round
+                        $('#roundCountdown').show();
+                        $('#countdownText').html('Next round starting soon...');
                     } else {
                         // Reset if no result yet
                         isSpinning = false;
