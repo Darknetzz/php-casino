@@ -226,7 +226,7 @@ function processCrashBets($db, $roundId, $crashPoint) {
 if (php_sapi_name() === 'cli') {
     // Run as CLI script
     echo "Game Rounds Worker started\n";
-    echo "Processing rounds every 2 seconds...\n\n";
+    echo "Processing rounds every 1 seconds...\n\n";
     
     while (true) {
         try {
@@ -236,7 +236,7 @@ if (php_sapi_name() === 'cli') {
             echo "Error: " . $e->getMessage() . "\n";
         }
         
-        sleep(2); // Check every 2 seconds
+        sleep(1); // Check every 1 seconds
     }
 } else {
     // Run as web request (for cron)
