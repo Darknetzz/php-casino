@@ -73,6 +73,7 @@ switch ($action) {
             'max_deposit' => floatval(getSetting('max_deposit', 10000)),
             'default_bet' => $defaultBet,
             'slots_multipliers' => $slotsMultipliers,
+            'slots_win_row' => intval(getSetting('slots_win_row', 1)),
             'plinko_multipliers' => $plinkoMultipliers
         ];
         echo json_encode(['success' => true, 'settings' => $settings]);

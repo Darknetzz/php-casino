@@ -2,6 +2,7 @@ $(document).ready(function() {
     const symbols = ['🍒', '🍋', '🍊', '🍇', '🎰'];
     let isSpinning = false;
     let maxBet = 100;
+    let settings = {};
     let multipliers = {
         '🍒': 2,
         '🍋': 3,
@@ -14,6 +15,7 @@ $(document).ready(function() {
     // Load max bet, default bet, and multipliers from settings
     $.get('../api/api.php?action=getSettings', function(data) {
         if (data.success) {
+            settings = data.settings;
             if (data.settings.max_bet) {
                 maxBet = data.settings.max_bet;
                 $('#maxBet').text(maxBet);
@@ -178,10 +180,11 @@ $(document).ready(function() {
         setTimeout(() => spinReel('#reel3', reel3StopTime, s3), reel3Delay);
         
         setTimeout(function() {
-            // Get middle symbols (the winning ones) - wait for all reels to stop
-            const s1 = $('#reel1 .symbol').eq(1).text();
-            const s2 = $('#reel2 .symbol').eq(1).text();
-            const s3 = $('#reel3 .symbol').eq(1).text();
+            // Get symbols from the winning row - wait for all reels to stop
+            const winRow = settings.slots_win_row !== undefined ? settings.slots_win_row : 1; // Default to middle row (1)
+            const s1 = $('#reel1 .symbol').eq(winRow).text();
+            const s2 = $('#reel2 .symbol').eq(winRow).text();
+            const s3 = $('#reel3 .symbol').eq(winRow).text();
             
             const multiplier = calculateWin(s1, s2, s3);
             
