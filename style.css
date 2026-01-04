@@ -2276,7 +2276,26 @@ body.dark-mode select {
 }
 
 body.dark-mode .modal {
-    background: rgba(30, 30, 50, 0.98);
+    background: rgba(0, 0, 0, 0.7);
+}
+
+body.dark-mode .modal-content {
+    background-color: rgba(30, 30, 50, 0.98);
+    color: #e0e0e0;
+    border: 1px solid #555;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.7);
+}
+
+body.dark-mode .modal-content h3 {
+    color: #8a9eff;
+}
+
+body.dark-mode .modal-content .close {
+    color: #aaa;
+}
+
+body.dark-mode .modal-content .close:hover,
+body.dark-mode .modal-content .close:focus {
     color: #e0e0e0;
 }
 

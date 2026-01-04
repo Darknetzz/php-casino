@@ -80,6 +80,30 @@ $(document).ready(function() {
         const tbody = $('.slots-payout-table tbody');
         tbody.empty();
         
+        // Add custom combinations first
+        customCombinations.forEach(function(combination) {
+            if (combination.symbols && Array.isArray(combination.symbols)) {
+                let comboText = '';
+                combination.symbols.forEach(function(reqSymbol, index) {
+                    const emoji = reqSymbol.emoji || '';
+                    const count = parseInt(reqSymbol.count) || 1;
+                    if (index > 0) comboText += ' + ';
+                    // Repeat emoji by concatenating
+                    for (let i = 0; i < count; i++) {
+                        comboText += emoji;
+                    }
+                });
+                const multiplier = parseFloat(combination.multiplier) || 0;
+                tbody.append(
+                    $('<tr>').append(
+                        $('<td>').text(comboText)
+                    ).append(
+                        $('<td>').text(multiplier + 'x bet')
+                    )
+                );
+            }
+        });
+        
         // Add 3-of-a-kind payouts
         symbols.forEach(function(emoji) {
             const multiplier = multipliers[emoji] || 0;
@@ -195,6 +219,55 @@ $(document).ready(function() {
         s1 = (s1 || '').trim();
         s2 = (s2 || '').trim();
         s3 = (s3 || '').trim();
+        
+        // Create array of symbols for matching
+        const resultSymbols = [s1, s2, s3];
+        
+        // Check custom combinations first (most specific)
+        for (let i = 0; i < customCombinations.length; i++) {
+            const combination = customCombinations[i];
+            if (combination.symbols && Array.isArray(combination.symbols)) {
+                // Count occurrences of each symbol in the result
+                const resultCounts = {};
+                resultSymbols.forEach(function(symbol) {
+                    resultCounts[symbol] = (resultCounts[symbol] || 0) + 1;
+                });
+                
+                // Build set of required emojis
+                const requiredEmojis = {};
+                combination.symbols.forEach(function(reqSymbol) {
+                    requiredEmojis[reqSymbol.emoji] = true;
+                });
+                
+                // Check if we have any symbols not in the combination
+                let hasExtraSymbols = false;
+                for (const symbol in resultCounts) {
+                    if (!requiredEmojis[symbol]) {
+                        hasExtraSymbols = true;
+                        break;
+                    }
+                }
+                
+                if (hasExtraSymbols) {
+                    continue; // Skip this combination if we have extra symbols
+                }
+                
+                // Check if combination matches exactly
+                let matches = true;
+                combination.symbols.forEach(function(reqSymbol) {
+                    const emoji = reqSymbol.emoji || '';
+                    const requiredCount = parseInt(reqSymbol.count) || 1;
+                    const actualCount = resultCounts[emoji] || 0;
+                    if (actualCount !== requiredCount) {
+                        matches = false;
+                    }
+                });
+                
+                if (matches) {
+                    return parseFloat(combination.multiplier) || 0;
+                }
+            }
+        }
         
         // Check for 3 of a kind
         if (s1 === s2 && s2 === s3 && s1 !== '') {
