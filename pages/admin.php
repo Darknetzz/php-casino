@@ -492,6 +492,30 @@ include __DIR__ . '/../includes/navbar.php';
                     
                     <button type="submit" name="update_settings" class="btn btn-primary">Update Settings</button>
                 </form>
+                
+                <hr style="border: none; border-top: 2px solid #e0e0e0; margin: 40px 0 30px 0;">
+                
+                <h3 style="margin-top: 20px; margin-bottom: 15px; color: #667eea;">⚙️ Worker Management</h3>
+                <p style="margin-bottom: 15px; color: #666;">Manage the game rounds worker process. Required for central mode roulette and crash games.</p>
+                
+                <div id="workerStatus" style="margin-bottom: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px;">
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
+                        <strong>Status:</strong>
+                        <span id="workerStatusText" style="padding: 5px 10px; border-radius: 4px; font-weight: bold;">Loading...</span>
+                    </div>
+                    <div id="workerDetails" style="font-size: 0.9em; color: #666;">
+                        <div>PID: <span id="workerPid">-</span></div>
+                    </div>
+                </div>
+                
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <button id="workerStartBtn" class="btn btn-primary" onclick="controlWorker('start')">Start Worker</button>
+                    <button id="workerStopBtn" class="btn btn-secondary" onclick="controlWorker('stop')">Stop Worker</button>
+                    <button id="workerRestartBtn" class="btn btn-secondary" onclick="controlWorker('restart')">Restart Worker</button>
+                    <button id="workerRefreshBtn" class="btn btn-secondary" onclick="updateWorkerStatus()">Refresh Status</button>
+                </div>
+                
+                <div id="workerMessage" style="margin-top: 15px;"></div>
             </div>
             <?php endif; ?>
             
@@ -1488,6 +1512,63 @@ include __DIR__ . '/../includes/navbar.php';
     </div>
     
     <script>
+        // Worker management functions
+        function updateWorkerStatus() {
+            $.get('../api/api.php?action=getWorkerStatus', function(data) {
+                if (data.success) {
+                    const status = data.status;
+                    const $statusText = $('#workerStatusText');
+                    const $workerPid = $('#workerPid');
+                    const $startBtn = $('#workerStartBtn');
+                    const $stopBtn = $('#workerStopBtn');
+                    const $restartBtn = $('#workerRestartBtn');
+                    
+                    if (status.running) {
+                        $statusText.text('Running').css({'background': '#d4edda', 'color': '#155724'});
+                        $workerPid.text(status.pid || '-');
+                        $startBtn.prop('disabled', true);
+                        $stopBtn.prop('disabled', false);
+                        $restartBtn.prop('disabled', false);
+                    } else {
+                        $statusText.text('Stopped').css({'background': '#f8d7da', 'color': '#721c24'});
+                        $workerPid.text('-');
+                        $startBtn.prop('disabled', false);
+                        $stopBtn.prop('disabled', true);
+                        $restartBtn.prop('disabled', true);
+                    }
+                }
+            }, 'json').fail(function() {
+                $('#workerStatusText').text('Error').css({'background': '#f8d7da', 'color': '#721c24'});
+            });
+        }
+        
+        function controlWorker(action) {
+            const $message = $('#workerMessage');
+            $message.html('<div class="alert" style="background: #fff3cd; color: #856404;">Processing...</div>');
+            
+            $.post('../api/api.php?action=controlWorker', {action: action}, function(data) {
+                if (data.success) {
+                    $message.html('<div class="alert alert-success">' + (data.message || 'Operation completed successfully') + '</div>');
+                    // Refresh status after a short delay
+                    setTimeout(updateWorkerStatus, 1000);
+                } else {
+                    $message.html('<div class="alert alert-error">' + (data.message || 'Operation failed') + '</div>');
+                    updateWorkerStatus();
+                }
+            }, 'json').fail(function() {
+                $message.html('<div class="alert alert-error">Error communicating with server</div>');
+                updateWorkerStatus();
+            });
+        }
+        
+        // Auto-refresh worker status every 5 seconds if on settings tab
+        <?php if ($currentTab === 'settings'): ?>
+        $(document).ready(function() {
+            updateWorkerStatus();
+            setInterval(updateWorkerStatus, 5000);
+        });
+        <?php endif; ?>
+        
         // Define functions globally so they can be called from onclick handlers
         function editBalance(userId, currentBalance) {
             $('#balance_user_id').val(userId);

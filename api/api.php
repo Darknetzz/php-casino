@@ -560,6 +560,83 @@ switch ($action) {
         $predictions = ProvablyFair::getUpcomingPredictions($db, $game, $count);
         echo json_encode(['success' => true, 'predictions' => $predictions]);
         break;
+    
+    // Worker management endpoints (admin only)
+    case 'getWorkerStatus':
+        requireAdmin();
+        $workerScript = __DIR__ . '/../workers/game_rounds_worker.php';
+        $pidFile = __DIR__ . '/../workers/worker.pid';
+        
+        $status = ['running' => false, 'pid' => null, 'command' => null];
+        
+        // Check PID file first
+        if (file_exists($pidFile)) {
+            $pid = trim(file_get_contents($pidFile));
+            if ($pid && is_numeric($pid)) {
+                // Check if process is running
+                $output = [];
+                $returnVar = 0;
+                exec("ps -p $pid -o pid,cmd 2>/dev/null", $output, $returnVar);
+                if ($returnVar === 0 && count($output) > 1) {
+                    $status['running'] = true;
+                    $status['pid'] = intval($pid);
+                    $status['command'] = isset($output[1]) ? trim($output[1]) : null;
+                }
+            }
+        }
+        
+        // If not found via PID file, search by process
+        if (!$status['running']) {
+            $output = [];
+            exec("ps aux | grep '[p]hp.*game_rounds_worker.php'", $output);
+            if (!empty($output)) {
+                $line = $output[0];
+                if (preg_match('/^\S+\s+(\d+)\s+/', $line, $matches)) {
+                    $status['running'] = true;
+                    $status['pid'] = intval($matches[1]);
+                    $status['command'] = trim($line);
+                }
+            }
+        }
+        
+        echo json_encode(['success' => true, 'status' => $status]);
+        break;
+    
+    case 'controlWorker':
+        requireAdmin();
+        $action = $_POST['action'] ?? '';
+        
+        if (!in_array($action, ['start', 'stop', 'restart'])) {
+            echo json_encode(['success' => false, 'message' => 'Invalid action']);
+            break;
+        }
+        
+        $scriptPath = __DIR__ . '/../workers/manage_worker.sh';
+        
+        if (!file_exists($scriptPath)) {
+            echo json_encode(['success' => false, 'message' => 'Worker management script not found']);
+            break;
+        }
+        
+        if (!is_executable($scriptPath)) {
+            echo json_encode(['success' => false, 'message' => 'Worker management script is not executable']);
+            break;
+        }
+        
+        // Execute the management script
+        $output = [];
+        $returnVar = 0;
+        $command = escapeshellcmd($scriptPath) . ' ' . escapeshellarg($action) . ' 2>&1';
+        exec($command, $output, $returnVar);
+        
+        $message = implode("\n", $output);
+        
+        if ($returnVar === 0) {
+            echo json_encode(['success' => true, 'message' => $message]);
+        } else {
+            echo json_encode(['success' => false, 'message' => $message]);
+        }
+        break;
         
     default:
         echo json_encode(['success' => false, 'message' => 'Invalid action']);
