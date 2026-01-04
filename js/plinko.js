@@ -258,48 +258,45 @@ $(document).ready(function() {
                         const newRow = ball.currentRow;
                         const maxColForNewRow = newRow; // Maximum valid column for new row (0 to newRow)
                         
-                        // From a peg at (previousRow, previousCol), the ball can only move to:
-                        // - The peg directly below-left: (newRow, previousCol - 1) if previousCol > 0
-                        // - The peg directly below-right: (newRow, previousCol + 1) if previousCol + 1 <= newRow
-                        // OR if we're thinking of it differently:
-                        // - Below-left: (newRow, previousCol - 1) if previousCol > 0
-                        // - Below-right: (newRow, previousCol) if previousCol <= newRow
-                        // Actually, in Plinko, from peg (r,c), ball goes to (r+1, c) OR (r+1, c+1)
-                        // But user said "left or right", so maybe: (r+1, c-1) OR (r+1, c)
+                        // In Plinko, from a peg at (row r, col c), the ball can bounce to:
+                        // - The peg directly below-left: (r+1, c) - same column, directly below
+                        // - The peg directly below-right: (r+1, c+1) - one column to the right
+                        // So from (previousRow, previousCol), can go to:
+                        // - (newRow, previousCol) - below-left (same column)
+                        // - (newRow, previousCol + 1) - below-right (one column right)
                         
-                        // Let's use: from (r,c), can go to (r+1, c-1) left OR (r+1, c) right
                         let newCol;
-                        const canMoveLeft = previousCol > 0; // Can move to col (previousCol - 1)
-                        const canMoveRight = previousCol <= newRow; // Can move to col (previousCol)
+                        const canMoveLeft = previousCol <= newRow; // Can move to col (previousCol) - directly below
+                        const canMoveRight = (previousCol + 1) <= newRow; // Can move to col (previousCol + 1) - one right
                         
                         // DEBUG: Log the decision process
                         console.log(`[Plinko Debug] Ball at row ${previousRow}, col ${previousCol} -> moving to row ${newRow}`);
-                        console.log(`[Plinko Debug] canMoveLeft: ${canMoveLeft} (to col ${previousCol - 1}), canMoveRight: ${canMoveRight} (to col ${previousCol})`);
+                        console.log(`[Plinko Debug] canMoveLeft: ${canMoveLeft} (to col ${previousCol}), canMoveRight: ${canMoveRight} (to col ${previousCol + 1})`);
                         
                         if (!canMoveLeft && !canMoveRight) {
                             // Should never happen, but safety fallback
                             console.warn(`[Plinko Debug] WARNING: Cannot move left or right! Using fallback.`);
                             newCol = Math.max(0, Math.min(newRow, previousCol));
                         } else if (!canMoveLeft) {
-                            // Can only move right (to same column)
-                            console.log(`[Plinko Debug] Only right available -> col ${previousCol}`);
-                            newCol = previousCol;
+                            // Can only move right (to previousCol + 1)
+                            console.log(`[Plinko Debug] Only right available -> col ${previousCol + 1}`);
+                            newCol = previousCol + 1;
                         } else if (!canMoveRight) {
-                            // Can only move left (to previousCol - 1)
-                            console.log(`[Plinko Debug] Only left available -> col ${previousCol - 1}`);
-                            newCol = previousCol - 1;
+                            // Can only move left (to same column, previousCol)
+                            console.log(`[Plinko Debug] Only left available -> col ${previousCol}`);
+                            newCol = previousCol;
                         } else {
                             // Can move either left or right - randomly choose (50/50 chance)
                             // Use Math.random() which should be uniformly distributed
                             const randomValue = Math.random();
                             console.log(`[Plinko Debug] Random value: ${randomValue.toFixed(4)} (${randomValue < 0.5 ? 'LEFT' : 'RIGHT'})`);
                             if (randomValue < 0.5) {
-                                // Move left (to previousCol - 1)
-                                newCol = previousCol - 1;
+                                // Move left (to same column, previousCol)
+                                newCol = previousCol;
                                 console.log(`[Plinko Debug] Chose LEFT -> col ${newCol}`);
                             } else {
-                                // Move right (to same column, previousCol)
-                                newCol = previousCol;
+                                // Move right (to previousCol + 1)
+                                newCol = previousCol + 1;
                                 console.log(`[Plinko Debug] Chose RIGHT -> col ${newCol}`);
                             }
                         }
