@@ -9,73 +9,92 @@ $error = '';
 // Handle form submissions
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_POST['update_settings'])) {
-        $maxDeposit = floatval($_POST['max_deposit'] ?? 0);
-        $maxBet = floatval($_POST['max_bet'] ?? 0);
-        $startingBalance = floatval($_POST['starting_balance'] ?? 0);
-        $defaultBet = floatval($_POST['default_bet'] ?? 0);
-        
-        // Slots multipliers
-        $slotsCherry = floatval($_POST['slots_cherry_multiplier'] ?? 0);
-        $slotsLemon = floatval($_POST['slots_lemon_multiplier'] ?? 0);
-        $slotsOrange = floatval($_POST['slots_orange_multiplier'] ?? 0);
-        $slotsGrape = floatval($_POST['slots_grape_multiplier'] ?? 0);
-        $slotsSlot = floatval($_POST['slots_slot_multiplier'] ?? 0);
-        $slotsTwoOfKind = floatval($_POST['slots_two_of_kind_multiplier'] ?? 0);
-        
-        // Plinko multipliers - collect from individual inputs
-        $plinkoMultipliersArray = [];
-        for ($i = 0; $i < 9; $i++) {
-            $plinkoMultipliersArray[] = floatval($_POST['plinko_multiplier_' . $i] ?? 0);
-        }
-        $plinkoMultipliers = implode(',', $plinkoMultipliersArray);
-        
-        // Validate all values
-        $allValid = true;
         $errors = [];
         
-        if ($maxDeposit <= 0) $errors[] = 'Max Deposit must be greater than 0';
-        if ($maxBet <= 0) $errors[] = 'Max Bet must be greater than 0';
-        if ($startingBalance < 0) $errors[] = 'Starting Balance must be greater than or equal to 0';
-        if ($defaultBet <= 0) $errors[] = 'Default Bet must be greater than 0';
-        if ($slotsCherry < 0) $errors[] = 'Slots Cherry multiplier must be greater than or equal to 0';
-        if ($slotsLemon < 0) $errors[] = 'Slots Lemon multiplier must be greater than or equal to 0';
-        if ($slotsOrange < 0) $errors[] = 'Slots Orange multiplier must be greater than or equal to 0';
-        if ($slotsGrape < 0) $errors[] = 'Slots Grape multiplier must be greater than or equal to 0';
-        if ($slotsSlot < 0) $errors[] = 'Slots Slot multiplier must be greater than or equal to 0';
-        if ($slotsTwoOfKind < 0) $errors[] = 'Slots Two of Kind multiplier must be greater than or equal to 0';
-        
-        // Check plinko multipliers
-        if (count($plinkoMultipliersArray) !== 9) {
-            $errors[] = 'All 9 Plinko multipliers must be provided';
-        } else {
-            foreach ($plinkoMultipliersArray as $i => $val) {
-                if ($val < 0 || !is_numeric($val)) {
-                    $errors[] = "Plinko Slot $i multiplier must be a number greater than or equal to 0";
-                }
+        // Check if this is casino settings update
+        if (isset($_POST['max_deposit'])) {
+            $maxDeposit = floatval($_POST['max_deposit'] ?? 0);
+            $maxBet = floatval($_POST['max_bet'] ?? 0);
+            $startingBalance = floatval($_POST['starting_balance'] ?? 0);
+            $defaultBet = floatval($_POST['default_bet'] ?? 0);
+            
+            if ($maxDeposit <= 0) $errors[] = 'Max Deposit must be greater than 0';
+            if ($maxBet <= 0) $errors[] = 'Max Bet must be greater than 0';
+            if ($startingBalance < 0) $errors[] = 'Starting Balance must be greater than or equal to 0';
+            if ($defaultBet <= 0) $errors[] = 'Default Bet must be greater than 0';
+            
+            if (empty($errors)) {
+                $db->setSetting('max_deposit', $maxDeposit);
+                $db->setSetting('max_bet', $maxBet);
+                $db->setSetting('starting_balance', $startingBalance);
+                $db->setSetting('default_bet', $defaultBet);
+                header('Location: admin.php?tab=settings&success=1');
+                exit;
             }
         }
         
-        if (empty($errors)) {
-            $db->setSetting('max_deposit', $maxDeposit);
-            $db->setSetting('max_bet', $maxBet);
-            $db->setSetting('starting_balance', $startingBalance);
-            $db->setSetting('default_bet', $defaultBet);
+        // Check if this is multipliers update
+        if (isset($_POST['slots_cherry_multiplier']) || isset($_POST['plinko_multiplier_0'])) {
+            // Slots multipliers
+            if (isset($_POST['slots_cherry_multiplier'])) {
+                $slotsCherry = floatval($_POST['slots_cherry_multiplier'] ?? 0);
+                $slotsLemon = floatval($_POST['slots_lemon_multiplier'] ?? 0);
+                $slotsOrange = floatval($_POST['slots_orange_multiplier'] ?? 0);
+                $slotsGrape = floatval($_POST['slots_grape_multiplier'] ?? 0);
+                $slotsSlot = floatval($_POST['slots_slot_multiplier'] ?? 0);
+                $slotsTwoOfKind = floatval($_POST['slots_two_of_kind_multiplier'] ?? 0);
+                $slotsWinRow = isset($_POST['slots_win_row']) ? intval($_POST['slots_win_row']) : 1;
+                $slotsBetRows = isset($_POST['slots_bet_rows']) ? intval($_POST['slots_bet_rows']) : 1;
+                
+                if ($slotsCherry < 0) $errors[] = 'Slots Cherry multiplier must be greater than or equal to 0';
+                if ($slotsLemon < 0) $errors[] = 'Slots Lemon multiplier must be greater than or equal to 0';
+                if ($slotsOrange < 0) $errors[] = 'Slots Orange multiplier must be greater than or equal to 0';
+                if ($slotsGrape < 0) $errors[] = 'Slots Grape multiplier must be greater than or equal to 0';
+                if ($slotsSlot < 0) $errors[] = 'Slots Slot multiplier must be greater than or equal to 0';
+                if ($slotsTwoOfKind < 0) $errors[] = 'Slots Two of Kind multiplier must be greater than or equal to 0';
+                
+                if (empty($errors)) {
+                    $db->setSetting('slots_cherry_multiplier', $slotsCherry);
+                    $db->setSetting('slots_lemon_multiplier', $slotsLemon);
+                    $db->setSetting('slots_orange_multiplier', $slotsOrange);
+                    $db->setSetting('slots_grape_multiplier', $slotsGrape);
+                    $db->setSetting('slots_slot_multiplier', $slotsSlot);
+                    $db->setSetting('slots_two_of_kind_multiplier', $slotsTwoOfKind);
+                    $db->setSetting('slots_win_row', $slotsWinRow);
+                    $db->setSetting('slots_bet_rows', $slotsBetRows);
+                }
+            }
             
-                // Save slots multipliers
-                $db->setSetting('slots_cherry_multiplier', $slotsCherry);
-                $db->setSetting('slots_lemon_multiplier', $slotsLemon);
-                $db->setSetting('slots_orange_multiplier', $slotsOrange);
-                $db->setSetting('slots_grape_multiplier', $slotsGrape);
-                $db->setSetting('slots_slot_multiplier', $slotsSlot);
-                $db->setSetting('slots_two_of_kind_multiplier', $slotsTwoOfKind);
-                $db->setSetting('slots_win_row', $slotsWinRow);
-                $db->setSetting('slots_bet_rows', $slotsBetRows);
+            // Plinko multipliers
+            if (isset($_POST['plinko_multiplier_0'])) {
+                $plinkoMultipliersArray = [];
+                for ($i = 0; $i < 9; $i++) {
+                    $plinkoMultipliersArray[] = floatval($_POST['plinko_multiplier_' . $i] ?? 0);
+                }
+                $plinkoMultipliers = implode(',', $plinkoMultipliersArray);
+                
+                if (count($plinkoMultipliersArray) !== 9) {
+                    $errors[] = 'All 9 Plinko multipliers must be provided';
+                } else {
+                    foreach ($plinkoMultipliersArray as $i => $val) {
+                        if ($val < 0 || !is_numeric($val)) {
+                            $errors[] = "Plinko Slot $i multiplier must be a number greater than or equal to 0";
+                        }
+                    }
+                }
+                
+                if (empty($errors)) {
+                    $db->setSetting('plinko_multipliers', $plinkoMultipliers);
+                }
+            }
             
-            // Save plinko multipliers
-            $db->setSetting('plinko_multipliers', $plinkoMultipliers);
-            
-            $message = 'Settings updated successfully!';
-        } else {
+            if (empty($errors)) {
+                header('Location: admin.php?tab=multipliers&success=1');
+                exit;
+            }
+        }
+        
+        if (!empty($errors)) {
             $error = implode('<br>', $errors);
         }
     } elseif (isset($_POST['update_user_balance'])) {
