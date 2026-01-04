@@ -230,16 +230,45 @@ $(document).ready(function() {
                             return;
                         }
                         
+                        // Store previous position before moving
+                        const previousRow = ball.currentRow;
+                        const previousCol = Math.round(ball.currentCol);
+                        
                         // Move to next row (one step at a time)
                         ball.currentRow++;
+                        const newRow = ball.currentRow;
+                        const maxColForNewRow = newRow; // Maximum valid column for new row (0 to newRow)
                         
-                        // When ball hits a peg, randomly bounce left or right
-                        // But keep within triangle bounds: col must be between 0 and currentRow
-                        const bounceDirection = Math.random() < 0.5 ? -1 : 1;
-                        ball.currentCol += bounceDirection;
+                        // The ball's column position from the previous row should be valid for the new row
+                        // But we need to ensure it's within bounds (previous row had max col = previousRow, new row has max col = newRow)
+                        let currentCol = previousCol;
                         
-                        // Clamp column to valid range for this row (0 to currentRow)
-                        ball.currentCol = Math.max(0, Math.min(ball.currentRow, ball.currentCol));
+                        // Clamp to valid range for new row (shouldn't be needed, but safety check)
+                        currentCol = Math.max(0, Math.min(maxColForNewRow, currentCol));
+                        
+                        // When ball hits a peg, randomly bounce left or right by exactly 1 position
+                        // Determine bounce direction based on current position in new row
+                        let bounceDirection;
+                        
+                        if (currentCol === 0) {
+                            // At left edge, can only move right
+                            bounceDirection = 1;
+                        } else if (currentCol === maxColForNewRow) {
+                            // At right edge, can only move left
+                            bounceDirection = -1;
+                        } else {
+                            // In the middle, randomly choose left or right
+                            bounceDirection = Math.random() < 0.5 ? -1 : 1;
+                        }
+                        
+                        // Move by exactly 1 position (no more, no less)
+                        currentCol = currentCol + bounceDirection;
+                        
+                        // Final safety check - ensure we're still within bounds
+                        currentCol = Math.max(0, Math.min(maxColForNewRow, currentCol));
+                        
+                        // Update ball's column position
+                        ball.currentCol = currentCol;
                         
                         updateBallPosition(ball);
                     });
