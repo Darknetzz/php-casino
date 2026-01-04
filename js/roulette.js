@@ -85,6 +85,18 @@ $(document).ready(function() {
         return entry ? entry.color : 'black';
     }
     
+    // Function to calculate which number is at the top after a given rotation
+    function getNumberAtTop(rotation) {
+        const anglePerNumber = 360 / rouletteNumbers.length;
+        // After rotating by rotation degrees, a pocket that started at angle A
+        // will be at position (A + rotation) % 360
+        // We want to find which pocket is at 0 (top)
+        // So we need: (A + rotation) % 360 = 0, which means A = (360 - rotation) % 360
+        const targetAngle = (360 - (rotation % 360)) % 360;
+        const targetIndex = Math.round(targetAngle / anglePerNumber) % rouletteNumbers.length;
+        return rouletteNumbers[targetIndex].num;
+    }
+    
     function checkWin(betType, resultNum) {
         const resultColor = getNumberColor(resultNum);
         const isEven = resultNum !== 0 && resultNum % 2 === 0;
@@ -164,36 +176,67 @@ $(document).ready(function() {
             $('#result').html('');
             
             // Determine winning number
-        const resultNum = Math.floor(Math.random() * 37);
-        const resultColor = getNumberColor(resultNum);
-        
-        // Calculate rotation needed to land on winning number
-        // Pockets are positioned starting from top (angle 0 = top position)
-        // The pointer is fixed at top (0 degrees)
-        // When wheel container rotates, all pockets rotate with it
-        const winningIndex = rouletteNumbers.findIndex(n => n.num === resultNum);
-        const anglePerNumber = 360 / rouletteNumbers.length;
-        const pocketStartAngle = winningIndex * anglePerNumber;
-        
-        // Calculate the target rotation
-        // After rotating by totalRotation, the pocket at pocketStartAngle should be at 0 (top)
-        // Formula: (pocketStartAngle + totalRotation) % 360 = 0
-        // Therefore: totalRotation = (360 - pocketStartAngle) % 360 (plus full spins)
-        // CSS transform is absolute, so we calculate the absolute rotation needed
-        const fullSpins = 5 + Math.random() * 3; // 5-8 full spins
-        // Calculate base rotation to get winning pocket to top (from original position)
-        const baseRotation = (360 - pocketStartAngle) % 360;
-        // Add full spins to make it look natural
-        // The totalRotation is the absolute rotation from the original position
-        const totalRotation = (fullSpins * 360) + baseRotation;
-        // Update currentRotation to track where we are (modulo 360)
-        currentRotation = totalRotation % 360;
-        
-        // Animate wheel spin
-        $('#rouletteWheel').css({
-            transition: 'transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99)',
-            transform: `rotate(${totalRotation}deg)`
-        });
+            const resultNum = Math.floor(Math.random() * 37);
+            const resultColor = getNumberColor(resultNum);
+            
+            // Calculate rotation needed to land on winning number
+            // Pockets are positioned starting from top (angle 0 = top position)
+            // The pointer is fixed at top (0 degrees)
+            // When wheel container rotates clockwise, all pockets rotate with it
+            const winningIndex = rouletteNumbers.findIndex(n => n.num === resultNum);
+            const anglePerNumber = 360 / rouletteNumbers.length;
+            const pocketStartAngle = winningIndex * anglePerNumber;
+            
+            // After rotating the wheel by totalRotation degrees clockwise:
+            // A pocket that started at angle A will be at angle (A + totalRotation) % 360
+            // We want the winning pocket to end up at 0 (top, where pointer is)
+            // So: (pocketStartAngle + totalRotation) % 360 = 0
+            // Therefore: totalRotation = (360 - pocketStartAngle) % 360 (plus full spins)
+            const fullSpins = 5 + Math.random() * 3; // 5-8 full spins
+            let baseRotation = (360 - pocketStartAngle) % 360;
+            // If exactly 0, use 360 to ensure at least one full rotation component
+            if (baseRotation === 0) {
+                baseRotation = 360;
+            }
+            let totalRotation = (fullSpins * 360) + baseRotation;
+            
+            // Verify which number will actually be at the top after this rotation
+            // After rotation R, a pocket at starting angle A will be at (A + R) % 360
+            // To find which pocket is at 0, we solve: (A + R) % 360 = 0
+            // This means A = (360 - (R % 360)) % 360
+            const effectiveRotation = totalRotation % 360;
+            const angleAtTop = (360 - effectiveRotation) % 360;
+            const indexAtTop = Math.round(angleAtTop / anglePerNumber) % rouletteNumbers.length;
+            const numAtTop = rouletteNumbers[indexAtTop].num;
+            
+            // If the calculated number doesn't match, we need to adjust
+            if (numAtTop !== resultNum) {
+                // Find the difference and adjust
+                const targetIndex = winningIndex;
+                const currentIndexAtTop = indexAtTop;
+                let indexDiff = (targetIndex - currentIndexAtTop + rouletteNumbers.length) % rouletteNumbers.length;
+                
+                // Adjust the rotation to account for the difference
+                const angleAdjustment = indexDiff * anglePerNumber;
+                totalRotation = (fullSpins * 360) + baseRotation + angleAdjustment;
+            }
+            
+            currentRotation = totalRotation % 360;
+            
+            // Reset wheel to 0 first to ensure we start from a known position
+            $('#rouletteWheel').css({
+                transition: 'none',
+                transform: 'rotate(0deg)'
+            });
+            
+            // Force a reflow to apply the reset
+            $('#rouletteWheel')[0].offsetHeight;
+            
+            // Now animate to the target rotation
+            $('#rouletteWheel').css({
+                transition: 'transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99)',
+                transform: `rotate(${totalRotation}deg)`
+            });
         
         // Show spinning result text
         let spinCount = 0;
