@@ -1658,6 +1658,78 @@ body {
     z-index: 5;
 }
 
+/* Crash Game */
+.crash-game {
+    margin-bottom: 30px;
+}
+
+.crash-display-container {
+    margin: 30px 0;
+}
+
+.crash-graph {
+    position: relative;
+    width: 100%;
+    background: #f8f9fa;
+    border: 2px solid #ddd;
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 20px;
+    min-height: 400px;
+}
+
+.crash-graph canvas {
+    width: 100%;
+    height: 400px;
+    display: block;
+}
+
+.crash-multiplier-display {
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 48px;
+    font-weight: bold;
+    color: #667eea;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+    z-index: 10;
+}
+
+.crash-controls {
+    text-align: center;
+    margin: 20px 0;
+}
+
+.btn-success {
+    background: #28a745;
+    color: white;
+    border: none;
+}
+
+.btn-success:hover {
+    background: #218838;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(40, 167, 69, 0.4);
+}
+
+.cash-out-info {
+    margin-top: 15px;
+    font-size: 18px;
+}
+
+.crash-history {
+    margin: 30px 0;
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 10px;
+}
+
+.crash-history h4 {
+    margin: 0 0 15px 0;
+    color: #667eea;
+}
+
 /* Admin Panel */
 .admin-panel {
     background: white;
@@ -2205,6 +2277,33 @@ body.dark-mode .plinko-peg {
 body.dark-mode .plinko-slot {
     background: rgba(50, 50, 70, 0.9);
     color: #e0e0e0;
+}
+
+body.dark-mode .crash-graph {
+    background: rgba(40, 40, 60, 0.8);
+    border-color: #555;
+}
+
+body.dark-mode .crash-multiplier-display {
+    color: #8a9eff;
+}
+
+body.dark-mode .crash-history {
+    background: rgba(40, 40, 60, 0.8);
+    border: 1px solid #555;
+}
+
+body.dark-mode .crash-history h4 {
+    color: #8a9eff;
+}
+
+body.dark-mode .btn-success {
+    background: rgba(40, 167, 69, 0.8);
+    color: white;
+}
+
+body.dark-mode .btn-success:hover {
+    background: rgba(40, 167, 69, 1);
 }
 
 body.dark-mode .transactions-table {

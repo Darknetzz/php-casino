@@ -68,17 +68,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     // Get number of reels to validate against
                     $numReels = isset($_POST['slots_num_reels']) ? intval($_POST['slots_num_reels']) : 3;
                     foreach ($slotsCustomCombinations as $index => $combination) {
-                        if (!isset($combination['symbols']) || !is_array($combination['symbols']) || empty($combination['symbols'])) {
-                            $errors[] = "Custom combination #" . ($index + 1) . " must have at least one symbol";
+                        if (!isset($combination['symbols']) || !is_array($combination['symbols'])) {
+                            $errors[] = "Custom combination #" . ($index + 1) . " must have a symbols array";
                         } else {
                             // Validate that symbols array matches number of reels
                             if (count($combination['symbols']) !== $numReels) {
-                                $errors[] = "Custom combination #" . ($index + 1) . " must have exactly " . $numReels . " symbols (one per reel)";
+                                $errors[] = "Custom combination #" . ($index + 1) . " must have exactly " . $numReels . " symbols (one per reel, empty allowed)";
                             }
+                            // Check that at least one symbol is specified (not all empty)
+                            $hasAtLeastOneSymbol = false;
                             foreach ($combination['symbols'] as $symbolIndex => $symbol) {
-                                if (empty($symbol)) {
-                                    $errors[] = "Custom combination #" . ($index + 1) . ", position #" . ($symbolIndex + 1) . " emoji cannot be empty";
+                                if (!empty($symbol) && trim($symbol) !== '') {
+                                    $hasAtLeastOneSymbol = true;
+                                    break;
                                 }
+                            }
+                            if (!$hasAtLeastOneSymbol) {
+                                $errors[] = "Custom combination #" . ($index + 1) . " must have at least one symbol specified (empty positions are allowed)";
                             }
                         }
                         if (!isset($combination['multiplier']) || floatval($combination['multiplier']) < 0) {
@@ -373,15 +379,17 @@ include __DIR__ . '/../includes/navbar.php';
                                required style="width: 100px; padding: 8px;">
                     </div>
                     
-                    <h4 style="margin-top: 30px; margin-bottom: 15px; color: #667eea;">Custom Combinations</h4>
+                    <hr style="border: none; border-top: 2px solid #e0e0e0; margin: 30px 0 20px 0;">
+                    
+                    <h4 style="margin-top: 20px; margin-bottom: 15px; color: #667eea;">Custom Combinations</h4>
                     <p style="margin-bottom: 15px; color: #666;">Define custom winning combinations with exact order (e.g., 🔥🔥❤️). Symbols are matched in order from left to right.</p>
                     <div id="slotsCustomCombinationsContainer">
-                        <table class="multiplier-table" id="slotsCustomCombinationsTable">
+                        <table class="multiplier-table" id="slotsCustomCombinationsTable" style="max-width: 100%;">
                             <thead>
                                 <tr>
-                                    <th>Symbols (Ordered)</th>
-                                    <th>Multiplier</th>
-                                    <th>Actions</th>
+                                    <th style="width: 60%;">Symbols (Ordered)</th>
+                                    <th style="width: 20%;">Multiplier</th>
+                                    <th style="width: 20%;">Actions</th>
                                 </tr>
                             </thead>
                             <tbody id="slotsCustomCombinationsBody">
@@ -395,8 +403,8 @@ include __DIR__ . '/../includes/navbar.php';
                                 foreach ($slotsCustomCombinations as $index => $combination):
                                 ?>
                                 <tr data-index="<?php echo $index; ?>">
-                                    <td>
-                                        <div class="custom-combination-symbols" style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center;">
+                                    <td style="white-space: nowrap;">
+                                        <div class="custom-combination-symbols" style="display: flex; flex-wrap: nowrap; gap: 10px; align-items: center;">
                                             <?php
                                             $comboSymbols = isset($combination['symbols']) && is_array($combination['symbols']) ? $combination['symbols'] : [];
                                             // Convert old format ({emoji, count}) to new format (array of emojis)
@@ -424,7 +432,7 @@ include __DIR__ . '/../includes/navbar.php';
                                                 $emoji = isset($emojisArray[$i]) && is_string($emojisArray[$i]) ? htmlspecialchars($emojisArray[$i]) : '';
                                                 echo '<div style="display: flex; align-items: center; gap: 5px;">';
                                                 echo '<span style="font-size: 14px; color: #666;">#' . ($i + 1) . '</span>';
-                                                echo '<input type="text" class="custom-combo-emoji" data-position="' . $i . '" value="' . $emoji . '" maxlength="2" style="width: 60px; padding: 5px; font-size: 18px; text-align: center;" placeholder="🎰" required>';
+                                                echo '<input type="text" class="custom-combo-emoji" data-position="' . $i . '" value="' . $emoji . '" maxlength="2" style="width: 60px; padding: 5px; font-size: 18px; text-align: center;" placeholder="Any">';
                                                 echo '</div>';
                                             }
                                             ?>
@@ -446,7 +454,9 @@ include __DIR__ . '/../includes/navbar.php';
                         <input type="hidden" id="slots_custom_combinations_json" name="slots_custom_combinations" value="">
                     </div>
                     
-                    <h3 style="margin-top: 30px; margin-bottom: 15px; color: #667eea;">Slots Settings</h3>
+                    <hr style="border: none; border-top: 2px solid #e0e0e0; margin: 30px 0 20px 0;">
+                    
+                    <h3 style="margin-top: 20px; margin-bottom: 15px; color: #667eea;">Slots Settings</h3>
                     <div class="form-group">
                         <label for="slots_num_reels">Number of Reels:</label>
                         <input type="number" id="slots_num_reels" name="slots_num_reels" min="3" max="10" 
@@ -789,19 +799,19 @@ include __DIR__ . '/../includes/navbar.php';
                 });
                 $('#slots_symbols_json').val(JSON.stringify(symbols));
                 
-                // Serialize custom combinations (ordered array)
+                // Serialize custom combinations (ordered array, empty allowed)
                 const customCombinations = [];
                 const numReels = parseInt($('#slots_num_reels').val()) || 3;
                 $('#slotsCustomCombinationsBody tr').each(function() {
                     const symbols = [];
-                    // Get symbols in order (one per reel)
+                    // Get symbols in order (one per reel, empty strings allowed)
                     $(this).find('.custom-combo-emoji').each(function() {
                         const emoji = $(this).val().trim();
-                        symbols.push(emoji || '');
+                        symbols.push(emoji || ''); // Allow empty strings
                     });
                     const multiplier = parseFloat($(this).find('.custom-combo-multiplier').val()) || 0;
-                    // Only add if we have the right number of symbols
-                    if (symbols.length === numReels && symbols.some(s => s)) {
+                    // Only add if we have the right number of symbols and at least one is non-empty
+                    if (symbols.length === numReels && symbols.some(s => s.trim() !== '')) {
                         customCombinations.push({symbols: symbols, multiplier: multiplier});
                     }
                 });
@@ -817,11 +827,11 @@ include __DIR__ . '/../includes/navbar.php';
             const row = document.createElement('tr');
             row.setAttribute('data-index', index);
             
-            let symbolsHtml = '<div class="custom-combination-symbols" style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center;">';
+            let symbolsHtml = '<div class="custom-combination-symbols" style="display: flex; flex-wrap: nowrap; gap: 10px; align-items: center;">';
             for (let i = 0; i < numReels; i++) {
                 symbolsHtml += '<div style="display: flex; align-items: center; gap: 5px;">';
                 symbolsHtml += '<span style="font-size: 14px; color: #666;">#' + (i + 1) + '</span>';
-                symbolsHtml += '<input type="text" class="custom-combo-emoji" data-position="' + i + '" value="' + (i === 0 ? '🔥' : i === 1 ? '🔥' : '❤️') + '" maxlength="2" style="width: 60px; padding: 5px; font-size: 18px; text-align: center;" placeholder="🎰" required>';
+                symbolsHtml += '<input type="text" class="custom-combo-emoji" data-position="' + i + '" value="' + (i === 0 ? '🔥' : i === 1 ? '🔥' : '❤️') + '" maxlength="2" style="width: 60px; padding: 5px; font-size: 18px; text-align: center;" placeholder="Any">';
                 symbolsHtml += '</div>';
             }
             symbolsHtml += '</div>';
@@ -865,12 +875,13 @@ include __DIR__ . '/../includes/navbar.php';
                 const currentValues = currentInputs.map(function() { return $(this).val(); }).get();
                 
                 $symbolsContainer.empty();
+                $symbolsContainer.css({'flex-wrap': 'nowrap'});
                 for (let i = 0; i < numReels; i++) {
                     const value = i < currentValues.length ? currentValues[i] : '';
                     $symbolsContainer.append(
                         $('<div style="display: flex; align-items: center; gap: 5px;">').html(
                             '<span style="font-size: 14px; color: #666;">#' + (i + 1) + '</span>' +
-                            '<input type="text" class="custom-combo-emoji" data-position="' + i + '" value="' + value + '" maxlength="2" style="width: 60px; padding: 5px; font-size: 18px; text-align: center;" placeholder="🎰" required>'
+                            '<input type="text" class="custom-combo-emoji" data-position="' + i + '" value="' + value + '" maxlength="2" style="width: 60px; padding: 5px; font-size: 18px; text-align: center;" placeholder="Any">'
                         )
                     );
                 }

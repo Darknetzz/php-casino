@@ -99,11 +99,14 @@ $(document).ready(function() {
         const tbody = $('.slots-payout-table tbody');
         tbody.empty();
         
-        // Add custom combinations first (ordered array)
+        // Add custom combinations first (ordered array, empty = any symbol)
         customCombinations.forEach(function(combination) {
             if (combination.symbols && Array.isArray(combination.symbols)) {
-                // Just concatenate emojis in order
-                const comboText = combination.symbols.join('');
+                // Display emojis in order, show "?" for empty positions
+                const comboText = combination.symbols.map(function(symbol) {
+                    const trimmed = (symbol || '').trim();
+                    return trimmed === '' ? '?' : trimmed;
+                }).join('');
                 const multiplier = parseFloat(combination.multiplier) || 0;
                 tbody.append(
                     $('<tr>').append(
@@ -237,15 +240,18 @@ $(document).ready(function() {
         }
         resultSymbols = resultSymbols.map(function(s) { return (s || '').trim(); });
         
-        // Check custom combinations first (exact order matching)
+        // Check custom combinations first (exact order matching, empty = any symbol)
         for (let i = 0; i < customCombinations.length; i++) {
             const combination = customCombinations[i];
             if (combination.symbols && Array.isArray(combination.symbols)) {
-                // Check for exact order match
+                // Check for exact order match (empty string matches any symbol)
                 if (combination.symbols.length === resultSymbols.length) {
                     let matches = true;
                     for (let j = 0; j < combination.symbols.length; j++) {
-                        if (combination.symbols[j] !== resultSymbols[j]) {
+                        const comboSymbol = (combination.symbols[j] || '').trim();
+                        const resultSymbol = (resultSymbols[j] || '').trim();
+                        // If combo symbol is empty, it matches any symbol; otherwise must match exactly
+                        if (comboSymbol !== '' && comboSymbol !== resultSymbol) {
                             matches = false;
                             break;
                         }
