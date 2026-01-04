@@ -566,6 +566,18 @@ class Database {
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
     
+    public function getRouletteBetsForRoundWithUsers($roundId) {
+        $stmt = $this->db->prepare("
+            SELECT rb.*, u.username, u.id as user_id 
+            FROM roulette_bets rb 
+            INNER JOIN users u ON rb.user_id = u.id 
+            WHERE rb.round_id = ? 
+            ORDER BY rb.created_at ASC
+        ");
+        $stmt->execute([$roundId]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+    
     public function getUserRouletteBetsForRound($roundId, $userId) {
         $stmt = $this->db->prepare("SELECT * FROM roulette_bets WHERE round_id = ? AND user_id = ?");
         $stmt->execute([$roundId, $userId]);

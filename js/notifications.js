@@ -227,6 +227,9 @@ $(document).ready(function() {
                     markAsRead(id);
                     if (notif.game) {
                         window.location.href = getGameUrl(notif.game);
+                    } else {
+                        // Close dropdown if no game link
+                        $('#notificationDropdown').hide();
                     }
                 }
             });
