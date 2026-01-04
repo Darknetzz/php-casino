@@ -11,7 +11,7 @@ if (strpos($_SERVER['PHP_SELF'], '/games/') !== false) {
 ?>
 <nav class="navbar">
     <div class="nav-container">
-        <h2><a href="<?php echo $basePath; ?>index.php">🎰 Casino</a></h2>
+        <h2><a href="<?php echo $basePath; ?>index.php" style="text-decoration: none; color: inherit;">🎰 Casino</a></h2>
         <div class="nav-center">
             <div class="games-menu">
                 <button class="games-menu-btn" id="gamesMenuBtn">
