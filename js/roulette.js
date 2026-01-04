@@ -109,7 +109,10 @@ $(document).ready(function() {
         targetIndex = targetIndex % rouletteNumbers.length;
         if (targetIndex < 0) targetIndex += rouletteNumbers.length;
         
-        return rouletteNumbers[targetIndex].num;
+        const result = rouletteNumbers[targetIndex].num;
+        console.log(`  getNumberAtTop(${rotation}): normalized=${normalizedRotation}, targetAngle=${targetStartingAngle}, index=${targetIndex}, number=${result}`);
+        
+        return result;
     }
     
     function checkColorBetWin(betType, resultNum) {
@@ -303,40 +306,59 @@ $(document).ready(function() {
             const resultNum = Math.floor(Math.random() * 37);
             const resultColor = getNumberColor(resultNum);
             
+            console.log('=== ROULETTE SPIN DEBUG ===');
+            console.log('Winning number:', resultNum);
+            
             // Calculate rotation needed to land on winning number
             const anglePerNumber = 360 / rouletteNumbers.length;
             const winningIndex = rouletteNumbers.findIndex(n => n.num === resultNum);
             const pocketStartAngle = winningIndex * anglePerNumber;
             
+            console.log('Winning index:', winningIndex);
+            console.log('Pocket start angle:', pocketStartAngle);
+            console.log('Angle per number:', anglePerNumber);
+            
             // Try both rotation directions to see which one works
             // Method 1: Rotate by (360 - A) - brings pocket to top
             const rotation1 = (360 - pocketStartAngle) % 360;
             const testNum1 = getNumberAtTop(rotation1);
+            console.log('Method 1 - Rotation:', rotation1, '-> Number at top:', testNum1);
             
             // Method 2: Rotate by A - maybe this is what we need
             const rotation2 = pocketStartAngle;
             const testNum2 = getNumberAtTop(rotation2);
+            console.log('Method 2 - Rotation:', rotation2, '-> Number at top:', testNum2);
             
             // Method 3: Rotate by (A + 180) mod 360 - opposite direction
             const rotation3 = (pocketStartAngle + 180) % 360;
             const testNum3 = getNumberAtTop(rotation3);
+            console.log('Method 3 - Rotation:', rotation3, '-> Number at top:', testNum3);
             
             // Use whichever method gives the correct result
             let rotationToTop;
             if (testNum1 === resultNum) {
                 rotationToTop = rotation1;
+                console.log('Using Method 1');
             } else if (testNum2 === resultNum) {
                 rotationToTop = rotation2;
+                console.log('Using Method 2');
             } else if (testNum3 === resultNum) {
                 rotationToTop = rotation3;
+                console.log('Using Method 3');
             } else {
                 // Fallback: use method 1
                 rotationToTop = rotation1;
+                console.log('WARNING: None of the methods worked! Using Method 1 as fallback');
             }
             
             // Add full spins for animation
             const fullSpins = 5 + Math.random() * 3; // 5-8 full spins
             let totalRotation = (fullSpins * 360) + rotationToTop;
+            
+            console.log('Rotation to top:', rotationToTop);
+            console.log('Full spins:', fullSpins);
+            console.log('Total rotation:', totalRotation);
+            console.log('Final rotation (mod 360):', totalRotation % 360);
             
             currentRotation = totalRotation % 360;
             
@@ -357,19 +379,26 @@ $(document).ready(function() {
             
             // After animation completes, verify and correct if needed
             $('#rouletteWheel').one('transitionend', function() {
+                console.log('=== POST-ANIMATION VERIFICATION ===');
+                
                 // Find which pocket is actually closest to the top (pointer position)
                 const wheelRect = $('#rouletteWheel')[0].getBoundingClientRect();
                 const wheelCenterX = wheelRect.left + wheelRect.width / 2;
                 const wheelCenterY = wheelRect.top + wheelRect.height / 2;
                 const pointerY = wheelRect.top; // Pointer is at the top
                 
+                console.log('Wheel center:', wheelCenterX, wheelCenterY);
+                console.log('Pointer Y:', pointerY);
+                
                 let closestPocket = null;
                 let minDistance = Infinity;
+                const pocketDistances = [];
                 
                 $('.roulette-pocket').each(function() {
                     const pocketRect = this.getBoundingClientRect();
                     const pocketCenterX = pocketRect.left + pocketRect.width / 2;
                     const pocketCenterY = pocketRect.top + pocketRect.height / 2;
+                    const pocketNumber = parseInt($(this).attr('data-number'));
                     
                     // Calculate distance from pocket center to pointer position (top center)
                     const distance = Math.sqrt(
@@ -377,29 +406,52 @@ $(document).ready(function() {
                         Math.pow(pocketCenterY - pointerY, 2)
                     );
                     
+                    pocketDistances.push({number: pocketNumber, distance: distance, x: pocketCenterX, y: pocketCenterY});
+                    
                     if (distance < minDistance) {
                         minDistance = distance;
                         closestPocket = $(this);
                     }
                 });
                 
+                // Sort by distance and log top 5 closest
+                pocketDistances.sort((a, b) => a.distance - b.distance);
+                console.log('Top 5 closest pockets to pointer:');
+                pocketDistances.slice(0, 5).forEach(p => {
+                    console.log(`  Number ${p.number}: distance=${p.distance.toFixed(2)}, pos=(${p.x.toFixed(1)}, ${p.y.toFixed(1)})`);
+                });
+                
                 // Check if the closest pocket matches the result
                 if (closestPocket) {
                     const actualNumber = parseInt(closestPocket.attr('data-number'));
+                    console.log('Closest pocket number:', actualNumber);
+                    console.log('Expected number:', resultNum);
+                    console.log('Match:', actualNumber === resultNum ? 'YES' : 'NO');
+                    
                     if (actualNumber !== resultNum) {
+                        console.log('MISMATCH DETECTED - Attempting correction...');
                         // Need to correct - calculate adjustment needed
                         const actualIndex = rouletteNumbers.findIndex(n => n.num === actualNumber);
                         const winningIndex = rouletteNumbers.findIndex(n => n.num === resultNum);
                         let indexDiff = (winningIndex - actualIndex + rouletteNumbers.length) % rouletteNumbers.length;
                         const angleAdjustment = indexDiff * anglePerNumber;
                         
+                        console.log('Actual index:', actualIndex, 'Winning index:', winningIndex);
+                        console.log('Index difference:', indexDiff);
+                        console.log('Angle adjustment:', angleAdjustment);
+                        console.log('Current total rotation:', totalRotation);
+                        console.log('New total rotation:', totalRotation + angleAdjustment);
+                        
                         // Apply small corrective rotation
                         $('#rouletteWheel').css({
                             transition: 'transform 0.3s ease-out',
                             transform: `rotate(${totalRotation + angleAdjustment}deg)`
                         });
+                    } else {
+                        console.log('SUCCESS: Numbers match!');
                     }
                 }
+                console.log('=== END VERIFICATION ===');
             });
             
         
