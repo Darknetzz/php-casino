@@ -32,6 +32,15 @@ include __DIR__ . '/../includes/navbar.php';
                 <div id="result" class="result-message"></div>
             </div>
             
+            <div class="win-rate-section" style="margin: 20px 0; padding: 15px; background: #f8f9fa; border-radius: 8px;">
+                <h4 style="margin: 0 0 10px 0; color: #667eea;">📊 Your Stats</h4>
+                <div id="winRateDisplay" style="color: #666;">
+                    <span>Win Rate: <strong id="winRate">-</strong>%</span>
+                    <span style="margin-left: 20px;">Games Played: <strong id="gamesPlayed">-</strong></span>
+                    <span style="margin-left: 20px;">Wins: <strong id="wins">-</strong></span>
+                </div>
+            </div>
+            
             <div class="game-info">
                 <h3>How to Play:</h3>
                 <table class="slots-info-table">
@@ -80,4 +89,16 @@ include __DIR__ . '/../includes/navbar.php';
     </div>
     
     <script src="../js/plinko.js"></script>
+    <script>
+        $(document).ready(function() {
+            // Load win rate for plinko
+            $.get(getApiPath('getWinRates') + '&game=plinko', function(data) {
+                if (data.success && data.winRate) {
+                    $('#winRate').text(data.winRate.rate);
+                    $('#gamesPlayed').text(data.winRate.total);
+                    $('#wins').text(data.winRate.wins);
+                }
+            }, 'json');
+        });
+    </script>
 <?php include __DIR__ . '/../includes/footer.php'; ?>

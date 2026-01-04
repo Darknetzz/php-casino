@@ -86,7 +86,8 @@ $(document).ready(function() {
             $.post('../api/api.php?action=updateBalance', {
             amount: -betAmount,
             type: 'bet',
-            description: 'Plinko bet'
+            description: 'Plinko bet',
+            game: 'plinko'
         }, function(data) {
             if (!data.success) {
                 $('#result').html('<div class="alert alert-error">' + (data.message || 'Insufficient funds') + '</div>');
@@ -130,7 +131,8 @@ $(document).ready(function() {
                             $.post('../api/api.php?action=updateBalance', {
                                 amount: winAmount,
                                 type: 'win',
-                                description: `Plinko win: ${multiplier.toFixed(1)}x multiplier`
+                                description: `Plinko win: ${multiplier.toFixed(1)}x multiplier`,
+                                game: 'plinko'
                             }, function(data) {
                                 if (data.success) {
                                     $('#balance').text(parseFloat(data.balance).toFixed(2));

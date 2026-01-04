@@ -31,6 +31,37 @@ include __DIR__ . '/../includes/navbar.php';
                 </div>
             </div>
             
+            <div class="win-rates-section" style="margin-top: 30px; padding: 20px; background: #f8f9fa; border-radius: 8px;">
+                <h2 style="margin-top: 0; color: #667eea;">📊 Win Rates</h2>
+                <div id="winRatesDisplay" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                    <div style="padding: 15px; background: white; border-radius: 8px; text-align: center;">
+                        <h4 style="margin: 0 0 10px 0; color: #667eea;">Overall</h4>
+                        <div style="font-size: 24px; font-weight: bold; color: #333;" id="overallRate">-</div>
+                        <div style="color: #666; font-size: 14px;" id="overallGames">- games</div>
+                    </div>
+                    <div style="padding: 15px; background: white; border-radius: 8px; text-align: center;">
+                        <h4 style="margin: 0 0 10px 0; color: #667eea;">🎰 Slots</h4>
+                        <div style="font-size: 24px; font-weight: bold; color: #333;" id="slotsRate">-</div>
+                        <div style="color: #666; font-size: 14px;" id="slotsGames">- games</div>
+                    </div>
+                    <div style="padding: 15px; background: white; border-radius: 8px; text-align: center;">
+                        <h4 style="margin: 0 0 10px 0; color: #667eea;">🃏 Blackjack</h4>
+                        <div style="font-size: 24px; font-weight: bold; color: #333;" id="blackjackRate">-</div>
+                        <div style="color: #666; font-size: 14px;" id="blackjackGames">- games</div>
+                    </div>
+                    <div style="padding: 15px; background: white; border-radius: 8px; text-align: center;">
+                        <h4 style="margin: 0 0 10px 0; color: #667eea;">🎲 Roulette</h4>
+                        <div style="font-size: 24px; font-weight: bold; color: #333;" id="rouletteRate">-</div>
+                        <div style="color: #666; font-size: 14px;" id="rouletteGames">- games</div>
+                    </div>
+                    <div style="padding: 15px; background: white; border-radius: 8px; text-align: center;">
+                        <h4 style="margin: 0 0 10px 0; color: #667eea;">⚪ Plinko</h4>
+                        <div style="font-size: 24px; font-weight: bold; color: #333;" id="plinkoRate">-</div>
+                        <div style="color: #666; font-size: 14px;" id="plinkoGames">- games</div>
+                    </div>
+                </div>
+            </div>
+            
             <div class="refill-section">
                 <h2>⚙️ Default Bet Amount</h2>
                 <div id="defaultBetMessage"></div>
@@ -165,6 +196,45 @@ include __DIR__ . '/../includes/navbar.php';
                     }
                 }, 'json');
             }, 5000);
+        });
+        
+        // Load win rates
+        $(document).ready(function() {
+            $.get(getApiPath('getWinRates'), function(data) {
+                if (data.success && data.winRates) {
+                    const rates = data.winRates;
+                    
+                    // Overall
+                    if (rates.overall) {
+                        $('#overallRate').text(rates.overall.rate + '%');
+                        $('#overallGames').text(rates.overall.total + ' games (' + rates.overall.wins + ' wins)');
+                    }
+                    
+                    // Slots
+                    if (rates.slots) {
+                        $('#slotsRate').text(rates.slots.rate + '%');
+                        $('#slotsGames').text(rates.slots.total + ' games (' + rates.slots.wins + ' wins)');
+                    }
+                    
+                    // Blackjack
+                    if (rates.blackjack) {
+                        $('#blackjackRate').text(rates.blackjack.rate + '%');
+                        $('#blackjackGames').text(rates.blackjack.total + ' games (' + rates.blackjack.wins + ' wins)');
+                    }
+                    
+                    // Roulette
+                    if (rates.roulette) {
+                        $('#rouletteRate').text(rates.roulette.rate + '%');
+                        $('#rouletteGames').text(rates.roulette.total + ' games (' + rates.roulette.wins + ' wins)');
+                    }
+                    
+                    // Plinko
+                    if (rates.plinko) {
+                        $('#plinkoRate').text(rates.plinko.rate + '%');
+                        $('#plinkoGames').text(rates.plinko.total + ' games (' + rates.plinko.wins + ' wins)');
+                    }
+                }
+            }, 'json');
         });
     </script>
 <?php include __DIR__ . '/../includes/footer.php'; ?>

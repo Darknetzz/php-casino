@@ -68,10 +68,18 @@ class Database {
                 type TEXT NOT NULL,
                 amount REAL NOT NULL,
                 description TEXT,
+                game TEXT,
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (user_id) REFERENCES users(id)
             )
         ");
+        
+        // Try to add game column if table already exists
+        try {
+            $this->db->exec("ALTER TABLE transactions ADD COLUMN game TEXT");
+        } catch (PDOException $e) {
+            // Column already exists, ignore
+        }
         
         // Settings table
         $this->db->exec("
@@ -146,9 +154,9 @@ class Database {
         return $stmt->execute([$newBalance, $userId]);
     }
     
-    public function addTransaction($userId, $type, $amount, $description = '') {
-        $stmt = $this->db->prepare("INSERT INTO transactions (user_id, type, amount, description) VALUES (?, ?, ?, ?)");
-        return $stmt->execute([$userId, $type, $amount, $description]);
+    public function addTransaction($userId, $type, $amount, $description = '', $game = null) {
+        $stmt = $this->db->prepare("INSERT INTO transactions (user_id, type, amount, description, game) VALUES (?, ?, ?, ?, ?)");
+        return $stmt->execute([$userId, $type, $amount, $description, $game]);
     }
     
     public function getTransactions($userId, $limit = 10) {
@@ -210,6 +218,54 @@ class Database {
             $settings[$row['setting_key']] = $row['setting_value'];
         }
         return $settings;
+    }
+    
+    // Win rate functions
+    public function getWinRate($userId, $game = null) {
+        $whereClause = "user_id = ? AND (type = 'win' OR type = 'bet')";
+        $params = [$userId];
+        
+        if ($game !== null) {
+            $whereClause .= " AND game = ?";
+            $params[] = $game;
+        }
+        
+        // Get total games played (bets)
+        $stmt = $this->db->prepare("SELECT COUNT(*) as total FROM transactions WHERE $whereClause AND type = 'bet'");
+        $stmt->execute($params);
+        $totalGames = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
+        
+        // Get total wins
+        $stmt = $this->db->prepare("SELECT COUNT(*) as wins FROM transactions WHERE $whereClause AND type = 'win'");
+        $stmt->execute($params);
+        $wins = $stmt->fetch(PDO::FETCH_ASSOC)['wins'];
+        
+        if ($totalGames == 0) {
+            return ['wins' => 0, 'total' => 0, 'rate' => 0];
+        }
+        
+        $rate = ($wins / $totalGames) * 100;
+        
+        return [
+            'wins' => $wins,
+            'total' => $totalGames,
+            'rate' => round($rate, 2)
+        ];
+    }
+    
+    public function getAllWinRates($userId) {
+        $games = ['slots', 'blackjack', 'roulette', 'plinko'];
+        $winRates = [];
+        
+        // Overall win rate
+        $winRates['overall'] = $this->getWinRate($userId);
+        
+        // Per-game win rates
+        foreach ($games as $game) {
+            $winRates[$game] = $this->getWinRate($userId, $game);
+        }
+        
+        return $winRates;
     }
 }
 ?>

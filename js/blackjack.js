@@ -117,7 +117,8 @@ $(document).ready(function() {
             $.post('../api/api.php?action=updateBalance', {
                 amount: -bet,
                 type: 'bet',
-                description: 'Blackjack bet'
+                description: 'Blackjack bet',
+                game: 'blackjack'
             }, function(data) {
                 if (data.success) {
                     $('#balance').text(parseFloat(data.balance).toFixed(2));
@@ -191,7 +192,8 @@ $(document).ready(function() {
             $.post('../api/api.php?action=updateBalance', {
                 amount: winAmount,
                 type: 'win',
-                description: isBlackjack ? 'Blackjack win!' : 'Blackjack win'
+                description: isBlackjack ? 'Blackjack win!' : 'Blackjack win',
+                game: 'blackjack'
             }, function(data) {
                 if (data.success) {
                     $('#balance').text(parseFloat(data.balance).toFixed(2));
@@ -204,7 +206,8 @@ $(document).ready(function() {
             $.post('../api/api.php?action=updateBalance', {
                 amount: winAmount,
                 type: 'win',
-                description: 'Blackjack win!'
+                description: 'Blackjack win!',
+                game: 'blackjack'
             }, function(data) {
                 if (data.success) {
                     $('#balance').text(parseFloat(data.balance).toFixed(2));
@@ -217,7 +220,8 @@ $(document).ready(function() {
             $.post('../api/api.php?action=updateBalance', {
                 amount: winAmount,
                 type: 'win',
-                description: 'Blackjack win'
+                description: 'Blackjack win',
+                game: 'blackjack'
             }, function(data) {
                 if (data.success) {
                     $('#balance').text(parseFloat(data.balance).toFixed(2));
@@ -230,7 +234,8 @@ $(document).ready(function() {
             $.post('../api/api.php?action=updateBalance', {
                 amount: betAmount,
                 type: 'win',
-                description: 'Blackjack push'
+                description: 'Blackjack push',
+                game: 'blackjack'
             }, function(data) {
                 if (data.success) {
                     $('#balance').text(parseFloat(data.balance).toFixed(2));

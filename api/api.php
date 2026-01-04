@@ -97,6 +97,19 @@ switch ($action) {
         echo json_encode(['success' => true, 'transactions' => $transactions]);
         break;
         
+    case 'getWinRates':
+        $user = getCurrentUser();
+        $game = $_GET['game'] ?? null;
+        
+        if ($game !== null) {
+            $winRate = $db->getWinRate($user['id'], $game);
+            echo json_encode(['success' => true, 'winRate' => $winRate]);
+        } else {
+            $winRates = $db->getAllWinRates($user['id']);
+            echo json_encode(['success' => true, 'winRates' => $winRates]);
+        }
+        break;
+        
     default:
         echo json_encode(['success' => false, 'message' => 'Invalid action']);
 }

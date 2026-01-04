@@ -196,7 +196,8 @@ $(document).ready(function() {
                 $.post('../api/api.php?action=updateBalance', {
                     amount: winAmount,
                     type: 'win',
-                    description: `Slots win: ${s1}${s2}${s3} (${multiplier}x - ${winType})`
+                    description: `Slots win: ${s1}${s2}${s3} (${multiplier}x - ${winType})`,
+                    game: 'slots'
                 }, function(data) {
                     if (data.success) {
                         $('#balance').text(parseFloat(data.balance).toFixed(2));
@@ -207,7 +208,8 @@ $(document).ready(function() {
                 $.post('../api/api.php?action=updateBalance', {
                     amount: -betAmount,
                     type: 'bet',
-                    description: 'Slots bet'
+                    description: 'Slots bet',
+                    game: 'slots'
                 }, function(data) {
                     if (data.success) {
                         $('#balance').text(parseFloat(data.balance).toFixed(2));

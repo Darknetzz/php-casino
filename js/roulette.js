@@ -376,7 +376,8 @@ $(document).ready(function() {
                     $.post('../api/api.php?action=updateBalance', {
                         amount: netResult,
                         type: 'win',
-                        description: `Roulette win: ${totalWins} winning bet(s)`
+                        description: `Roulette win: ${totalWins} winning bet(s)`,
+                        game: 'roulette'
                     }, function(data) {
                         if (data.success) {
                             $('#balance').text(parseFloat(data.balance).toFixed(2));
@@ -406,7 +407,8 @@ $(document).ready(function() {
                     $.post('../api/api.php?action=updateBalance', {
                         amount: netResult, // This is negative
                         type: 'bet',
-                        description: `Roulette bet: ${totalBets} bet(s)`
+                        description: `Roulette bet: ${totalBets} bet(s)`,
+                        game: 'roulette'
                     }, function(data) {
                         if (data.success) {
                             $('#balance').text(parseFloat(data.balance).toFixed(2));
