@@ -124,6 +124,7 @@ $(document).ready(function() {
                     
                     $('#gameControls').show();
                     $('#result').html('');
+                    $('#newGameBtn').prop('disabled', true);
                     
                     // Check for blackjack
                     if (calculateHand(playerHand) === 21) {
@@ -138,15 +139,28 @@ $(document).ready(function() {
         gameActive = false;
         hideFirst = false;
         
-        // Dealer draws until 17 or higher
-        while (calculateHand(dealerHand) < 17) {
+        const playerScore = calculateHand(playerHand);
+        
+        // Dealer draws until 17 or higher, but stops if already beating player
+        while (true) {
+            const currentDealerScore = calculateHand(dealerHand);
+            
+            // Dealer must hit until 17, but if already beating player, stand
+            if (currentDealerScore >= 17) {
+                break; // Dealer stands at 17 or higher
+            }
+            
+            // If dealer is already beating player (and both are valid), stand
+            if (currentDealerScore > playerScore && playerScore <= 21 && currentDealerScore <= 21) {
+                break;
+            }
+            
             dealCard(dealerHand);
         }
         
         displayHand(dealerHand, '#dealerHand', false);
         updateScores();
         
-        const playerScore = calculateHand(playerHand);
         const dealerScore = calculateHand(dealerHand);
         
         let won = false;
@@ -208,11 +222,20 @@ $(document).ready(function() {
             }, 'json');
         }
         
-        $('#result').html(`<div class="alert ${won ? 'alert-success' : 'alert-error'}">${message}</div>`);
+        $('#result').html(`<div class="alert ${won ? 'alert-success' : 'alert-error'}">${message} <button class="btn btn-primary" id="newGameFromResult" style="margin-left: 10px; margin-top: 5px;">New Game</button></div>`);
         $('#gameControls').hide();
+        $('#newGameBtn').prop('disabled', false);
+        
+        // Add click handler for new game button in result
+        $('#newGameFromResult').click(function() {
+            startGame();
+        });
     }
     
     $('#newGameBtn').click(startGame);
+    
+    // Ensure new game button is enabled initially
+    $('#newGameBtn').prop('disabled', false);
     
     $('#hitBtn').click(function() {
         if (!gameActive) return;

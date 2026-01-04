@@ -321,6 +321,14 @@ body {
     text-align: center;
 }
 
+.alert .btn {
+    display: inline-block;
+    vertical-align: middle;
+    padding: 8px 16px;
+    font-size: 14px;
+    margin-left: 10px;
+}
+
 /* Blackjack */
 .blackjack-game {
     margin-bottom: 30px;
