@@ -3203,6 +3203,14 @@ body.dark-mode .loading-text {
     flex-shrink: 0;
 }
 
+/* Ensure history stays in one line */
+.round-history-section #roundHistoryList > div {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+}
+
 body.dark-mode .round-history-section [style*="border-radius: 50%"] {
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4) !important;
 }

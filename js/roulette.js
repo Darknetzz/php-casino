@@ -591,15 +591,15 @@ $(document).ready(function() {
     function loadHistory() {
         if (!$('#roundHistoryList').length) return; // Section doesn't exist (local mode)
         
-        $.get('../api/api.php?action=getRouletteHistory&limit=20', function(data) {
+        $.get('../api/api.php?action=getRouletteHistory&limit=10', function(data) {
             if (data.success && data.history) {
                 if (data.history.length === 0) {
                     $('#roundHistoryList').html('<p class="loading-text" style="text-align: center;">No history yet</p>');
                     return;
                 }
                 
-                // Display as colored circles in a row
-                let html = '<div style="display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; align-items: center;">';
+                // Display as colored circles in a single row (no wrap, max 10 rounds)
+                let html = '<div style="display: flex; flex-wrap: nowrap; gap: 10px; justify-content: flex-start; align-items: center; overflow-x: auto; padding: 5px 0;">';
                 
                 data.history.forEach(function(round) {
                     const result = round.result_number !== null ? round.result_number : '-';
@@ -954,15 +954,15 @@ $(document).ready(function() {
     function loadHistory() {
         if (!$('#roundHistoryList').length) return; // Section doesn't exist (local mode)
         
-        $.get('../api/api.php?action=getRouletteHistory&limit=20', function(data) {
+        $.get('../api/api.php?action=getRouletteHistory&limit=10', function(data) {
             if (data.success && data.history) {
                 if (data.history.length === 0) {
                     $('#roundHistoryList').html('<p class="loading-text" style="text-align: center;">No history yet</p>');
                     return;
                 }
                 
-                // Display as colored circles in a row
-                let html = '<div style="display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; align-items: center;">';
+                // Display as colored circles in a single row (no wrap, max 10 rounds)
+                let html = '<div style="display: flex; flex-wrap: nowrap; gap: 10px; justify-content: flex-start; align-items: center; overflow-x: auto; padding: 5px 0;">';
                 
                 data.history.forEach(function(round) {
                     const result = round.result_number !== null ? round.result_number : '-';
