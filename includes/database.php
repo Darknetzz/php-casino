@@ -225,12 +225,12 @@ class Database {
             // Blackjack dealer stand threshold
             'blackjack_dealer_stand' => '17',
             // Roulette round settings
-            'roulette_betting_duration' => '15', // seconds
+            'roulette_betting_duration' => '30', // seconds
             'roulette_spinning_duration' => '4', // seconds
-            'roulette_round_interval' => '5', // seconds between rounds
+            'roulette_round_interval' => '60', // seconds between rounds
             // Crash round settings
-            'crash_betting_duration' => '15', // seconds
-            'crash_round_interval' => '5', // seconds between rounds
+            'crash_betting_duration' => '30', // seconds
+            'crash_round_interval' => '60', // seconds between rounds
             // Game mode settings
             'roulette_mode' => 'local', // 'local' or 'central'
             'crash_mode' => 'local' // 'local' or 'central'

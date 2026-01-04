@@ -679,7 +679,7 @@ $(document).ready(function() {
             
             placeNextBet();
         }, 'json');
-    });
+    }
     
     function updateBalance() {
         $.get('../api/api.php?action=getBalance', function(data) {

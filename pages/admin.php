@@ -219,8 +219,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $crashSpeed = floatval($_POST['crash_speed'] ?? 0.02);
                 $crashMaxMultiplier = floatval($_POST['crash_max_multiplier'] ?? 0);
                 $crashDistributionParam = floatval($_POST['crash_distribution_param'] ?? 0.99);
-                $crashBettingDuration = intval($_POST['crash_betting_duration'] ?? 15);
-                $crashRoundInterval = intval($_POST['crash_round_interval'] ?? 5);
+                $crashBettingDuration = intval($_POST['crash_betting_duration'] ?? 30);
+                $crashRoundInterval = intval($_POST['crash_round_interval'] ?? 60);
                 
                 if ($crashSpeed <= 0 || $crashSpeed > 1) {
                     $errors[] = 'Crash speed must be between 0 and 1';
@@ -249,9 +249,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             // Roulette settings
             if (isset($_POST['roulette_betting_duration'])) {
-                $rouletteBettingDuration = intval($_POST['roulette_betting_duration'] ?? 15);
+                $rouletteBettingDuration = intval($_POST['roulette_betting_duration'] ?? 30);
                 $rouletteSpinningDuration = intval($_POST['roulette_spinning_duration'] ?? 4);
-                $rouletteRoundInterval = intval($_POST['roulette_round_interval'] ?? 5);
+                $rouletteRoundInterval = intval($_POST['roulette_round_interval'] ?? 60);
                 
                 if ($rouletteBettingDuration < 5 || $rouletteBettingDuration > 300) {
                     $errors[] = 'Roulette betting duration must be between 5 and 300 seconds';
@@ -907,10 +907,10 @@ include __DIR__ . '/../includes/navbar.php';
                                 <td>
                                     <input type="number" id="roulette_betting_duration" name="roulette_betting_duration"
                                            min="5" max="300" step="1" 
-                                           value="<?php echo htmlspecialchars($settings['roulette_betting_duration'] ?? '15'); ?>"
+                                           value="<?php echo htmlspecialchars($settings['roulette_betting_duration'] ?? '30'); ?>"
                                            required style="width: 100px; padding: 8px;">
                                 </td>
-                                <td>How long users can place bets before the wheel spins. Default: 15 seconds</td>
+                                <td>How long users can place bets before the wheel spins. Default: 30 seconds</td>
                             </tr>
                             <tr>
                                 <td>Spinning Duration (seconds)</td>
@@ -927,10 +927,10 @@ include __DIR__ . '/../includes/navbar.php';
                                 <td>
                                     <input type="number" id="roulette_round_interval" name="roulette_round_interval"
                                            min="1" max="300" step="1" 
-                                           value="<?php echo htmlspecialchars($settings['roulette_round_interval'] ?? '5'); ?>"
+                                           value="<?php echo htmlspecialchars($settings['roulette_round_interval'] ?? '60'); ?>"
                                            required style="width: 100px; padding: 8px;">
                                 </td>
-                                <td>Time between rounds. Default: 5 seconds</td>
+                                <td>Time between rounds. Default: 60 seconds</td>
                             </tr>
                         </tbody>
                     </table>
@@ -1001,20 +1001,20 @@ include __DIR__ . '/../includes/navbar.php';
                                 <td>
                                     <input type="number" id="crash_betting_duration" name="crash_betting_duration"
                                            min="5" max="300" step="1" 
-                                           value="<?php echo htmlspecialchars($settings['crash_betting_duration'] ?? '15'); ?>"
+                                           value="<?php echo htmlspecialchars($settings['crash_betting_duration'] ?? '30'); ?>"
                                            required style="width: 100px; padding: 8px;">
                                 </td>
-                                <td>How long users can place bets before the round starts. Default: 15 seconds</td>
+                                <td>How long users can place bets before the round starts. Default: 30 seconds</td>
                             </tr>
                             <tr>
                                 <td>Round Interval (seconds)</td>
                                 <td>
                                     <input type="number" id="crash_round_interval" name="crash_round_interval"
                                            min="1" max="300" step="1" 
-                                           value="<?php echo htmlspecialchars($settings['crash_round_interval'] ?? '5'); ?>"
+                                           value="<?php echo htmlspecialchars($settings['crash_round_interval'] ?? '60'); ?>"
                                            required style="width: 100px; padding: 8px;">
                                 </td>
-                                <td>Time between rounds. Default: 5 seconds</td>
+                                <td>Time between rounds. Default: 60 seconds</td>
                             </tr>
                         </tbody>
                     </table>
@@ -1149,11 +1149,13 @@ include __DIR__ . '/../includes/navbar.php';
                 $crashMode = getSetting('crash_mode', 'local');
                 
                 // Function to get roulette number color
+                // Red numbers match the actual roulette wheel: 1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36
                 function getRouletteNumberColor($number) {
+                    $number = intval($number); // Ensure it's an integer
                     $redNumbers = [1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36];
-                    if ($number == 0) {
+                    if ($number === 0) {
                         return '#28a745'; // Green
-                    } elseif (in_array($number, $redNumbers)) {
+                    } elseif (in_array($number, $redNumbers, true)) {
                         return '#dc3545'; // Red
                     } else {
                         return '#333333'; // Black (darker for better visibility)
@@ -1861,13 +1863,15 @@ include __DIR__ . '/../includes/navbar.php';
             const crashMode = '<?php echo $crashMode; ?>';
             
             // Function to get roulette number color
+            // Red numbers match the actual roulette wheel: 1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36
             function getRouletteNumberColor(number) {
+                const num = parseInt(number, 10); // Ensure it's an integer
                 const redNumbers = [1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36];
                 // Check if dark mode is active
                 const isDarkMode = document.body.classList.contains('dark-mode');
-                if (number == 0) {
+                if (num === 0) {
                     return '#28a745'; // Green
-                } else if (redNumbers.includes(parseInt(number))) {
+                } else if (redNumbers.includes(num)) {
                     return '#dc3545'; // Red
                 } else {
                     return isDarkMode ? '#e0e0e0' : '#333333'; // Light gray in dark mode, dark gray in light mode

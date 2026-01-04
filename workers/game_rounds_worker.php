@@ -15,11 +15,11 @@ $db = new Database();
 $pf = new ProvablyFair();
 
 // Settings
-$rouletteBettingDuration = intval(getSetting('roulette_betting_duration', 15));
+$rouletteBettingDuration = intval(getSetting('roulette_betting_duration', 30));
 $rouletteSpinningDuration = intval(getSetting('roulette_spinning_duration', 4));
-$rouletteRoundInterval = intval(getSetting('roulette_round_interval', 5));
-$crashBettingDuration = intval(getSetting('crash_betting_duration', 15));
-$crashRoundInterval = intval(getSetting('crash_round_interval', 5));
+$rouletteRoundInterval = intval(getSetting('roulette_round_interval', 60));
+$crashBettingDuration = intval(getSetting('crash_betting_duration', 30));
+$crashRoundInterval = intval(getSetting('crash_round_interval', 60));
 $crashDistributionParam = floatval(getSetting('crash_distribution_param', 0.99));
 
 function processRouletteRound($db, $pf) {
