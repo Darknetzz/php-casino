@@ -4,7 +4,7 @@ $(document).ready(function() {
     let maxBet = 100;
     let settings = {};
     let multipliers = {};
-    let twoOfKindMultiplier = 0.5;
+    let twoOfKindMultiplier = 1.0;
     
     // Function to update total bet display (defined early so it's available everywhere)
     function updateTotalBetDisplay() {
@@ -42,7 +42,7 @@ $(document).ready(function() {
                     symbols.push(symbol.emoji);
                     multipliers[symbol.emoji] = parseFloat(symbol.multiplier) || 0;
                 });
-                twoOfKindMultiplier = data.settings.slots_multipliers.two_of_kind || 0.5;
+                twoOfKindMultiplier = data.settings.slots_multipliers.two_of_kind || 1.0;
                 
                 // Initialize reels with symbols
                 initializeReels();
