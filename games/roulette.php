@@ -29,7 +29,7 @@ include __DIR__ . '/../includes/navbar.php';
                         <div class="bet-buttons">
                             <button class="bet-btn" data-bet="red" data-multiplier="2">Red (2x)</button>
                             <button class="bet-btn" data-bet="black" data-multiplier="2">Black (2x)</button>
-                            <button class="bet-btn" data-bet="green" data-multiplier="14">Green (14x)</button>
+                            <button class="bet-btn" data-bet="green" data-multiplier="36">Green (36x)</button>
                             <button class="bet-btn" data-bet="even" data-multiplier="2">Even (2x)</button>
                             <button class="bet-btn" data-bet="odd" data-multiplier="2">Odd (2x)</button>
                             <button class="bet-btn" data-bet="low" data-multiplier="2">1-18 (2x)</button>
@@ -102,7 +102,7 @@ include __DIR__ . '/../includes/navbar.php';
                         </tr>
                         <tr>
                             <td>Green (0)</td>
-                            <td>14x bet</td>
+                            <td>36x bet</td>
                         </tr>
                         <tr>
                             <td>Specific number (0-36)</td>
