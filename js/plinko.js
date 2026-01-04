@@ -263,8 +263,10 @@ $(document).ready(function() {
                             // Can only move left (to previousCol - 1)
                             newCol = previousCol - 1;
                         } else {
-                            // Can move either left or right - randomly choose
-                            if (Math.random() < 0.5) {
+                            // Can move either left or right - randomly choose (50/50 chance)
+                            // Use Math.random() which should be uniformly distributed
+                            const randomValue = Math.random();
+                            if (randomValue < 0.5) {
                                 // Move left (to previousCol - 1)
                                 newCol = previousCol - 1;
                             } else {
