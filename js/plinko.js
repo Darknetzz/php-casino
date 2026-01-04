@@ -142,7 +142,8 @@ $(document).ready(function() {
                         currentRow: 0,
                         currentCol: 0, // Column index within the current row (0 to currentRow)
                         completed: false,
-                        stepDelay: 0 // Delay counter for step-by-step movement
+                        stepDelay: 0, // Delay counter for step-by-step movement
+                        lastProcessedRow: -1 // Track last processed row to prevent double-processing
                     };
                     
                     activeBalls.push(ballData);
@@ -166,6 +167,11 @@ $(document).ready(function() {
                             return;
                         }
                         ball.stepDelay = 0;
+                        
+                        // Prevent double-processing - ensure we only move once per step
+                        if (ball.lastProcessedRow === ball.currentRow) {
+                            return; // Already processed this row
+                        }
                         
                         // Check if ball reached the bottom
                         if (ball.currentRow >= rows) {
@@ -230,21 +236,30 @@ $(document).ready(function() {
                             return;
                         }
                         
-                        // Store previous position before moving
+                        // Store previous position before moving - ensure it's valid
                         const previousRow = ball.currentRow;
                         const previousCol = Math.round(ball.currentCol);
+                        const maxColForPreviousRow = previousRow; // Max col for previous row
+                        
+                        // Validate previous position is within bounds
+                        const validPreviousCol = Math.max(0, Math.min(maxColForPreviousRow, previousCol));
                         
                         // Move to next row (one step at a time)
                         ball.currentRow++;
                         const newRow = ball.currentRow;
                         const maxColForNewRow = newRow; // Maximum valid column for new row (0 to newRow)
                         
-                        // The ball's column position from the previous row should be valid for the new row
-                        // But we need to ensure it's within bounds (previous row had max col = previousRow, new row has max col = newRow)
-                        let currentCol = previousCol;
+                        // The ball's column from previous row should be valid for new row
+                        // (since new row has more columns than previous row)
+                        let currentCol = validPreviousCol;
                         
-                        // Clamp to valid range for new row (shouldn't be needed, but safety check)
-                        currentCol = Math.max(0, Math.min(maxColForNewRow, currentCol));
+                        // Ensure it's within bounds for new row (should always be, but safety check)
+                        if (currentCol > maxColForNewRow) {
+                            currentCol = maxColForNewRow;
+                        }
+                        if (currentCol < 0) {
+                            currentCol = 0;
+                        }
                         
                         // When ball hits a peg, randomly bounce left or right by exactly 1 position
                         // Determine bounce direction based on current position in new row
@@ -261,14 +276,27 @@ $(document).ready(function() {
                             bounceDirection = Math.random() < 0.5 ? -1 : 1;
                         }
                         
-                        // Move by exactly 1 position (no more, no less)
-                        currentCol = currentCol + bounceDirection;
+                        // Move by exactly 1 position (no more, no less) - this is the ONLY movement
+                        const newCol = currentCol + bounceDirection;
                         
-                        // Final safety check - ensure we're still within bounds
-                        currentCol = Math.max(0, Math.min(maxColForNewRow, currentCol));
+                        // Final validation - ensure result is within bounds
+                        const finalCol = Math.max(0, Math.min(maxColForNewRow, newCol));
                         
-                        // Update ball's column position
-                        ball.currentCol = currentCol;
+                        // Verify the movement was exactly 1 position
+                        const actualMovement = Math.abs(finalCol - currentCol);
+                        if (actualMovement > 1) {
+                            console.error('Illegal move detected! Ball moved', actualMovement, 'positions. From col', currentCol, 'to col', finalCol, 'Row:', newRow);
+                            // Force it to be exactly 1 position in the correct direction
+                            ball.currentCol = currentCol + bounceDirection;
+                            // Clamp to bounds
+                            ball.currentCol = Math.max(0, Math.min(maxColForNewRow, ball.currentCol));
+                        } else {
+                            // Update ball's column position
+                            ball.currentCol = finalCol;
+                        }
+                        
+                        // Mark this row as processed
+                        ball.lastProcessedRow = newRow;
                         
                         updateBallPosition(ball);
                     });
