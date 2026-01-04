@@ -517,10 +517,13 @@ include __DIR__ . '/../includes/navbar.php';
                 <p style="margin-bottom: 20px; color: #666;">Configure betting and deposit limits for the casino.</p>
                 <form method="POST" action="admin.php?tab=limits" class="admin-form">
                     <div class="form-group">
-                        <label style="display: flex; align-items: center; gap: 10px;">
-                            <input type="checkbox" id="max_deposit_enabled" name="max_deposit_enabled" value="1" 
-                                   <?php echo (getSetting('max_deposit_enabled', '1') === '1') ? 'checked' : ''; ?>>
-                            <span>Enable Max Deposit Limit</span>
+                        <label class="toggle-switch-label">
+                            <span class="toggle-switch">
+                                <input type="checkbox" id="max_deposit_enabled" name="max_deposit_enabled" value="1" 
+                                       <?php echo (getSetting('max_deposit_enabled', '1') === '1') ? 'checked' : ''; ?>>
+                                <span class="toggle-slider"></span>
+                            </span>
+                            <span class="toggle-label-text">Enable Max Deposit Limit</span>
                         </label>
                     </div>
                     <div class="form-group">
@@ -531,10 +534,13 @@ include __DIR__ . '/../includes/navbar.php';
                         <small>Leave disabled to allow unlimited deposits</small>
                     </div>
                     <div class="form-group">
-                        <label style="display: flex; align-items: center; gap: 10px;">
-                            <input type="checkbox" id="max_bet_enabled" name="max_bet_enabled" value="1" 
-                                   <?php echo (getSetting('max_bet_enabled', '1') === '1') ? 'checked' : ''; ?>>
-                            <span>Enable Max Bet Limit</span>
+                        <label class="toggle-switch-label">
+                            <span class="toggle-switch">
+                                <input type="checkbox" id="max_bet_enabled" name="max_bet_enabled" value="1" 
+                                       <?php echo (getSetting('max_bet_enabled', '1') === '1') ? 'checked' : ''; ?>>
+                                <span class="toggle-slider"></span>
+                            </span>
+                            <span class="toggle-label-text">Enable Max Bet Limit</span>
                         </label>
                     </div>
                     <div class="form-group">
@@ -2588,6 +2594,36 @@ include __DIR__ . '/../includes/navbar.php';
                     clearInterval(roundsPollInterval);
                 }
             });
+            <?php endif; ?>
+            
+            // Handle toggle switches for limits
+            <?php if ($currentTab === 'limits'): ?>
+            function updateLimitInputs() {
+                const maxDepositEnabled = $('#max_deposit_enabled').is(':checked');
+                const maxBetEnabled = $('#max_bet_enabled').is(':checked');
+                
+                const maxDepositInput = $('#max_deposit');
+                const maxBetInput = $('#max_bet');
+                
+                if (maxDepositEnabled) {
+                    maxDepositInput.prop('required', true);
+                    maxDepositInput.prop('disabled', false);
+                } else {
+                    maxDepositInput.prop('required', false);
+                    maxDepositInput.prop('disabled', false);
+                }
+                
+                if (maxBetEnabled) {
+                    maxBetInput.prop('required', true);
+                    maxBetInput.prop('disabled', false);
+                } else {
+                    maxBetInput.prop('required', false);
+                    maxBetInput.prop('disabled', false);
+                }
+            }
+            
+            $('#max_deposit_enabled, #max_bet_enabled').on('change', updateLimitInputs);
+            updateLimitInputs(); // Initialize on page load
             <?php endif; ?>
         });
     </script>
