@@ -34,7 +34,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         
         // Check if this is game modes update (from rounds tab)
-        if (isset($_POST['roulette_mode']) && isset($_POST['update_game_modes'])) {
+        if (isset($_POST['update_game_modes'])) {
+            $errors = [];
             $rouletteMode = $_POST['roulette_mode'] ?? 'local';
             $crashMode = $_POST['crash_mode'] ?? 'local';
             
@@ -50,11 +51,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $db->setSetting('crash_mode', $crashMode);
                 header('Location: admin.php?tab=rounds&success=1');
                 exit;
+            } else {
+                $error = implode(', ', $errors);
             }
         }
         
         // Check if this is worker settings update
-        if (isset($_POST['worker_interval']) && isset($_POST['update_worker_settings'])) {
+        if (isset($_POST['update_worker_settings'])) {
+            $errors = [];
             $workerInterval = intval($_POST['worker_interval'] ?? 1);
             
             if ($workerInterval < 1) {
@@ -68,6 +72,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $db->setSetting('worker_interval', $workerInterval);
                 header('Location: admin.php?tab=rounds&success=1');
                 exit;
+            } else {
+                $error = implode(', ', $errors);
             }
         }
         
