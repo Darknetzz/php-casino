@@ -47,6 +47,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $rouletteMode = $_POST['roulette_mode'] ?? 'local';
             $crashMode = $_POST['crash_mode'] ?? 'local';
             
+            // Force stay on rounds tab
+            $currentTab = 'rounds';
+            
             if (!in_array($rouletteMode, ['local', 'central'])) {
                 $errors[] = 'Invalid roulette mode';
             }
@@ -56,10 +59,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             if (empty($errors)) {
                 try {
-                    $db->setSetting('roulette_mode', $rouletteMode);
-                    $db->setSetting('crash_mode', $crashMode);
-                    header('Location: admin.php?tab=rounds&success=1');
-                    exit;
+                    $result1 = $db->setSetting('roulette_mode', $rouletteMode);
+                    $result2 = $db->setSetting('crash_mode', $crashMode);
+                    if ($result1 && $result2) {
+                        header('Location: admin.php?tab=rounds&success=1');
+                        exit;
+                    } else {
+                        $error = 'Failed to save settings. setSetting returned: roulette=' . ($result1 ? 'true' : 'false') . ', crash=' . ($result2 ? 'true' : 'false');
+                    }
                 } catch (Exception $e) {
                     $error = 'Error saving settings: ' . $e->getMessage();
                 }
@@ -73,6 +80,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $errors = [];
             $workerInterval = intval($_POST['worker_interval'] ?? 1);
             
+            // Force stay on rounds tab
+            $currentTab = 'rounds';
+            
             if ($workerInterval < 1) {
                 $errors[] = 'Worker interval must be at least 1 second';
             }
@@ -82,9 +92,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             if (empty($errors)) {
                 try {
-                    $db->setSetting('worker_interval', $workerInterval);
-                    header('Location: admin.php?tab=rounds&success=1');
-                    exit;
+                    $result = $db->setSetting('worker_interval', $workerInterval);
+                    if ($result) {
+                        header('Location: admin.php?tab=rounds&success=1');
+                        exit;
+                    } else {
+                        $error = 'Failed to save worker interval. setSetting returned false.';
+                    }
                 } catch (Exception $e) {
                     $error = 'Error saving settings: ' . $e->getMessage();
                 }
@@ -429,8 +443,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $settings = $db->getAllSettings();
 $users = $db->getAllUsers();
 
-// Get current tab from URL
-$currentTab = $_GET['tab'] ?? 'multipliers';
+// Get current tab from URL or POST (for form submissions)
+$currentTab = $_GET['tab'] ?? $_POST['tab'] ?? 'multipliers';
 $currentGame = $_GET['game'] ?? 'slots'; // Default to slots for multipliers subnav
 
 // Check for success message
