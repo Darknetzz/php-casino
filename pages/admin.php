@@ -76,8 +76,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $symbol = isset($rule['symbol']) ? trim($rule['symbol']) : '';
                         $multiplier = floatval($rule['multiplier'] ?? 0);
                         
-                        if ($count < 2 || $count > 10) {
-                            $errors[] = "N-of-a-kind rule #" . ($index + 1) . " count must be between 2 and 10";
+                        if ($count < 1 || $count > 10) {
+                            $errors[] = "N-of-a-kind rule #" . ($index + 1) . " count must be between 1 and 10";
                         }
                         if ($multiplier < 0) {
                             $errors[] = "N-of-a-kind rule #" . ($index + 1) . " multiplier must be greater than or equal to 0";
@@ -463,7 +463,7 @@ include __DIR__ . '/../includes/navbar.php';
                                     <td>
                                         <input type="number" class="n-of-kind-count" 
                                                value="<?php echo htmlspecialchars($rule['count'] ?? '2'); ?>" 
-                                               min="2" max="10" style="width: 80px; padding: 8px;" required>
+                                               min="1" max="10" style="width: 80px; padding: 8px;" required>
                                     </td>
                                     <td>
                                         <select class="n-of-kind-symbol" style="width: 120px; padding: 8px; font-size: 16px;">
@@ -1116,7 +1116,7 @@ include __DIR__ . '/../includes/navbar.php';
                         symbol = 'any';
                     }
                     const multiplier = parseFloat($(this).find('.n-of-kind-multiplier').val()) || 0;
-                    if (count >= 2 && count <= 10 && multiplier >= 0) {
+                    if (count >= 1 && count <= 10 && multiplier >= 0) {
                         nOfKindRules.push({count: count, symbol: symbol, multiplier: multiplier});
                     }
                 });
@@ -1187,7 +1187,7 @@ include __DIR__ . '/../includes/navbar.php';
             
             row.innerHTML = `
                 <td>
-                    <input type="number" class="n-of-kind-count" value="2" min="2" max="10" style="width: 80px; padding: 8px;" required>
+                    <input type="number" class="n-of-kind-count" value="2" min="1" max="10" style="width: 80px; padding: 8px;" required>
                 </td>
                 <td>
                     <select class="n-of-kind-symbol" style="width: 120px; padding: 8px; font-size: 16px;">
