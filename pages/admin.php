@@ -513,6 +513,7 @@ include __DIR__ . '/../includes/navbar.php';
                     <button id="workerStopBtn" class="btn btn-secondary" onclick="controlWorker('stop')">Stop Worker</button>
                     <button id="workerRestartBtn" class="btn btn-secondary" onclick="controlWorker('restart')">Restart Worker</button>
                     <button id="workerRefreshBtn" class="btn btn-secondary" onclick="updateWorkerStatus()">Refresh Status</button>
+                    <button id="workerLogsBtn" class="btn btn-secondary" onclick="viewWorkerLogs()">View Logs</button>
                 </div>
                 
                 <div id="workerMessage" style="margin-top: 15px;"></div>
@@ -1517,6 +1518,28 @@ include __DIR__ . '/../includes/navbar.php';
         </div>
     </div>
     
+    <!-- Worker Logs Modal -->
+    <div id="workerLogsModal" class="modal" style="display: none;">
+        <div class="modal-content" style="max-width: 800px; max-height: 80vh;">
+            <span class="close" onclick="closeModal('workerLogsModal')">&times;</span>
+            <h3>Worker Logs</h3>
+            <div style="margin-bottom: 15px; display: flex; gap: 10px; align-items: center;">
+                <label for="logLines">Lines to show:</label>
+                <select id="logLines" onchange="viewWorkerLogs()" style="padding: 5px 10px; border-radius: 4px; border: 1px solid #ddd;">
+                    <option value="50">Last 50</option>
+                    <option value="100" selected>Last 100</option>
+                    <option value="200">Last 200</option>
+                    <option value="500">Last 500</option>
+                    <option value="0">All</option>
+                </select>
+                <button class="btn btn-secondary" onclick="viewWorkerLogs()" style="margin-left: auto;">Refresh</button>
+            </div>
+            <div id="workerLogsContent" class="worker-logs-content" style="padding: 15px; border-radius: 5px; font-family: 'Courier New', monospace; font-size: 12px; max-height: 60vh; overflow-y: auto; white-space: pre-wrap; word-wrap: break-word;">
+                <div style="text-align: center; color: #888;">Loading logs...</div>
+            </div>
+        </div>
+    </div>
+    
     <script>
         // Worker management functions
         function updateWorkerStatus() {
@@ -1582,6 +1605,41 @@ include __DIR__ . '/../includes/navbar.php';
             }, 'json').fail(function() {
                 $message.html('<div class="alert alert-error">Error communicating with server</div>');
                 updateWorkerStatus();
+            });
+        }
+        
+        function viewWorkerLogs() {
+            const $modal = $('#workerLogsModal');
+            const $content = $('#workerLogsContent');
+            const lines = $('#logLines').val() || 100;
+            
+            // Show modal
+            $modal.show();
+            
+            // Show loading state
+            const loadingColor = $('body').hasClass('dark-mode') ? '#888' : '#666';
+            $content.html('<div style="text-align: center; color: ' + loadingColor + ';">Loading logs...</div>');
+            
+            // Fetch logs
+            $.get('../api/api.php?action=getWorkerLogs&lines=' + lines, function(data) {
+                if (data.success) {
+                    if (data.logs && data.logs.trim()) {
+                        // Escape HTML and format logs
+                        const logs = $('<div>').text(data.logs).html();
+                        $content.html(logs);
+                        // Auto-scroll to bottom
+                        $content.scrollTop($content[0].scrollHeight);
+                    } else {
+                        const emptyColor = $('body').hasClass('dark-mode') ? '#888' : '#666';
+                        $content.html('<div style="text-align: center; color: ' + emptyColor + ';">Log file is empty</div>');
+                    }
+                } else {
+                    const errorColor = $('body').hasClass('dark-mode') ? '#f87171' : '#dc3545';
+                    $content.html('<div style="text-align: center; color: ' + errorColor + ';">Error: ' + (data.message || 'Failed to load logs') + '</div>');
+                }
+            }, 'json').fail(function() {
+                const errorColor = $('body').hasClass('dark-mode') ? '#f87171' : '#dc3545';
+                $content.html('<div style="text-align: center; color: ' + errorColor + ';">Error communicating with server</div>');
             });
         }
         
@@ -2089,7 +2147,7 @@ include __DIR__ . '/../includes/navbar.php';
                 }
             }
             
-            function updateRouletteAllBetsDisplay(allBets) {
+            function updateRouletteAllBetsDisplay(allBets, predictedResult) {
                 const container = $('#rouletteAllBetsContent');
                 if (!container.length) return;
                 
@@ -2111,6 +2169,33 @@ include __DIR__ . '/../includes/navbar.php';
                     betsByUser[userId].bets.push(bet);
                 });
                 
+                // Helper function to check if a color/range bet wins
+                function checkColorBetWin(betType, resultNum) {
+                    const redNumbers = [1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36];
+                    const resultColor = resultNum === 0 ? 'green' : (redNumbers.includes(resultNum) ? 'red' : 'black');
+                    const isEven = resultNum !== 0 && resultNum % 2 === 0;
+                    const isOdd = resultNum !== 0 && resultNum % 2 === 1;
+                    
+                    switch(betType) {
+                        case 'red':
+                            return resultColor === 'red';
+                        case 'black':
+                            return resultColor === 'black';
+                        case 'green':
+                            return resultNum === 0;
+                        case 'even':
+                            return isEven;
+                        case 'odd':
+                            return isOdd;
+                        case 'low':
+                            return resultNum >= 1 && resultNum <= 18;
+                        case 'high':
+                            return resultNum >= 19 && resultNum <= 36;
+                        default:
+                            return false;
+                    }
+                }
+                
                 let html = '<div style="display: flex; flex-direction: column; gap: 12px;">';
                 
                 // Display bets grouped by user
@@ -2121,12 +2206,24 @@ include __DIR__ . '/../includes/navbar.php';
                     html += '<div style="display: flex; flex-direction: column; gap: 6px;">';
                     
                     userData.bets.forEach(function(bet) {
+                        // Check if bet matches predicted result (only if predictedResult is provided)
+                        let matchesPrediction = false;
+                        if (predictedResult !== null && predictedResult !== undefined) {
+                            if (bet.bet_type === 'number') {
+                                matchesPrediction = parseInt(bet.bet_value) === parseInt(predictedResult);
+                            } else if (bet.bet_type === 'color' || bet.bet_type === 'range') {
+                                matchesPrediction = checkColorBetWin(bet.bet_value, parseInt(predictedResult));
+                            }
+                        }
+                        
+                        const sparkleIcon = matchesPrediction ? ' 🔮' : '';
+                        
                         if (bet.bet_type === 'number') {
                             const number = parseInt(bet.bet_value);
                             const colors = getRouletteNumberColors(number);
                             html += '<div style="display: flex; align-items: center; gap: 8px; padding: 6px; background: white; border-radius: 4px;">';
                             html += '<div style="width: 24px; height: 24px; border-radius: 50%; background-color: ' + colors.bg + '; color: ' + colors.text + '; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.2);">' + number + '</div>';
-                            html += '<span>Number ' + bet.bet_value + ': $' + parseFloat(bet.amount).toFixed(2) + '</span>';
+                            html += '<span>Number ' + bet.bet_value + ': $' + parseFloat(bet.amount).toFixed(2) + sparkleIcon + '</span>';
                             html += '</div>';
                         } else if (bet.bet_type === 'color' || bet.bet_type === 'range') {
                             const betValue = bet.bet_value || '';
@@ -2140,7 +2237,7 @@ include __DIR__ . '/../includes/navbar.php';
                                 colorClass = 'bet-item-green';
                             }
                             html += '<div class="bet-item ' + colorClass + '" style="display: flex; align-items: center; padding: 6px; background: white; border-radius: 4px;">';
-                            html += '<span>' + betName + ': $' + parseFloat(bet.amount).toFixed(2) + ' (' + parseInt(bet.multiplier || 2) + 'x)</span>';
+                            html += '<span>' + betName + ': $' + parseFloat(bet.amount).toFixed(2) + ' (' + parseInt(bet.multiplier || 2) + 'x)' + sparkleIcon + '</span>';
                             html += '</div>';
                         }
                     });
@@ -2216,7 +2313,7 @@ include __DIR__ . '/../includes/navbar.php';
                                 
                                 // Update all bets display
                                 if (round.all_bets && round.all_bets.length > 0) {
-                                    updateRouletteAllBetsDisplay(round.all_bets);
+                                    updateRouletteAllBetsDisplay(round.all_bets, round.predicted_result);
                                 } else {
                                     $('#rouletteAllBetsContent').html('<p style="text-align: center; color: #999;">No bets placed yet</p>');
                                 }

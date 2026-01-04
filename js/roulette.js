@@ -293,7 +293,7 @@ $(document).ready(function() {
         }
     }
     
-    function updateAllPlayersBetsDisplay(allBets) {
+    function updateAllPlayersBetsDisplay(allBets, predictedResult) {
         const allBetsContainer = $('#allPlayersBets');
         if (!allBetsContainer.length) return; // Section doesn't exist (local mode)
         
@@ -325,12 +325,24 @@ $(document).ready(function() {
             html += '<div style="display: flex; flex-direction: column; gap: 6px;">';
             
             userData.bets.forEach(function(bet) {
+                // Check if bet matches predicted result (only if predictedResult is provided)
+                let matchesPrediction = false;
+                if (predictedResult !== null && predictedResult !== undefined) {
+                    if (bet.bet_type === 'number') {
+                        matchesPrediction = parseInt(bet.bet_value) === parseInt(predictedResult);
+                    } else if (bet.bet_type === 'color' || bet.bet_type === 'range') {
+                        matchesPrediction = checkColorBetWin(bet.bet_value, parseInt(predictedResult));
+                    }
+                }
+                
+                const sparkleIcon = matchesPrediction ? ' 🔮' : '';
+                
                 if (bet.bet_type === 'number') {
                     const number = parseInt(bet.bet_value);
                     const colors = getRouletteNumberColors(number);
                     html += '<div class="bet-item" style="display: flex; align-items: center; gap: 8px; padding: 6px; background: white; border-radius: 4px;">';
                     html += '<div style="width: 24px; height: 24px; border-radius: 50%; background-color: ' + colors.bg + '; color: ' + colors.text + '; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.2);">' + number + '</div>';
-                    html += '<span>Number ' + bet.bet_value + ': $' + parseFloat(bet.amount).toFixed(2) + '</span>';
+                    html += '<span>Number ' + bet.bet_value + ': $' + parseFloat(bet.amount).toFixed(2) + sparkleIcon + '</span>';
                     html += '</div>';
                 } else if (bet.bet_type === 'color' || bet.bet_type === 'range') {
                     const betValue = bet.bet_value || '';
@@ -344,7 +356,7 @@ $(document).ready(function() {
                         colorClass = 'bet-item-green';
                     }
                     html += '<div class="bet-item ' + colorClass + '" style="display: flex; align-items: center; padding: 6px; background: white; border-radius: 4px;">';
-                    html += '<span>' + betName + ': $' + parseFloat(bet.amount).toFixed(2) + ' (' + parseInt(bet.multiplier || 2) + 'x)</span>';
+                    html += '<span>' + betName + ': $' + parseFloat(bet.amount).toFixed(2) + ' (' + parseInt(bet.multiplier || 2) + 'x)' + sparkleIcon + '</span>';
                     html += '</div>';
                 }
             });
@@ -396,7 +408,7 @@ $(document).ready(function() {
                     // Update status display
                     updateRoundStatusDisplay(null);
                     // Clear all players' bets display
-                    updateAllPlayersBetsDisplay([]);
+                    updateAllPlayersBetsDisplay([], null);
                     // Load history anyway
                     loadHistory();
                     // Continue polling to catch when a round starts
@@ -444,9 +456,9 @@ $(document).ready(function() {
                     
                     // Display all players' bets
                     if (round.all_bets && round.all_bets.length > 0) {
-                        updateAllPlayersBetsDisplay(round.all_bets);
+                        updateAllPlayersBetsDisplay(round.all_bets, null); // No predicted result for regular users
                     } else {
-                        updateAllPlayersBetsDisplay([]);
+                        updateAllPlayersBetsDisplay([], null);
                     }
 
                     // Disable betting if betting period has ended
@@ -491,9 +503,9 @@ $(document).ready(function() {
                     
                     // Display all players' bets during spinning
                     if (round.all_bets && round.all_bets.length > 0) {
-                        updateAllPlayersBetsDisplay(round.all_bets);
+                        updateAllPlayersBetsDisplay(round.all_bets, null); // No predicted result for regular users
                     } else {
-                        updateAllPlayersBetsDisplay([]);
+                        updateAllPlayersBetsDisplay([], null);
                     }
                 } else if (round.status === 'finished') {
                     if (round.result_number !== null) {
@@ -509,9 +521,9 @@ $(document).ready(function() {
                     
                     // Display all players' bets for finished round
                     if (round.all_bets && round.all_bets.length > 0) {
-                        updateAllPlayersBetsDisplay(round.all_bets);
+                        updateAllPlayersBetsDisplay(round.all_bets, round.result_number);
                     } else {
-                        updateAllPlayersBetsDisplay([]);
+                        updateAllPlayersBetsDisplay([], null);
                     }
                     
                     // Wait for next round - continue polling

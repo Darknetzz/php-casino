@@ -657,6 +657,35 @@ switch ($action) {
             echo json_encode(['success' => false, 'message' => $message]);
         }
         break;
+    
+    case 'getWorkerLogs':
+        requireAdmin();
+        $logFile = __DIR__ . '/../workers/worker.log';
+        $lines = intval($_GET['lines'] ?? 100); // Default to last 100 lines
+        
+        if (!file_exists($logFile)) {
+            echo json_encode(['success' => false, 'message' => 'Log file not found']);
+            break;
+        }
+        
+        // Read the last N lines from the log file
+        $logContent = '';
+        if ($lines > 0) {
+            $command = 'tail -n ' . escapeshellarg($lines) . ' ' . escapeshellarg($logFile) . ' 2>&1';
+            $logContent = shell_exec($command);
+            if ($logContent === null) {
+                $logContent = '';
+            }
+        } else {
+            // Read entire file if lines is 0 or negative
+            $logContent = file_get_contents($logFile);
+            if ($logContent === false) {
+                $logContent = '';
+            }
+        }
+        
+        echo json_encode(['success' => true, 'logs' => $logContent]);
+        break;
         
     default:
         echo json_encode(['success' => false, 'message' => 'Invalid action']);

@@ -2810,6 +2810,24 @@ body.dark-mode .modal-footer {
     border-top-color: #555;
 }
 
+/* Worker Logs Content */
+.worker-logs-content {
+    background: #1e1e1e;
+    color: #d4d4d4;
+}
+
+body.dark-mode .worker-logs-content {
+    background: #0d0d0d;
+    color: #d4d4d4;
+    border: 1px solid #333;
+}
+
+body.dark-mode #logLines {
+    background: rgba(30, 30, 50, 0.98);
+    color: #e0e0e0;
+    border-color: #555;
+}
+
 /* Additional Dark Mode Styles for Missing Elements */
 body.dark-mode .welcome-section {
     color: #e0e0e0;
