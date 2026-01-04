@@ -1264,6 +1264,12 @@ include __DIR__ . '/../includes/navbar.php';
                                 <p>No active round - worker may not be running</p>
                             <?php endif; ?>
                         </div>
+                        <div id="rouletteAllBets" style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #ddd;">
+                            <h4 style="margin-top: 0; color: #667eea;">👥 All Players' Bets</h4>
+                            <div id="rouletteAllBetsContent" style="max-height: 300px; overflow-y: auto;">
+                                <p style="text-align: center; color: #999;">Loading bets...</p>
+                            </div>
+                        </div>
                     </div>
                     
                     <!-- Crash Round -->
@@ -2083,6 +2089,81 @@ include __DIR__ . '/../includes/navbar.php';
                 }
             }
             
+            function updateRouletteAllBetsDisplay(allBets) {
+                const container = $('#rouletteAllBetsContent');
+                if (!container.length) return;
+                
+                if (!allBets || allBets.length === 0) {
+                    container.html('<p style="text-align: center; color: #999;">No bets placed yet</p>');
+                    return;
+                }
+                
+                // Group bets by user
+                const betsByUser = {};
+                allBets.forEach(function(bet) {
+                    const userId = bet.user_id;
+                    if (!betsByUser[userId]) {
+                        betsByUser[userId] = {
+                            username: bet.username || 'Unknown',
+                            bets: []
+                        };
+                    }
+                    betsByUser[userId].bets.push(bet);
+                });
+                
+                let html = '<div style="display: flex; flex-direction: column; gap: 12px;">';
+                
+                // Display bets grouped by user
+                Object.keys(betsByUser).forEach(function(userId) {
+                    const userData = betsByUser[userId];
+                    html += '<div style="border: 1px solid #ddd; border-radius: 6px; padding: 12px; background: #f9f9f9;">';
+                    html += '<div style="font-weight: bold; margin-bottom: 8px; color: #667eea;">' + escapeHtml(userData.username) + '</div>';
+                    html += '<div style="display: flex; flex-direction: column; gap: 6px;">';
+                    
+                    userData.bets.forEach(function(bet) {
+                        if (bet.bet_type === 'number') {
+                            const number = parseInt(bet.bet_value);
+                            const colors = getRouletteNumberColors(number);
+                            html += '<div style="display: flex; align-items: center; gap: 8px; padding: 6px; background: white; border-radius: 4px;">';
+                            html += '<div style="width: 24px; height: 24px; border-radius: 50%; background-color: ' + colors.bg + '; color: ' + colors.text + '; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.2);">' + number + '</div>';
+                            html += '<span>Number ' + bet.bet_value + ': $' + parseFloat(bet.amount).toFixed(2) + '</span>';
+                            html += '</div>';
+                        } else if (bet.bet_type === 'color' || bet.bet_type === 'range') {
+                            const betValue = bet.bet_value || '';
+                            const betName = betValue.charAt(0).toUpperCase() + betValue.slice(1);
+                            let colorClass = '';
+                            if (betValue === 'red') {
+                                colorClass = 'bet-item-red';
+                            } else if (betValue === 'black') {
+                                colorClass = 'bet-item-black';
+                            } else if (betValue === 'green') {
+                                colorClass = 'bet-item-green';
+                            }
+                            html += '<div class="bet-item ' + colorClass + '" style="display: flex; align-items: center; padding: 6px; background: white; border-radius: 4px;">';
+                            html += '<span>' + betName + ': $' + parseFloat(bet.amount).toFixed(2) + ' (' + parseInt(bet.multiplier || 2) + 'x)</span>';
+                            html += '</div>';
+                        }
+                    });
+                    
+                    html += '</div>';
+                    html += '</div>';
+                });
+                
+                html += '</div>';
+                container.html(html);
+            }
+            
+            function escapeHtml(text) {
+                const map = {
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    '"': '&quot;',
+                    "'": '&#039;'
+                };
+                return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+            }
+            
             function updateRoundsMonitor() {
                 // Only poll if in central mode
                 if (rouletteMode === 'central') {
@@ -2132,8 +2213,16 @@ include __DIR__ . '/../includes/navbar.php';
                                 html += 'Server Seed Hash: <code style="font-size: 0.8em;">' + (round.server_seed_hash ? round.server_seed_hash.substring(0, 16) : '') + '...</code></p>';
                                 
                                 $('#rouletteRoundInfo').html(html);
+                                
+                                // Update all bets display
+                                if (round.all_bets && round.all_bets.length > 0) {
+                                    updateRouletteAllBetsDisplay(round.all_bets);
+                                } else {
+                                    $('#rouletteAllBetsContent').html('<p style="text-align: center; color: #999;">No bets placed yet</p>');
+                                }
                             } else {
                                 $('#rouletteRoundInfo').html('<p>No active round - worker may not be running</p>');
+                                $('#rouletteAllBetsContent').html('<p style="text-align: center; color: #999;">No active round</p>');
                             }
                         }
                     }, 'json').fail(function() {

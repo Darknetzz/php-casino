@@ -293,6 +293,81 @@ $(document).ready(function() {
         }
     }
     
+    function updateAllPlayersBetsDisplay(allBets) {
+        const allBetsContainer = $('#allPlayersBets');
+        if (!allBetsContainer.length) return; // Section doesn't exist (local mode)
+        
+        if (!allBets || allBets.length === 0) {
+            allBetsContainer.html('<p style="text-align: center; color: #999;">No bets placed yet</p>');
+            return;
+        }
+        
+        // Group bets by user
+        const betsByUser = {};
+        allBets.forEach(function(bet) {
+            const userId = bet.user_id;
+            if (!betsByUser[userId]) {
+                betsByUser[userId] = {
+                    username: bet.username || 'Unknown',
+                    bets: []
+                };
+            }
+            betsByUser[userId].bets.push(bet);
+        });
+        
+        let html = '<div class="all-bets-list" style="display: flex; flex-direction: column; gap: 12px;">';
+        
+        // Display bets grouped by user
+        Object.keys(betsByUser).forEach(function(userId) {
+            const userData = betsByUser[userId];
+            html += '<div class="user-bets-group" style="border: 1px solid #ddd; border-radius: 6px; padding: 12px; background: #f9f9f9;">';
+            html += '<div style="font-weight: bold; margin-bottom: 8px; color: #667eea;">' + escapeHtml(userData.username) + '</div>';
+            html += '<div style="display: flex; flex-direction: column; gap: 6px;">';
+            
+            userData.bets.forEach(function(bet) {
+                if (bet.bet_type === 'number') {
+                    const number = parseInt(bet.bet_value);
+                    const colors = getRouletteNumberColors(number);
+                    html += '<div class="bet-item" style="display: flex; align-items: center; gap: 8px; padding: 6px; background: white; border-radius: 4px;">';
+                    html += '<div style="width: 24px; height: 24px; border-radius: 50%; background-color: ' + colors.bg + '; color: ' + colors.text + '; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.2);">' + number + '</div>';
+                    html += '<span>Number ' + bet.bet_value + ': $' + parseFloat(bet.amount).toFixed(2) + '</span>';
+                    html += '</div>';
+                } else if (bet.bet_type === 'color' || bet.bet_type === 'range') {
+                    const betValue = bet.bet_value || '';
+                    const betName = betValue.charAt(0).toUpperCase() + betValue.slice(1);
+                    let colorClass = '';
+                    if (betValue === 'red') {
+                        colorClass = 'bet-item-red';
+                    } else if (betValue === 'black') {
+                        colorClass = 'bet-item-black';
+                    } else if (betValue === 'green') {
+                        colorClass = 'bet-item-green';
+                    }
+                    html += '<div class="bet-item ' + colorClass + '" style="display: flex; align-items: center; padding: 6px; background: white; border-radius: 4px;">';
+                    html += '<span>' + betName + ': $' + parseFloat(bet.amount).toFixed(2) + ' (' + parseInt(bet.multiplier || 2) + 'x)</span>';
+                    html += '</div>';
+                }
+            });
+            
+            html += '</div>';
+            html += '</div>';
+        });
+        
+        html += '</div>';
+        allBetsContainer.html(html);
+    }
+    
+    function escapeHtml(text) {
+        const map = {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#039;'
+        };
+        return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+    }
+    
     // Poll server for current round state
     function pollRoundState() {
         $.get('../api/api.php?action=getRouletteRound', function(data) {
@@ -364,6 +439,13 @@ $(document).ready(function() {
                     if (round.user_bets && round.user_bets.length > 0) {
                         updateActiveBetsDisplayFromServer(round.user_bets);
                     }
+                    
+                    // Display all players' bets
+                    if (round.all_bets && round.all_bets.length > 0) {
+                        updateAllPlayersBetsDisplay(round.all_bets);
+                    } else {
+                        updateAllPlayersBetsDisplay([]);
+                    }
 
                     // Disable betting if betting period has ended
                     if (bettingEndsIn <= 0) {
@@ -404,6 +486,13 @@ $(document).ready(function() {
                         // Round finished, show result
                         showRoundResult(round.result_number);
                     }
+                    
+                    // Display all players' bets during spinning
+                    if (round.all_bets && round.all_bets.length > 0) {
+                        updateAllPlayersBetsDisplay(round.all_bets);
+                    } else {
+                        updateAllPlayersBetsDisplay([]);
+                    }
                 } else if (round.status === 'finished') {
                     if (round.result_number !== null) {
                         lastRoundResult = round.result_number; // Store the result
@@ -415,6 +504,14 @@ $(document).ready(function() {
                         // Reset if no result yet
                         isSpinning = false;
                     }
+                    
+                    // Display all players' bets for finished round
+                    if (round.all_bets && round.all_bets.length > 0) {
+                        updateAllPlayersBetsDisplay(round.all_bets);
+                    } else {
+                        updateAllPlayersBetsDisplay([]);
+                    }
+                    
                     // Wait for next round - continue polling
                 }
                 

@@ -73,6 +73,13 @@ include __DIR__ . '/../includes/navbar.php';
                 </div>
                 
                 <?php if ($rouletteMode === 'central'): ?>
+                <div class="other-players-bets-section section" style="margin-top: 30px; border-radius: 8px; padding: 20px;">
+                    <h3 style="margin-top: 0; color: #667eea; margin-bottom: 15px;">👥 All Players' Bets</h3>
+                    <div id="allPlayersBets" style="max-height: 300px; overflow-y: auto;">
+                        <p class="loading-text" style="text-align: center;">Loading bets...</p>
+                    </div>
+                </div>
+                
                 <div class="round-info-section section" style="margin-top: 30px; border-radius: 8px; padding: 20px;">
                     <h3 style="margin-top: 0; color: #667eea; margin-bottom: 15px;">⏱️ Round Status</h3>
                     <div id="roundStatusDisplay" style="font-size: 1.1em;">

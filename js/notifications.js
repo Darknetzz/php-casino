@@ -2,7 +2,7 @@
  * Global Notification System for Active Bets and Game Results
  * 
  * Monitors roulette and crash games for active bets and results
- * Shows notifications when user navigates away from game pages
+ * Shows notifications for bets and wins/losses on all pages
  */
 
 $(document).ready(function() {
@@ -257,14 +257,9 @@ $(document).ready(function() {
      * Check for active bets and results
      */
     function checkActiveBetsAndResults() {
-        // Only check if we're NOT on the game page
-        if (!isRoulettePage) {
-            checkRouletteBets();
-        }
-        
-        if (!isCrashPage) {
-            checkCrashBets();
-        }
+        // Always check for both games, regardless of current page
+        checkRouletteBets();
+        checkCrashBets();
     }
     
     /**

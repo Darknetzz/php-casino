@@ -279,11 +279,15 @@ switch ($action) {
             // Get user's bets for this round
             $userBets = $db->getUserRouletteBetsForRound($round['id'], $user['id']);
             
+            // Get all bets with user information for displaying other players' bets
+            $allBets = $db->getRouletteBetsForRoundWithUsers($round['id']);
+            
             $round['time_until_betting_ends'] = $timeUntilBettingEnds;
             $round['time_until_start'] = $timeUntilStart;
             $round['time_until_finish'] = $timeUntilFinish;
             $round['time_until_result'] = $timeUntilResult;
             $round['user_bets'] = $userBets;
+            $round['all_bets'] = $allBets;
             
             // Don't reveal server seed until round is finished (for provably fair)
             if ($round['status'] !== 'finished') {
@@ -520,6 +524,10 @@ switch ($action) {
             $round['time_until_start'] = $timeUntilStart;
             $round['time_until_finish'] = $timeUntilFinish;
             $round['time_until_result'] = $timeUntilResult;
+            
+            // Get all bets with user information for admin display
+            $allBets = $db->getRouletteBetsForRoundWithUsers($round['id']);
+            $round['all_bets'] = $allBets;
             
             // Admins can see the server seed and predict the result
             if ($round['status'] === 'betting' || $round['status'] === 'spinning') {
