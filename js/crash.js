@@ -216,7 +216,8 @@ $(document).ready(function() {
                 // Update UI
                 $('#placeBetBtn').prop('disabled', true).text('Game In Progress...').addClass('game-disabled');
                 $('#betAmount').prop('disabled', true);
-                $('.game-container button, .game-container .btn').addClass('game-disabled');
+                // Grey out all buttons except the cash out button (players need to be able to cash out!)
+                $('.game-container button, .game-container .btn').not('#cashOutBtn').addClass('game-disabled');
                 $('#crashControls').show();
                 $('#result').html('');
                 
@@ -349,6 +350,7 @@ $(document).ready(function() {
             $('#betAmount').prop('disabled', false);
             $('#crashControls').hide();
             $('#cashOutBtn').prop('disabled', false);
+            // Remove disabled class from all buttons (cash out was never disabled anyway)
             $('.game-container button, .game-container .btn').removeClass('game-disabled');
             $('#cashOutInfo').html('');
             currentMultiplier = 1.00;
