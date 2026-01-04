@@ -1808,14 +1808,7 @@ include __DIR__ . '/../includes/navbar.php';
             const row = document.createElement('tr');
             row.setAttribute('data-index', index);
             
-            // Get available symbols from the symbols table
-            let symbolOptions = '<option value="any" selected>any</option>';
-            $('#slotsSymbolsBody tr').each(function() {
-                const emoji = $(this).find('.slots-emoji-input').val().trim();
-                if (emoji) {
-                    symbolOptions += '<option value="' + emoji + '">' + emoji + '</option>';
-                }
-            });
+            const symbolOptions = buildSymbolSelectOptionsHTML(false, 'any');
             
             row.innerHTML = `
                 <td>
@@ -1839,14 +1832,7 @@ include __DIR__ . '/../includes/navbar.php';
         
         // Update symbol dropdowns in N-of-a-kind rules when symbols are added/removed
         function updateNOfKindSymbolDropdowns() {
-            // Get current symbols
-            const availableSymbols = [];
-            $('#slotsSymbolsBody tr').each(function() {
-                const emoji = $(this).find('.slots-emoji-input').val().trim();
-                if (emoji) {
-                    availableSymbols.push(emoji);
-                }
-            });
+            const availableSymbols = getAvailableSlotsSymbols();
             
             // Update all N-of-a-kind rule dropdowns
             $('#slotsNOfKindBody tr').each(function() {
@@ -1854,11 +1840,7 @@ include __DIR__ . '/../includes/navbar.php';
                 const currentValue = $select.val();
                 
                 // Rebuild options
-                let options = '<option value="any">any</option>';
-                availableSymbols.forEach(function(emoji) {
-                    options += '<option value="' + emoji + '">' + emoji + '</option>';
-                });
-                
+                const options = buildSymbolSelectOptionsHTML(false, currentValue);
                 $select.html(options);
                 
                 // Try to restore the previous value if it still exists
@@ -1879,14 +1861,7 @@ include __DIR__ . '/../includes/navbar.php';
         
         // Update symbol dropdowns in custom combinations when symbols are added/removed
         function updateCustomCombinationSymbolDropdowns() {
-            // Get current symbols
-            const availableSymbols = [];
-            $('#slotsSymbolsBody tr').each(function() {
-                const emoji = $(this).find('.slots-emoji-input').val().trim();
-                if (emoji) {
-                    availableSymbols.push(emoji);
-                }
-            });
+            const availableSymbols = getAvailableSlotsSymbols();
             
             // Update all custom combination dropdowns
             $('#slotsCustomCombinationsBody tr').each(function() {
@@ -1896,11 +1871,7 @@ include __DIR__ . '/../includes/navbar.php';
                     const currentValue = $select.val();
                     
                     // Rebuild options
-                    let options = '<option value="">(empty)</option>';
-                    availableSymbols.forEach(function(emoji) {
-                        options += '<option value="' + emoji + '">' + emoji + '</option>';
-                    });
-                    
+                    const options = buildSymbolSelectOptionsHTML(true, currentValue);
                     $select.html(options);
                     
                     // Try to restore the previous value if it still exists
@@ -1924,14 +1895,6 @@ include __DIR__ . '/../includes/navbar.php';
         // Update custom combinations when number of reels changes
         $('#slots_num_reels').on('change', function() {
             const numReels = parseInt($(this).val()) || 3;
-            // Get available symbols
-            const availableSymbols = [];
-            $('#slotsSymbolsBody tr').each(function() {
-                const emoji = $(this).find('.slots-emoji-input').val().trim();
-                if (emoji) {
-                    availableSymbols.push(emoji);
-                }
-            });
             
             // Update all existing combinations to have the right number of symbol selects
             $('#slotsCustomCombinationsBody tr').each(function() {
@@ -1944,12 +1907,9 @@ include __DIR__ . '/../includes/navbar.php';
                 $symbolsContainer.css({'flex-wrap': 'nowrap'});
                 for (let i = 0; i < numReels; i++) {
                     const value = i < currentValues.length ? currentValues[i] : '';
+                    const symbolOptions = buildSymbolSelectOptionsHTML(true, value);
                     let selectHtml = '<select class="custom-combo-emoji" data-position="' + i + '" style="width: 80px; padding: 5px; font-size: 16px;">';
-                    selectHtml += '<option value="">(empty)</option>';
-                    availableSymbols.forEach(function(emoji) {
-                        const selected = (value === emoji) ? 'selected' : '';
-                        selectHtml += '<option value="' + emoji + '" ' + selected + '>' + emoji + '</option>';
-                    });
+                    selectHtml += symbolOptions;
                     selectHtml += '</select>';
                     $symbolsContainer.append(
                         $('<div style="display: flex; align-items: center; gap: 5px;">').html(
