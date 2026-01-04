@@ -360,16 +360,23 @@ $(document).ready(function() {
                 rotationToTop = (360 - pocketStartAngle) % 360;
             }
             
-            // Add full spins for animation
-            const fullSpins = 5 + Math.random() * 3; // 5-8 full spins
+            // Add full spins for animation (must be integer to preserve rotationToTop mod 360)
+            const fullSpins = Math.floor(5 + Math.random() * 3); // 5-7 full spins (integer)
             let totalRotation = (fullSpins * 360) + rotationToTop;
             
             console.log('Rotation to top:', rotationToTop);
-            console.log('Full spins:', fullSpins);
+            console.log('Full spins (integer):', fullSpins);
             console.log('Total rotation:', totalRotation);
             console.log('Final rotation (mod 360):', totalRotation % 360);
+            console.log('Verification - should equal rotationToTop:', (totalRotation % 360).toFixed(2), 'vs', rotationToTop.toFixed(2));
             
-            currentRotation = totalRotation % 360;
+            // Verify that the final rotation mod 360 equals rotationToTop
+            const finalRotationMod = totalRotation % 360;
+            if (Math.abs(finalRotationMod - rotationToTop) > 0.01 && Math.abs(finalRotationMod - (rotationToTop + 360)) > 0.01) {
+                console.log('ERROR: Final rotation mod 360 does not match rotationToTop!');
+            }
+            
+            currentRotation = finalRotationMod;
             
             // Reset wheel to 0 first to ensure we start from a known position
             $('#rouletteWheel').css({
