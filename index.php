@@ -38,6 +38,12 @@ include __DIR__ . '/includes/navbar.php';
                 <h3>Plinko</h3>
                 <p>Drop the ball and win!</p>
             </div>
+            
+            <div class="game-card" onclick="window.location.href='games/dice.php'">
+                <div class="game-icon">🎲</div>
+                <h3>Dice Roll</h3>
+                <p>Roll 6 dice and match to win!</p>
+            </div>
         </div>
         
         <div class="transactions-section">

@@ -1,0 +1,117 @@
+<?php
+require_once __DIR__ . '/../includes/config.php';
+requireLogin();
+
+$user = getCurrentUser();
+$pageTitle = 'Dice';
+include __DIR__ . '/../includes/header.php';
+include __DIR__ . '/../includes/navbar.php';
+?>
+    
+    <div class="container">
+        <div class="game-container">
+            <h1>🎲 Dice Roll</h1>
+            
+            <div class="dice-game">
+                <div class="dice-container">
+                    <div class="dice-grid">
+                        <div class="dice" id="dice1">
+                            <div class="dice-face">⚀</div>
+                        </div>
+                        <div class="dice" id="dice2">
+                            <div class="dice-face">⚁</div>
+                        </div>
+                        <div class="dice" id="dice3">
+                            <div class="dice-face">⚂</div>
+                        </div>
+                        <div class="dice" id="dice4">
+                            <div class="dice-face">⚃</div>
+                        </div>
+                        <div class="dice" id="dice5">
+                            <div class="dice-face">⚄</div>
+                        </div>
+                        <div class="dice" id="dice6">
+                            <div class="dice-face">⚅</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="dice-controls">
+                    <div class="bet-controls">
+                        <label>Bet Amount: $</label>
+                        <input type="number" id="betAmount" min="1" value="10" step="1" class="bet-input-with-adjust">
+                        <small>Max: $<span id="maxBet">100</span></small>
+                    </div>
+                    <button id="rollBtn" class="btn btn-primary btn-large">ROLL DICE</button>
+                </div>
+                
+                <div id="result" class="result-message"></div>
+            </div>
+            
+            <div class="win-rate-section" style="margin: 20px 0; padding: 15px; background: #f8f9fa; border-radius: 8px;">
+                <h4 style="margin: 0 0 10px 0; color: #667eea;">📊 Your Stats</h4>
+                <div id="winRateDisplay" style="color: #666;">
+                    <span>Win Rate: <strong id="winRate">-</strong>%</span>
+                    <span style="margin-left: 20px;">Games Played: <strong id="gamesPlayed">-</strong></span>
+                    <span style="margin-left: 20px;">Wins: <strong id="wins">-</strong></span>
+                </div>
+            </div>
+            
+            <div class="game-info">
+                <h3>How to Play:</h3>
+                <table class="slots-info-table">
+                    <tr>
+                        <td>1. Set your bet amount</td>
+                    </tr>
+                    <tr>
+                        <td>2. Click ROLL DICE to roll 6 dice</td>
+                    </tr>
+                    <tr>
+                        <td>3. Match dice to win!</td>
+                    </tr>
+                </table>
+                <h4 style="margin-top: 20px; margin-bottom: 10px;">Payouts:</h4>
+                <table class="slots-payout-table">
+                    <thead>
+                        <tr>
+                            <th>Combination</th>
+                            <th>Payout</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>3 of a kind</td>
+                            <td>2x bet</td>
+                        </tr>
+                        <tr>
+                            <td>4 of a kind</td>
+                            <td>5x bet</td>
+                        </tr>
+                        <tr>
+                            <td>5 of a kind</td>
+                            <td>10x bet</td>
+                        </tr>
+                        <tr>
+                            <td>6 of a kind</td>
+                            <td>20x bet</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <script src="../js/dice.js"></script>
+    <script>
+        $(document).ready(function() {
+            // Load win rate for dice
+            $.get(getApiPath('getWinRates') + '&game=dice', function(data) {
+                if (data.success && data.winRate) {
+                    $('#winRate').text(data.winRate.rate);
+                    $('#gamesPlayed').text(data.winRate.total);
+                    $('#wins').text(data.winRate.wins);
+                }
+            }, 'json');
+        });
+    </script>
+<?php include __DIR__ . '/../includes/footer.php'; ?>
