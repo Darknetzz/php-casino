@@ -52,11 +52,9 @@ $(document).ready(function() {
             }
             
             // Update total bet display after all settings are loaded
-            if (typeof updateTotalBetDisplay === 'function') {
-                setTimeout(function() {
-                    updateTotalBetDisplay();
-                }, 100);
-            }
+            setTimeout(function() {
+                updateTotalBetDisplay();
+            }, 150);
         }
     }, 'json');
     
@@ -344,22 +342,6 @@ $(document).ready(function() {
         }, reel3StopTime + 100); // Wait for all reels to stop
         }, 'json');
     });
-    
-    // Function to update total bet display
-    function updateTotalBetDisplay() {
-        const betAmount = parseFloat($('#betAmount').val()) || 0;
-        const betRows = parseInt($('#betRows').val()) || 1;
-        const totalBet = betRows === 3 ? betAmount * 3 : betAmount;
-        
-        $('#totalBetAmount').text(totalBet.toFixed(2));
-        
-        if (betRows === 3) {
-            $('#baseBetAmount').text(betAmount.toFixed(2));
-            $('#totalBetNote').show();
-        } else {
-            $('#totalBetNote').hide();
-        }
-    }
     
     // Update total bet when bet amount changes (multiple event types for compatibility)
     $('#betAmount').on('input change keyup paste', function() {
