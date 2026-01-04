@@ -109,7 +109,7 @@ $(document).ready(function() {
         // Check if user has enough balance
         $.get('../api/api.php?action=getBalance', function(data) {
             if (!data.success || parseFloat(data.balance) < betAmount) {
-                $('#result').html('<div class="alert alert-error">Insufficient funds. Your balance is $' + (data.success ? parseFloat(data.balance).toFixed(2) : '0.00') + '</div>');
+                $('#result').html('<div class="alert alert-error">Insufficient funds. Your balance is $' + (data.success ? formatNumber(data.balance) : '0.00') + '</div>');
                 return;
             }
             
@@ -157,7 +157,7 @@ $(document).ready(function() {
                                 game: 'dice'
                             }, function(winData) {
                                 if (winData.success) {
-                                    $('#balance').text(parseFloat(winData.balance).toFixed(2));
+                                    $('#balance').text(formatNumber(winData.balance));
                                     $('#result').html(`<div class="alert alert-success">🎉 You won $${winAmount.toFixed(2)}! (${winDescription} - ${multiplier}x)</div>`);
                                     // Update stats after win
                                     updateWinRateStats('dice');
@@ -165,7 +165,7 @@ $(document).ready(function() {
                             }, 'json');
                         } else {
                             // Loss - bet already recorded above
-                            $('#balance').text(parseFloat(betData.balance).toFixed(2));
+                            $('#balance').text(formatNumber(betData.balance));
                             $('#result').html(`<div class="alert alert-error">Better luck next time! Lost $${betAmount.toFixed(2)}</div>`);
                             // Update stats after loss
                             updateWinRateStats('dice');
@@ -185,7 +185,7 @@ $(document).ready(function() {
     setInterval(function() {
         $.get('../api/api.php?action=getBalance', function(data) {
             if (data.success) {
-                $('#balance').text(parseFloat(data.balance).toFixed(2));
+                $('#balance').text(formatNumber(data.balance));
             }
         }, 'json');
     }, 5000);

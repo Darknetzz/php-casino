@@ -109,7 +109,7 @@ $(document).ready(function() {
         // Check if user has enough balance
         $.get('../api/api.php?action=getBalance', function(data) {
             if (!data.success || parseFloat(data.balance) < bet) {
-                $('#result').html('<div class="alert alert-error">Insufficient funds. Your balance is $' + (data.success ? parseFloat(data.balance).toFixed(2) : '0.00') + '</div>');
+                $('#result').html('<div class="alert alert-error">Insufficient funds. Your balance is $' + (data.success ? formatNumber(data.balance) : '0.00') + '</div>');
                 return;
             }
             
@@ -121,7 +121,7 @@ $(document).ready(function() {
                 game: 'blackjack'
             }, function(data) {
                 if (data.success) {
-                    $('#balance').text(parseFloat(data.balance).toFixed(2));
+                    $('#balance').text(formatNumber(data.balance));
                     betAmount = bet;
                     gameActive = true;
                     hideFirst = true;
@@ -196,7 +196,7 @@ $(document).ready(function() {
                 game: 'blackjack'
             }, function(data) {
                 if (data.success) {
-                    $('#balance').text(parseFloat(data.balance).toFixed(2));
+                    $('#balance').text(formatNumber(data.balance));
                     // Update stats after win
                     updateWinRateStats('blackjack');
                 }
@@ -212,7 +212,7 @@ $(document).ready(function() {
                 game: 'blackjack'
             }, function(data) {
                 if (data.success) {
-                    $('#balance').text(parseFloat(data.balance).toFixed(2));
+                    $('#balance').text(formatNumber(data.balance));
                     // Update stats after win
                     updateWinRateStats('blackjack');
                 }
@@ -228,7 +228,7 @@ $(document).ready(function() {
                 game: 'blackjack'
             }, function(data) {
                 if (data.success) {
-                    $('#balance').text(parseFloat(data.balance).toFixed(2));
+                    $('#balance').text(formatNumber(data.balance));
                     // Update stats after win
                     updateWinRateStats('blackjack');
                 }
@@ -246,7 +246,7 @@ $(document).ready(function() {
                 game: 'blackjack'
             }, function(data) {
                 if (data.success) {
-                    $('#balance').text(parseFloat(data.balance).toFixed(2));
+                    $('#balance').text(formatNumber(data.balance));
                     // Update stats after push (counts as a game played)
                     updateWinRateStats('blackjack');
                 }
@@ -289,7 +289,7 @@ $(document).ready(function() {
     setInterval(function() {
         $.get('../api/api.php?action=getBalance', function(data) {
             if (data.success) {
-                $('#balance').text(parseFloat(data.balance).toFixed(2));
+                $('#balance').text(formatNumber(data.balance));
             }
         }, 'json');
     }, 5000);

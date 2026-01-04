@@ -222,7 +222,7 @@ $(document).ready(function() {
         $.get('../api/api.php?action=getBalance', function(data) {
             if (!data.success || parseFloat(data.balance) < actualBetAmount) {
                 const requiredText = betRows === 3 ? `$${actualBetAmount.toFixed(2)} ($${betAmount.toFixed(2)} × 3 rows)` : `$${actualBetAmount.toFixed(2)}`;
-                $('#result').html('<div class="alert alert-error">Insufficient funds. You need ' + requiredText + ' but your balance is $' + (data.success ? parseFloat(data.balance).toFixed(2) : '0.00') + '</div>');
+                $('#result').html('<div class="alert alert-error">Insufficient funds. You need ' + requiredText + ' but your balance is $' + (data.success ? formatNumber(data.balance) : '0.00') + '</div>');
                 return;
             }
             
@@ -319,7 +319,7 @@ $(document).ready(function() {
                             game: 'slots'
                         }, function(winData) {
                             if (winData.success) {
-                                $('#balance').text(parseFloat(winData.balance).toFixed(2));
+                                $('#balance').text(formatNumber(winData.balance));
                                 const winText = winDescriptions.length === 1 
                                     ? winDescriptions[0].split(' (')[1].replace(')', '')
                                     : `${winDescriptions.length} winning row(s)`;
@@ -330,7 +330,7 @@ $(document).ready(function() {
                         }, 'json');
                     } else {
                         // Loss - bet already recorded above
-                        $('#balance').text(parseFloat(betData.balance).toFixed(2));
+                        $('#balance').text(formatNumber(betData.balance));
                         const lostText = betRows === 3 ? `$${actualBetAmount.toFixed(2)} ($${betAmount.toFixed(2)} × 3 rows)` : `$${actualBetAmount.toFixed(2)}`;
                         $('#result').html(`<div class="alert alert-error">Better luck next time! Lost ${lostText}</div>`);
                         // Update stats after loss
@@ -380,7 +380,7 @@ $(document).ready(function() {
     setInterval(function() {
         $.get('../api/api.php?action=getBalance', function(data) {
             if (data.success) {
-                $('#balance').text(parseFloat(data.balance).toFixed(2));
+                $('#balance').text(formatNumber(data.balance));
             }
         }, 'json');
     }, 5000);

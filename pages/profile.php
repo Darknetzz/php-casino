@@ -207,8 +207,8 @@ include __DIR__ . '/../includes/navbar.php';
                 }, function(data) {
                     if (data.success) {
                         $('#refillMessage').html('<div class="alert alert-success">Balance refilled successfully! Added $' + amount.toFixed(2) + '</div>');
-                        $('#balance').text(parseFloat(data.balance).toFixed(2));
-                        $('.balance-large').text('$' + parseFloat(data.balance).toFixed(2));
+                        $('#balance').text(formatNumber(data.balance));
+                        $('.balance-large').text('$' + formatNumber(data.balance));
                         $('#refill_amount').val('');
                         setTimeout(function() {
                             $('#refillMessage').html('');
@@ -225,9 +225,9 @@ include __DIR__ . '/../includes/navbar.php';
             setInterval(function() {
                 $.get(getApiPath('getBalance'), function(data) {
                     if (data.success) {
-                        $('#balance').text(parseFloat(data.balance).toFixed(2));
+                        $('#balance').text(formatNumber(data.balance));
                         if ($('.balance-large').length) {
-                            $('.balance-large').text('$' + parseFloat(data.balance).toFixed(2));
+                            $('.balance-large').text('$' + formatNumber(data.balance));
                         }
                     }
                 }, 'json');

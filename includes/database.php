@@ -118,7 +118,7 @@ class Database {
                 ['emoji' => '🎰', 'multiplier' => 10.0]
             ]),
             // Slots multipliers (2 of a kind)
-            'slots_two_of_kind_multiplier' => '0.5',
+            'slots_two_of_kind_multiplier' => '1.0',
             // Slots win row (0 = top, 1 = middle, 2 = bottom)
             'slots_win_row' => '1',
             // Slots bet rows (1 = middle row only, 3 = all rows)

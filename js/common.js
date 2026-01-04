@@ -1,11 +1,19 @@
 // Common JavaScript functions used across the casino application
 
+// Format number with commas (like PHP's number_format)
+function formatNumber(num, decimals = 2) {
+    const numStr = parseFloat(num).toFixed(decimals);
+    const parts = numStr.split('.');
+    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    return parts.join('.');
+}
+
 // Update balance display
 function updateBalance() {
     $.get(getApiPath('getBalance'), function(data) {
         if (data.success) {
-            $('#balance').text(parseFloat(data.balance).toFixed(2));
-            $('.balance-large').text('$' + parseFloat(data.balance).toFixed(2));
+            $('#balance').text(formatNumber(data.balance));
+            $('.balance-large').text('$' + formatNumber(data.balance));
         }
     }, 'json');
 }

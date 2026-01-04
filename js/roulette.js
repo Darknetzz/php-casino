@@ -289,7 +289,7 @@ $(document).ready(function() {
         // Check if user has enough balance
         $.get('../api/api.php?action=getBalance', function(data) {
             if (!data.success || parseFloat(data.balance) < totalBetAmount) {
-                $('#result').html('<div class="alert alert-error">Insufficient funds. Your balance is $' + (data.success ? parseFloat(data.balance).toFixed(2) : '0.00') + ', but you need $' + totalBetAmount.toFixed(2) + '</div>');
+                $('#result').html('<div class="alert alert-error">Insufficient funds. Your balance is $' + (data.success ? formatNumber(data.balance) : '0.00') + ', but you need $' + totalBetAmount.toFixed(2) + '</div>');
                 return;
             }
             
@@ -466,7 +466,7 @@ $(document).ready(function() {
                                 game: 'roulette'
                             }, function(winData) {
                                 if (winData.success) {
-                                    $('#balance').text(parseFloat(winData.balance).toFixed(2));
+                                    $('#balance').text(formatNumber(winData.balance));
                                     let message = `<div class="alert alert-success">🎉 You won $${netResult.toFixed(2)}!<br>`;
                                     if (winningNumberBets.length > 0) {
                                         message += `Winning number bets: `;
@@ -492,7 +492,7 @@ $(document).ready(function() {
                             }, 'json');
                         } else {
                             // Loss - bet already recorded above
-                            $('#balance').text(parseFloat(betData.balance).toFixed(2));
+                            $('#balance').text(formatNumber(betData.balance));
                             let message = `<div class="alert alert-error">Lost $${totalBetAmount.toFixed(2)}<br>`;
                             message += `Lost: $${totalLoss.toFixed(2)} on ${losingNumberBets.length + losingColorBets.length} bet(s)</div>`;
                             $('#result').html(message);
@@ -516,7 +516,7 @@ $(document).ready(function() {
     setInterval(function() {
         $.get('../api/api.php?action=getBalance', function(data) {
             if (data.success) {
-                $('#balance').text(parseFloat(data.balance).toFixed(2));
+                $('#balance').text(formatNumber(data.balance));
             }
         }, 'json');
     }, 5000);

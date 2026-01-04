@@ -99,7 +99,7 @@ $(document).ready(function() {
         // Check if user has enough balance
         $.get('../api/api.php?action=getBalance', function(data) {
             if (!data.success || parseFloat(data.balance) < totalBet) {
-                $('#result').html('<div class="alert alert-error">Insufficient funds. Your balance is $' + (data.success ? parseFloat(data.balance).toFixed(2) : '0.00') + '. Need $' + totalBet.toFixed(2) + '</div>');
+                $('#result').html('<div class="alert alert-error">Insufficient funds. Your balance is $' + (data.success ? formatNumber(data.balance) : '0.00') + '. Need $' + totalBet.toFixed(2) + '</div>');
                 return;
             }
             
@@ -121,7 +121,7 @@ $(document).ready(function() {
                     return;
                 }
                 
-                $('#balance').text(parseFloat(data.balance).toFixed(2));
+                $('#balance').text(formatNumber(data.balance));
                 
                 // Create multiple balls with slight horizontal offset for visual separation
                 const board = $('#plinkoBoard');
@@ -243,7 +243,7 @@ $(document).ready(function() {
                                             game: 'plinko'
                                         }, function(data) {
                                             if (data.success) {
-                                                $('#balance').text(parseFloat(data.balance).toFixed(2));
+                                                $('#balance').text(formatNumber(data.balance));
                                                 const netResult = totalWins - totalBet;
                                                 if (netResult > 0) {
                                                     $('#result').html(`<div class="alert alert-success">🎉 You won $${totalWins.toFixed(2)}! Net: +$${netResult.toFixed(2)}</div>`);
@@ -456,7 +456,7 @@ $(document).ready(function() {
     setInterval(function() {
         $.get('../api/api.php?action=getBalance', function(data) {
             if (data.success) {
-                $('#balance').text(parseFloat(data.balance).toFixed(2));
+                $('#balance').text(formatNumber(data.balance));
             }
         }, 'json');
     }, 5000);
