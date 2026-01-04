@@ -184,7 +184,7 @@ if (isset($_GET['success'])) {
     if ($currentTab === 'settings') {
         $message = 'Casino settings updated successfully!';
     } elseif ($currentTab === 'multipliers') {
-        $message = 'Game multipliers updated successfully!';
+        $message = 'Game settings updated successfully!';
     } elseif ($currentTab === 'users') {
         $message = 'User updated successfully!';
     }
@@ -212,7 +212,7 @@ include __DIR__ . '/../includes/navbar.php';
                     <span>📊</span> Casino Settings
                 </a>
                 <a href="admin.php?tab=multipliers" class="admin-tab <?php echo $currentTab === 'multipliers' ? 'active' : ''; ?>">
-                    <span>🎰</span> Game Multipliers
+                    <span>🎰</span> Game Settings
                 </a>
                 <a href="admin.php?tab=users" class="admin-tab <?php echo $currentTab === 'users' ? 'active' : ''; ?>">
                     <span>👥</span> User Management
@@ -253,7 +253,7 @@ include __DIR__ . '/../includes/navbar.php';
             <!-- Game Multipliers Section -->
             <?php if ($currentTab === 'multipliers'): ?>
             <div class="admin-section section">
-                <h2>🎰 Game Multipliers</h2>
+                <h2>🎰 Game Settings</h2>
                 
                 <!-- Game Subnav -->
                 <div class="admin-subnav-tabs">
