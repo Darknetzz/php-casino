@@ -79,12 +79,10 @@ function addBetAdjustButtons(inputSelector) {
         $input.wrap($wrapper);
         const $wrapperContainer = $input.parent(); // Get the wrapper after wrapping
         
-        // Create button groups container
+        // Create button groups container (3-column grid)
         const $buttonGroups = $('<div class="bet-adjust-buttons-inline"></div>');
         
-        const $positiveGroup = $('<div class="button-group button-group-positive"></div>');
-        const $negativeGroup = $('<div class="button-group button-group-negative"></div>');
-        
+        // Arrange buttons in grid order: +1000, +100, +10, -10, -100, -1000
         const adjustments = [1000, 100, 10, -10, -100, -1000];
         
         adjustments.forEach(function(adjust) {
@@ -94,10 +92,8 @@ function addBetAdjustButtons(inputSelector) {
             
             if (adjust > 0) {
                 $btn.addClass('bet-adjust-positive');
-                $positiveGroup.append($btn);
             } else {
                 $btn.addClass('bet-adjust-negative');
-                $negativeGroup.append($btn);
             }
             
             $btn.on('click', function(e) {
@@ -108,10 +104,10 @@ function addBetAdjustButtons(inputSelector) {
                 const newValue = Math.max(min, Math.min(max, current + adjust));
                 $input.val(newValue).trigger('change');
             });
+            
+            $buttonGroups.append($btn);
         });
         
-        $buttonGroups.append($positiveGroup);
-        $buttonGroups.append($negativeGroup);
         $wrapperContainer.append($buttonGroups);
     } else {
         // For inputs not in bet-controls, use form-group structure
@@ -122,10 +118,10 @@ function addBetAdjustButtons(inputSelector) {
         $input.wrap($inputWrapper);
         const $inputWrapperContainer = $input.parent(); // Get the wrapper after wrapping
         
+        // Create button groups container (3-column grid)
         const $buttonGroups = $('<div class="form-button-groups"></div>');
-        const $positiveGroup = $('<div class="button-group button-group-positive"></div>');
-        const $negativeGroup = $('<div class="button-group button-group-negative"></div>');
         
+        // Arrange buttons in grid order: +1000, +100, +10, -10, -100, -1000
         const adjustments = [1000, 100, 10, -10, -100, -1000];
         
         adjustments.forEach(function(adjust) {
@@ -135,10 +131,8 @@ function addBetAdjustButtons(inputSelector) {
             
             if (adjust > 0) {
                 $btn.addClass('bet-adjust-positive');
-                $positiveGroup.append($btn);
             } else {
                 $btn.addClass('bet-adjust-negative');
-                $negativeGroup.append($btn);
             }
             
             $btn.on('click', function(e) {
@@ -149,10 +143,10 @@ function addBetAdjustButtons(inputSelector) {
                 const newValue = Math.max(min, Math.min(max, current + adjust));
                 $input.val(newValue).trigger('change');
             });
+            
+            $buttonGroups.append($btn);
         });
         
-        $buttonGroups.append($positiveGroup);
-        $buttonGroups.append($negativeGroup);
         $inputWrapperContainer.after($buttonGroups);
     }
 }

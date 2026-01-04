@@ -555,6 +555,7 @@ body {
     gap: 8px;
     align-items: flex-start;
     flex-shrink: 0; /* Don't shrink in flex container */
+    min-width: 0; /* Allow shrinking if needed */
 }
 
 .bet-controls .bet-input-wrapper {
@@ -562,12 +563,13 @@ body {
 }
 
 .bet-adjust-buttons-inline {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin-top: 10px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 4px;
+    margin-top: 8px;
     width: 100%;
-    align-items: center;
+    max-width: 280px;
+    flex-shrink: 0;
 }
 
 /* Form Group - Semantic structure for bet inputs with adjustment buttons */
@@ -584,6 +586,7 @@ body {
     align-items: center;
     gap: 10px;
     width: 100%;
+    flex-wrap: wrap;
 }
 
 .form-input-wrapper input {
@@ -591,48 +594,38 @@ body {
 }
 
 .form-button-groups {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    justify-content: center;
-    align-items: center;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 4px;
+    margin-top: 8px;
+    max-width: 280px;
+    width: 100%;
 }
 
 .button-group {
-    display: flex;
-    gap: 6px;
-    flex-wrap: wrap;
-    align-items: center;
+    display: contents; /* Use grid layout from parent */
 }
 
 .button-group-positive {
-    border-left: 4px solid #28a745;
-    padding-left: 10px;
-    background: rgba(40, 167, 69, 0.05);
-    border-radius: 4px;
-    padding: 8px 8px 8px 10px;
+    /* Remove individual styling, use grid */
 }
 
 .button-group-negative {
-    border-left: 4px solid #dc3545;
-    padding-left: 10px;
-    background: rgba(220, 53, 69, 0.05);
-    border-radius: 4px;
-    padding: 8px 8px 8px 10px;
+    /* Remove individual styling, use grid */
 }
 
 .bet-adjust-btn {
-    padding: 8px 14px;
+    padding: 6px 10px;
     border: none;
-    border-radius: 6px;
-    font-size: 13px;
+    border-radius: 5px;
+    font-size: 12px;
     font-weight: 700;
     cursor: pointer;
     transition: all 0.2s ease;
-    min-width: 55px;
+    width: 100%;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.3px;
 }
 
 .bet-adjust-positive {
@@ -905,9 +898,21 @@ body {
 .color-bet-amount {
     margin-top: 15px;
     display: flex;
-    align-items: center;
-    gap: 10px;
+    align-items: flex-start;
+    gap: 12px;
     flex-wrap: wrap;
+}
+
+.color-bet-amount > label {
+    flex-shrink: 0;
+    margin-top: 8px;
+}
+
+.color-bet-amount > small {
+    flex-shrink: 0;
+    margin-top: 8px;
+    color: #666;
+    font-size: 12px;
 }
 
 .color-bet-amount label {
@@ -921,6 +926,7 @@ body {
     border-radius: 5px;
     font-size: 14px;
     width: 100px;
+    flex-shrink: 0;
 }
 
 .number-bets-section {
@@ -932,7 +938,11 @@ body {
     gap: 10px;
     margin-bottom: 20px;
     flex-wrap: wrap;
-    align-items: center;
+    align-items: flex-start;
+}
+
+.add-number-bet > * {
+    flex-shrink: 0;
 }
 
 .add-number-bet input {
