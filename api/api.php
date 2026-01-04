@@ -556,6 +556,10 @@ switch ($action) {
             $round['time_until_betting_ends'] = $timeUntilBettingEnds;
             $round['time_until_start'] = $timeUntilStart;
             
+            // Get all bets with user information for admin display
+            $allBets = $db->getCrashBetsForRoundWithUsers($round['id']);
+            $round['all_bets'] = $allBets;
+            
             // Admins can see the server seed and predict the crash point
             if ($round['status'] === 'betting') {
                 $distributionParam = floatval(getSetting('crash_distribution_param', 0.99));

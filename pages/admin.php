@@ -11,7 +11,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_POST['update_settings'])) {
         $errors = [];
         
-        // Check if this is casino settings update
+        // Check if this is limits update
         if (isset($_POST['max_deposit'])) {
             $maxDeposit = floatval($_POST['max_deposit'] ?? 0);
             $maxBet = floatval($_POST['max_bet'] ?? 0);
@@ -23,7 +23,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($startingBalance < 0) $errors[] = 'Starting Balance must be greater than or equal to 0';
             if ($defaultBet <= 0) $errors[] = 'Default Bet must be greater than 0';
             
-            // Handle game mode settings
+            if (empty($errors)) {
+                $db->setSetting('max_deposit', $maxDeposit);
+                $db->setSetting('max_bet', $maxBet);
+                $db->setSetting('starting_balance', $startingBalance);
+                $db->setSetting('default_bet', $defaultBet);
+                header('Location: admin.php?tab=limits&success=1');
+                exit;
+            }
+        }
+        
+        // Check if this is game modes update (from rounds tab)
+        if (isset($_POST['roulette_mode']) && isset($_POST['update_game_modes'])) {
             $rouletteMode = $_POST['roulette_mode'] ?? 'local';
             $crashMode = $_POST['crash_mode'] ?? 'local';
             
@@ -35,13 +46,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             
             if (empty($errors)) {
-                $db->setSetting('max_deposit', $maxDeposit);
-                $db->setSetting('max_bet', $maxBet);
-                $db->setSetting('starting_balance', $startingBalance);
-                $db->setSetting('default_bet', $defaultBet);
                 $db->setSetting('roulette_mode', $rouletteMode);
                 $db->setSetting('crash_mode', $crashMode);
-                header('Location: admin.php?tab=settings&success=1');
+                header('Location: admin.php?tab=rounds&success=1');
                 exit;
             }
         }
@@ -372,17 +379,21 @@ $settings = $db->getAllSettings();
 $users = $db->getAllUsers();
 
 // Get current tab from URL
-$currentTab = $_GET['tab'] ?? 'settings';
+$currentTab = $_GET['tab'] ?? 'multipliers';
 $currentGame = $_GET['game'] ?? 'slots'; // Default to slots for multipliers subnav
 
 // Check for success message
 if (isset($_GET['success'])) {
     if ($currentTab === 'settings') {
         $message = 'Casino settings updated successfully!';
+    } elseif ($currentTab === 'limits') {
+        $message = 'Limits updated successfully!';
     } elseif ($currentTab === 'multipliers') {
         $message = 'Game settings updated successfully!';
     } elseif ($currentTab === 'users') {
         $message = 'User updated successfully!';
+    } elseif ($currentTab === 'rounds') {
+        $message = 'Game modes updated successfully!';
     }
 }
 
@@ -404,11 +415,14 @@ include __DIR__ . '/../includes/navbar.php';
             
             <!-- Admin Navigation Tabs -->
             <div class="admin-nav-tabs">
-                <a href="admin.php?tab=settings" class="admin-tab <?php echo $currentTab === 'settings' ? 'active' : ''; ?>">
-                    <span>📊</span> Casino Settings
-                </a>
                 <a href="admin.php?tab=multipliers" class="admin-tab <?php echo $currentTab === 'multipliers' ? 'active' : ''; ?>">
                     <span>🎰</span> Game Settings
+                </a>
+                <a href="admin.php?tab=limits" class="admin-tab <?php echo $currentTab === 'limits' ? 'active' : ''; ?>">
+                    <span>🔒</span> Limits
+                </a>
+                <a href="admin.php?tab=settings" class="admin-tab <?php echo $currentTab === 'settings' ? 'active' : ''; ?>">
+                    <span>📊</span> Casino Settings
                 </a>
                 <a href="admin.php?tab=users" class="admin-tab <?php echo $currentTab === 'users' ? 'active' : ''; ?>">
                     <span>👥</span> User Management
@@ -442,11 +456,12 @@ include __DIR__ . '/../includes/navbar.php';
             </div>
             <?php endif; ?>
             
-            <!-- Settings Section -->
-            <?php if ($currentTab === 'settings'): ?>
+            <!-- Limits Section -->
+            <?php if ($currentTab === 'limits'): ?>
             <div class="admin-section section">
-                <h2>📊 Casino Settings</h2>
-                <form method="POST" action="admin.php?tab=settings" class="admin-form">
+                <h2>🔒 Limits</h2>
+                <p style="margin-bottom: 20px; color: #666;">Configure betting and deposit limits for the casino.</p>
+                <form method="POST" action="admin.php?tab=limits" class="admin-form">
                     <div class="form-group">
                         <label for="max_deposit">Max Deposit ($)</label>
                         <input type="number" id="max_deposit" name="max_deposit" min="1" step="0.01" 
@@ -469,54 +484,17 @@ include __DIR__ . '/../includes/navbar.php';
                         <small>Default bet amount for all users (can be overridden in user profile)</small>
                     </div>
                     
-                    <h3 style="margin-top: 30px; margin-bottom: 15px; color: #667eea;">Game Modes</h3>
-                    <p style="margin-bottom: 15px; color: #666;">Choose whether games run locally (client-side) or centrally (synchronized for all users).</p>
-                    
-                    <div class="form-group">
-                        <label for="roulette_mode">Roulette Mode</label>
-                        <select id="roulette_mode" name="roulette_mode" required>
-                            <option value="local" <?php echo ($settings['roulette_mode'] ?? 'local') === 'local' ? 'selected' : ''; ?>>Local (Client-side)</option>
-                            <option value="central" <?php echo ($settings['roulette_mode'] ?? 'local') === 'central' ? 'selected' : ''; ?>>Central (Synchronized)</option>
-                        </select>
-                        <small>Local: Users spin individually. Central: All users see the same synchronized rounds (requires worker).</small>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="crash_mode">Crash Mode</label>
-                        <select id="crash_mode" name="crash_mode" required>
-                            <option value="local" <?php echo ($settings['crash_mode'] ?? 'local') === 'local' ? 'selected' : ''; ?>>Local (Client-side)</option>
-                            <option value="central" <?php echo ($settings['crash_mode'] ?? 'local') === 'central' ? 'selected' : ''; ?>>Central (Synchronized)</option>
-                        </select>
-                        <small>Local: Users start games individually. Central: All users see the same synchronized rounds (requires worker).</small>
-                    </div>
-                    
-                    <button type="submit" name="update_settings" class="btn btn-primary">Update Settings</button>
+                    <button type="submit" name="update_settings" class="btn btn-primary">Update Limits</button>
                 </form>
-                
-                <hr style="border: none; border-top: 2px solid #e0e0e0; margin: 40px 0 30px 0;">
-                
-                <h3 style="margin-top: 20px; margin-bottom: 15px; color: #667eea;">⚙️ Worker Management</h3>
-                <p style="margin-bottom: 15px; color: #666;">Manage the game rounds worker process. Required for central mode roulette and crash games.</p>
-                
-                <div id="workerStatus" style="margin-bottom: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px;">
-                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
-                        <strong>Status:</strong>
-                        <span id="workerStatusText" style="padding: 5px 10px; border-radius: 4px; font-weight: bold;">Loading...</span>
-                    </div>
-                    <div id="workerDetails" style="font-size: 0.9em; color: #666;">
-                        <div>PID: <span id="workerPid">-</span></div>
-                    </div>
-                </div>
-                
-                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                    <button id="workerStartBtn" class="btn btn-primary" onclick="controlWorker('start')">Start Worker</button>
-                    <button id="workerStopBtn" class="btn btn-secondary" onclick="controlWorker('stop')">Stop Worker</button>
-                    <button id="workerRestartBtn" class="btn btn-secondary" onclick="controlWorker('restart')">Restart Worker</button>
-                    <button id="workerRefreshBtn" class="btn btn-secondary" onclick="updateWorkerStatus()">Refresh Status</button>
-                    <button id="workerLogsBtn" class="btn btn-secondary" onclick="viewWorkerLogs()">View Logs</button>
-                </div>
-                
-                <div id="workerMessage" style="margin-top: 15px;"></div>
+            </div>
+            <?php endif; ?>
+            
+            <!-- Settings Section -->
+            <?php if ($currentTab === 'settings'): ?>
+            <div class="admin-section section">
+                <h2>📊 Casino Settings</h2>
+                <p style="margin-bottom: 20px; color: #666;">General casino configuration settings.</p>
+                <!-- Add other casino settings here if needed in the future -->
             </div>
             <?php endif; ?>
             
@@ -1207,11 +1185,69 @@ include __DIR__ . '/../includes/navbar.php';
                 $crashMode = getSetting('crash_mode', 'local');
             ?>
             <div class="admin-section section">
-                <h2>🎯 Game Rounds Monitor</h2>
+                <h2>🎯 Synchronized Games</h2>
+                <p style="margin-bottom: 20px;" class="admin-description">Configure game modes and manage the worker process for synchronized game rounds.</p>
+                
+                <!-- Game Modes Section -->
+                <h3 style="margin-top: 0; margin-bottom: 15px; color: #667eea;">Game Modes</h3>
+                <p style="margin-bottom: 15px; color: #666;">Choose whether games run locally (client-side) or centrally (synchronized for all users).</p>
+                
+                <form method="POST" action="admin.php?tab=rounds" class="admin-form" style="margin-bottom: 30px;">
+                    <div class="form-group">
+                        <label for="roulette_mode">Roulette Mode</label>
+                        <select id="roulette_mode" name="roulette_mode" required>
+                            <option value="local" <?php echo ($rouletteMode ?? 'local') === 'local' ? 'selected' : ''; ?>>Local (Client-side)</option>
+                            <option value="central" <?php echo ($rouletteMode ?? 'local') === 'central' ? 'selected' : ''; ?>>Central (Synchronized)</option>
+                        </select>
+                        <small>Local: Users spin individually. Central: All users see the same synchronized rounds (requires worker).</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="crash_mode">Crash Mode</label>
+                        <select id="crash_mode" name="crash_mode" required>
+                            <option value="local" <?php echo ($crashMode ?? 'local') === 'local' ? 'selected' : ''; ?>>Local (Client-side)</option>
+                            <option value="central" <?php echo ($crashMode ?? 'local') === 'central' ? 'selected' : ''; ?>>Central (Synchronized)</option>
+                        </select>
+                        <small>Local: Users start games individually. Central: All users see the same synchronized rounds (requires worker).</small>
+                    </div>
+                    
+                    <button type="submit" name="update_game_modes" class="btn btn-primary">Update Game Modes</button>
+                </form>
+                
+                <hr style="border: none; border-top: 2px solid #e0e0e0; margin: 30px 0;">
+                
+                <!-- Worker Management Section -->
+                <h3 style="margin-top: 20px; margin-bottom: 15px; color: #667eea;">⚙️ Worker Management</h3>
+                <p style="margin-bottom: 15px; color: #666;">Manage the game rounds worker process. Required for central mode roulette and crash games.</p>
+                
+                <div id="workerStatus" style="margin-bottom: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px;">
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
+                        <strong>Status:</strong>
+                        <span id="workerStatusText" style="padding: 5px 10px; border-radius: 4px; font-weight: bold;">Loading...</span>
+                    </div>
+                    <div id="workerDetails" style="font-size: 0.9em; color: #666;">
+                        <div>PID: <span id="workerPid">-</span></div>
+                    </div>
+                </div>
+                
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <button id="workerStartBtn" class="btn btn-primary" onclick="controlWorker('start')">Start Worker</button>
+                    <button id="workerStopBtn" class="btn btn-secondary" onclick="controlWorker('stop')">Stop Worker</button>
+                    <button id="workerRestartBtn" class="btn btn-secondary" onclick="controlWorker('restart')">Restart Worker</button>
+                    <button id="workerRefreshBtn" class="btn btn-secondary" onclick="updateWorkerStatus()">Refresh Status</button>
+                    <button id="workerLogsBtn" class="btn btn-secondary" onclick="viewWorkerLogs()">View Logs</button>
+                </div>
+                
+                <div id="workerMessage" style="margin-top: 15px;"></div>
+                
+                <hr style="border: none; border-top: 2px solid #e0e0e0; margin: 40px 0 30px 0;">
+                
+                <!-- Game Rounds Monitor Section -->
+                <h3 style="margin-top: 20px; margin-bottom: 15px; color: #667eea;">Game Rounds Monitor</h3>
                 <p style="margin-bottom: 20px;" class="admin-description">Monitor current game rounds and predict upcoming results (admin only).</p>
                 <p style="margin-bottom: 20px; padding: 10px; background: rgba(102, 126, 234, 0.1); border-radius: 5px;" class="admin-description">
                     <strong>Current Modes:</strong> Roulette: <strong><?php echo ucfirst($rouletteMode); ?></strong> | Crash: <strong><?php echo ucfirst($crashMode); ?></strong><br>
-                    <small>Central mode requires the game rounds worker to be running. Change modes in Casino Settings.</small>
+                    <small>Central mode requires the game rounds worker to be running.</small>
                 </p>
                 
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px;">
@@ -1314,6 +1350,12 @@ include __DIR__ . '/../includes/navbar.php';
                             <?php else: ?>
                                 <p>No active round - worker may not be running</p>
                             <?php endif; ?>
+                        </div>
+                        <div id="crashAllBets" style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #ddd;">
+                            <h4 style="margin-top: 0; color: #667eea;">👥 All Players' Bets</h4>
+                            <div id="crashAllBetsContent" style="max-height: 300px; overflow-y: auto;">
+                                <p style="text-align: center; color: #999;">Loading bets...</p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1654,8 +1696,8 @@ include __DIR__ . '/../includes/navbar.php';
             });
         }
         
-        // Auto-refresh worker status every 5 seconds if on settings tab
-        <?php if ($currentTab === 'settings'): ?>
+        // Auto-refresh worker status every 5 seconds if on rounds tab
+        <?php if ($currentTab === 'rounds'): ?>
         $(document).ready(function() {
             updateWorkerStatus();
             setInterval(updateWorkerStatus, 5000);
@@ -2212,11 +2254,32 @@ include __DIR__ . '/../includes/navbar.php';
                 // Display bets grouped by user
                 Object.keys(betsByUser).forEach(function(userId) {
                     const userData = betsByUser[userId];
+                    
+                    // Consolidate bets by bet_type and bet_value for this user
+                    const consolidatedBets = {};
+                    userData.bets.forEach(function(bet) {
+                        const key = bet.bet_type + '_' + bet.bet_value;
+                        if (!consolidatedBets[key]) {
+                            consolidatedBets[key] = {
+                                bet_type: bet.bet_type,
+                                bet_value: bet.bet_value,
+                                amount: 0,
+                                count: 0,
+                                multiplier: bet.multiplier || 2
+                            };
+                        }
+                        consolidatedBets[key].amount += parseFloat(bet.amount || 0);
+                        consolidatedBets[key].count += 1;
+                    });
+                    
                     html += '<div style="border: 1px solid #ddd; border-radius: 6px; padding: 12px; background: #f9f9f9;">';
                     html += '<div style="font-weight: bold; margin-bottom: 8px; color: #667eea;">' + escapeHtml(userData.username) + '</div>';
                     html += '<div style="display: flex; flex-direction: column; gap: 6px;">';
                     
-                    userData.bets.forEach(function(bet) {
+                    // Display consolidated bets
+                    Object.keys(consolidatedBets).forEach(function(key) {
+                        const bet = consolidatedBets[key];
+                        
                         // Check if bet matches predicted result (only if predictedResult is provided)
                         let matchesPrediction = false;
                         if (predictedResult !== null && predictedResult !== undefined) {
@@ -2228,13 +2291,14 @@ include __DIR__ . '/../includes/navbar.php';
                         }
                         
                         const sparkleIcon = matchesPrediction ? ' 🔮' : '';
+                        const countText = bet.count > 1 ? ` (${bet.count}x)` : '';
                         
                         if (bet.bet_type === 'number') {
                             const number = parseInt(bet.bet_value);
                             const colors = getRouletteNumberColors(number);
                             html += '<div style="display: flex; align-items: center; gap: 8px; padding: 6px; background: white; border-radius: 4px;">';
                             html += '<div style="width: 24px; height: 24px; border-radius: 50%; background-color: ' + colors.bg + '; color: ' + colors.text + '; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.2);">' + number + '</div>';
-                            html += '<span>Number ' + bet.bet_value + ': $' + parseFloat(bet.amount).toFixed(2) + sparkleIcon + '</span>';
+                            html += '<span>Number ' + bet.bet_value + ': $' + bet.amount.toFixed(2) + countText + sparkleIcon + '</span>';
                             html += '</div>';
                         } else if (bet.bet_type === 'color' || bet.bet_type === 'range') {
                             const betValue = bet.bet_value || '';
@@ -2248,10 +2312,123 @@ include __DIR__ . '/../includes/navbar.php';
                                 colorClass = 'bet-item-green';
                             }
                             html += '<div class="bet-item ' + colorClass + '" style="display: flex; align-items: center; padding: 6px; background: white; border-radius: 4px;">';
-                            html += '<span>' + betName + ': $' + parseFloat(bet.amount).toFixed(2) + ' (' + parseInt(bet.multiplier || 2) + 'x)' + sparkleIcon + '</span>';
+                            html += '<span>' + betName + ': $' + bet.amount.toFixed(2) + ' (' + parseInt(bet.multiplier) + 'x)' + countText + sparkleIcon + '</span>';
                             html += '</div>';
                         }
                     });
+                    
+                    html += '</div>';
+                    html += '</div>';
+                });
+                
+                html += '</div>';
+                container.html(html);
+            }
+            
+            function updateCrashAllBetsDisplay(allBets, crashPoint) {
+                const container = $('#crashAllBetsContent');
+                if (!container.length) return;
+                
+                if (!allBets || allBets.length === 0) {
+                    container.html('<p style="text-align: center; color: #999;">No bets placed yet</p>');
+                    return;
+                }
+                
+                // Group bets by user and consolidate
+                const betsByUser = {};
+                allBets.forEach(function(bet) {
+                    const userId = bet.user_id;
+                    if (!betsByUser[userId]) {
+                        betsByUser[userId] = {
+                            username: bet.username || 'Unknown',
+                            totalBet: 0,
+                            bets: []
+                        };
+                    }
+                    betsByUser[userId].totalBet += parseFloat(bet.bet_amount || 0);
+                    betsByUser[userId].bets.push(bet);
+                });
+                
+                let html = '<div style="display: flex; flex-direction: column; gap: 12px;">';
+                
+                // Display bets grouped by user
+                Object.keys(betsByUser).forEach(function(userId) {
+                    const userData = betsByUser[userId];
+                    
+                    html += '<div style="border: 1px solid #ddd; border-radius: 6px; padding: 12px; background: #f9f9f9;">';
+                    html += '<div style="font-weight: bold; margin-bottom: 8px; color: #667eea;">' + escapeHtml(userData.username) + '</div>';
+                    html += '<div style="display: flex; flex-direction: column; gap: 6px;">';
+                    
+                    // Show total bet amount
+                    const countText = userData.bets.length > 1 ? ` (${userData.bets.length} bet${userData.bets.length > 1 ? 's' : ''})` : '';
+                    html += '<div style="display: flex; align-items: center; padding: 6px; background: white; border-radius: 4px;">';
+                    html += '<span><strong>Total Bet:</strong> $' + userData.totalBet.toFixed(2) + countText + '</span>';
+                    html += '</div>';
+                    
+                    // Show individual bet details if there are multiple bets or if they cashed out
+                    if (userData.bets.length > 1 || userData.bets.some(b => b.cash_out_multiplier)) {
+                        userData.bets.forEach(function(bet) {
+                            const betAmount = parseFloat(bet.bet_amount || 0);
+                            const cashOut = bet.cash_out_multiplier ? parseFloat(bet.cash_out_multiplier) : null;
+                            const won = bet.won === 1 || bet.won === '1';
+                            const payout = bet.payout ? parseFloat(bet.payout) : 0;
+                            
+                            // Check if bet would win based on crash point (if provided)
+                            let wouldWin = false;
+                            let sparkleIcon = '';
+                            if (crashPoint !== null && crashPoint !== undefined) {
+                                if (cashOut) {
+                                    wouldWin = cashOut <= parseFloat(crashPoint);
+                                } else {
+                                    // If no cash out yet, show if they could potentially win
+                                    wouldWin = parseFloat(crashPoint) > 1.0;
+                                }
+                                if (wouldWin && cashOut) {
+                                    sparkleIcon = ' 🔮';
+                                }
+                            }
+                            
+                            html += '<div style="display: flex; align-items: center; padding: 6px; background: white; border-radius: 4px; font-size: 0.9em; margin-left: 10px;">';
+                            html += '<span>Bet: $' + betAmount.toFixed(2);
+                            if (cashOut) {
+                                html += ' | Cashed out at: <strong>' + cashOut.toFixed(2) + 'x</strong>';
+                                if (won || wouldWin) {
+                                    html += ' | Payout: <strong style="color: #28a745;">$' + payout.toFixed(2) + '</strong>';
+                                }
+                                html += sparkleIcon;
+                            } else if (crashPoint && parseFloat(crashPoint) > 1.0) {
+                                html += ' | <span style="color: #999;">Not cashed out</span>';
+                            }
+                            html += '</span>';
+                            html += '</div>';
+                        });
+                    } else {
+                        // Single bet, show if they cashed out
+                        const bet = userData.bets[0];
+                        const cashOut = bet.cash_out_multiplier ? parseFloat(bet.cash_out_multiplier) : null;
+                        const won = bet.won === 1 || bet.won === '1';
+                        const payout = bet.payout ? parseFloat(bet.payout) : 0;
+                        
+                        let wouldWin = false;
+                        let sparkleIcon = '';
+                        if (crashPoint !== null && crashPoint !== undefined && cashOut) {
+                            wouldWin = cashOut <= parseFloat(crashPoint);
+                            if (wouldWin) {
+                                sparkleIcon = ' 🔮';
+                            }
+                        }
+                        
+                        if (cashOut) {
+                            html += '<div style="display: flex; align-items: center; padding: 6px; background: white; border-radius: 4px; font-size: 0.9em; margin-left: 10px;">';
+                            html += '<span>Cashed out at: <strong>' + cashOut.toFixed(2) + 'x</strong>';
+                            if (won || wouldWin) {
+                                html += ' | Payout: <strong style="color: #28a745;">$' + payout.toFixed(2) + '</strong>';
+                            }
+                            html += sparkleIcon;
+                            html += '</span>';
+                            html += '</div>';
+                        }
+                    }
                     
                     html += '</div>';
                     html += '</div>';

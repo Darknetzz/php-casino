@@ -664,6 +664,18 @@ class Database {
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
     
+    public function getCrashBetsForRoundWithUsers($roundId) {
+        $stmt = $this->db->prepare("
+            SELECT cb.*, u.username, u.id as user_id 
+            FROM crash_bets cb 
+            INNER JOIN users u ON cb.user_id = u.id 
+            WHERE cb.round_id = ? 
+            ORDER BY cb.created_at ASC
+        ");
+        $stmt->execute([$roundId]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+    
     public function getUserCrashBetsForRound($roundId, $userId) {
         $stmt = $this->db->prepare("SELECT * FROM crash_bets WHERE round_id = ? AND user_id = ?");
         $stmt->execute([$roundId, $userId]);
