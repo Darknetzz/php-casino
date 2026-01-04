@@ -91,11 +91,11 @@ $(document).ready(function() {
     // Function to calculate which number is at the top after a given rotation
     function getNumberAtTop(rotation) {
         const anglePerNumber = 360 / rouletteNumbers.length;
-        // After rotating by rotation degrees, a pocket that started at angle A
-        // will be at position (A + rotation) % 360
-        // We want to find which pocket is at 0 (top)
-        // So we need: (A + rotation) % 360 = 0, which means A = (360 - rotation) % 360
-        const targetAngle = (360 - (rotation % 360)) % 360;
+        // When the wheel rotates clockwise by R degrees, a pocket that started at angle A
+        // will appear at angle (A - R) mod 360 relative to the fixed pointer
+        // We want to find which pocket is at 0 (top) after rotation R
+        // So we need: (A - R) mod 360 = 0, which means A = R mod 360
+        const targetAngle = (rotation % 360 + 360) % 360; // Ensure positive
         const targetIndex = Math.round(targetAngle / anglePerNumber) % rouletteNumbers.length;
         return rouletteNumbers[targetIndex].num;
     }
@@ -292,17 +292,13 @@ $(document).ready(function() {
             const resultColor = getNumberColor(resultNum);
             
             // Calculate rotation needed to land on winning number
-            // The key insight: when we rotate the wheel container clockwise by R degrees,
-            // a pocket that started at angle A will visually appear at angle (A - R) % 360
-            // (because the wheel rotates, but the pointer stays fixed)
-            // We want the winning pocket to appear at 0 (top, where pointer is)
-            // So: (A - R) % 360 = 0, which means R = A (plus full spins)
-            const winningIndex = rouletteNumbers.findIndex(n => n.num === resultNum);
+            // When wheel rotates clockwise by R, a pocket at angle A moves to (A - R) mod 360
+            // To get pocket at angle A to top (0): (A - R) mod 360 = 0, so R = A mod 360
             const anglePerNumber = 360 / rouletteNumbers.length;
+            const winningIndex = rouletteNumbers.findIndex(n => n.num === resultNum);
             const pocketStartAngle = winningIndex * anglePerNumber;
             
-            // To get pocket at angle A to appear at 0: rotate by A degrees clockwise
-            // (plus full spins for animation effect)
+            // Add full spins for animation effect
             const fullSpins = 5 + Math.random() * 3; // 5-8 full spins
             const totalRotation = (fullSpins * 360) + pocketStartAngle;
             currentRotation = totalRotation % 360;
