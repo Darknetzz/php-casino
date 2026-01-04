@@ -11,12 +11,10 @@ $(document).ready(function() {
             if (data.settings.max_bet) {
                 maxBet = data.settings.max_bet;
                 $('#maxBet').text(maxBet);
-                $('#numberBetAmount').attr('max', maxBet);
-                $('#colorBetAmount').attr('max', maxBet);
+                $('#betAmount').attr('max', maxBet);
             }
             if (data.settings.default_bet) {
-                $('#numberBetAmount').val(data.settings.default_bet);
-                $('#colorBetAmount').val(data.settings.default_bet);
+                $('#betAmount').val(data.settings.default_bet);
             }
         }
     }, 'json');
@@ -216,7 +214,7 @@ $(document).ready(function() {
         
         const betType = $(this).data('bet');
         const multiplier = parseInt($(this).data('multiplier'));
-        const amount = parseFloat($('#colorBetAmount').val());
+        const amount = parseFloat($('#betAmount').val());
         
         if (isNaN(amount) || amount < 1 || amount > maxBet) {
             $('#result').html('<div class="alert alert-error">Bet amount must be between $1 and $' + maxBet + '</div>');
@@ -245,7 +243,7 @@ $(document).ready(function() {
         if (isSpinning) return;
         
         const number = parseInt($('#numberBet').val());
-        const amount = parseFloat($('#numberBetAmount').val());
+        const amount = parseFloat($('#betAmount').val());
         
         if (isNaN(number) || number < 0 || number > 36) {
             $('#result').html('<div class="alert alert-error">Please enter a valid number (0-36)</div>');
@@ -273,7 +271,7 @@ $(document).ready(function() {
     });
     
     // Allow Enter key to add bet
-    $('#numberBet, #numberBetAmount').keypress(function(e) {
+    $('#numberBet').keypress(function(e) {
         if (e.which === 13) {
             $('#addNumberBetBtn').click();
         }
