@@ -318,29 +318,46 @@ $(document).ready(function() {
             console.log('Pocket start angle:', pocketStartAngle);
             console.log('Angle per number:', anglePerNumber);
             
-            // Calculate rotation to bring winning pocket to top
-            // When wheel rotates clockwise by R, pocket at angle A moves to (A + R) mod 360
-            // To get pocket at angle A to top (0°): (A + R) mod 360 = 0, so R = (360 - A) mod 360
-            let rotationToTop = (360 - pocketStartAngle) % 360;
+            // Use brute force: test all rotations to find the one that puts resultNum at top
+            let rotationToTop = 0;
+            let found = false;
             
-            // Verify the calculation
-            const testNum = getNumberAtTop(rotationToTop);
-            console.log('Calculated rotation:', rotationToTop, '-> Expected number at top:', testNum);
-            
-            // If verification fails, try inverted calculation
-            if (testNum !== resultNum) {
-                console.log('WARNING: Calculation failed! Trying inverted...');
-                // Try inverted: maybe rotation direction is wrong
-                const invertedRotation = pocketStartAngle;
-                const testNumInverted = getNumberAtTop(invertedRotation);
-                console.log('Inverted rotation:', invertedRotation, '-> Number at top:', testNumInverted);
-                
-                if (testNumInverted === resultNum) {
-                    rotationToTop = invertedRotation;
-                    console.log('Using inverted rotation');
-                } else {
-                    console.log('Both methods failed, using original calculation');
+            console.log('Testing rotations to find correct one...');
+            // Test at each pocket position (rough test first)
+            for (let i = 0; i < rouletteNumbers.length; i++) {
+                const testRot = i * anglePerNumber;
+                const testNum = getNumberAtTop(testRot);
+                if (testNum === resultNum) {
+                    rotationToTop = testRot;
+                    found = true;
+                    console.log(`Found rotation: ${testRot.toFixed(2)} (index ${i}) puts ${resultNum} at top`);
+                    break;
                 }
+            }
+            
+            // If not found, try with small offsets around each pocket
+            if (!found) {
+                console.log('Coarse search failed, trying fine-grained search...');
+                for (let i = 0; i < rouletteNumbers.length; i++) {
+                    const baseRot = i * anglePerNumber;
+                    for (let offset = -anglePerNumber/4; offset <= anglePerNumber/4; offset += 1) {
+                        const testRot = (baseRot + offset + 360) % 360;
+                        const testNum = getNumberAtTop(testRot);
+                        if (testNum === resultNum) {
+                            rotationToTop = testRot;
+                            found = true;
+                            console.log(`Found rotation: ${testRot.toFixed(2)} (index ${i} + offset ${offset.toFixed(2)}) puts ${resultNum} at top`);
+                            break;
+                        }
+                    }
+                    if (found) break;
+                }
+            }
+            
+            if (!found) {
+                console.log('WARNING: Brute force failed! Using calculated fallback...');
+                // Fallback: try the calculated rotation
+                rotationToTop = (360 - pocketStartAngle) % 360;
             }
             
             // Add full spins for animation
