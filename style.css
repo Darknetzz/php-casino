@@ -535,8 +535,9 @@ body {
 }
 
 .bet-controls small {
-    color: #666;
-    font-size: 12px;
+    color: #444;
+    font-size: 13px;
+    font-weight: 500;
     margin-left: 5px;
 }
 
@@ -911,12 +912,13 @@ body {
 .color-bet-amount > small {
     flex-shrink: 0;
     margin-top: 8px;
-    color: #666;
-    font-size: 12px;
+    color: #444;
+    font-size: 13px;
+    font-weight: 500;
 }
 
 .color-bet-amount label {
-    font-weight: 500;
+    font-weight: 600;
     color: #333;
 }
 
@@ -964,6 +966,12 @@ body {
     min-height: 50px;
 }
 
+.active-bets-list p {
+    color: #555 !important;
+    font-weight: 500;
+    margin: 0;
+}
+
 .bets-list {
     display: flex;
     flex-direction: column;
@@ -981,8 +989,9 @@ body {
 }
 
 .bet-item span {
-    font-weight: 500;
-    color: #333;
+    font-weight: 600;
+    color: #222;
+    font-size: 15px;
 }
 
 .btn-remove-bet {
@@ -1230,9 +1239,12 @@ body {
     margin-top: 20px;
 }
 
-.number-bets h4 {
-    color: #666;
+.number-bets h4,
+.color-bets-section h4,
+.number-bets-section h4 {
+    color: #333;
     margin-bottom: 10px;
+    font-weight: 600;
 }
 
 .number-bets input {
@@ -2522,6 +2534,11 @@ body.dark-mode .active-bets-list {
     color: #e0e0e0;
 }
 
+body.dark-mode .bet-item {
+    background: rgba(30, 30, 50, 0.9) !important;
+    border-left-color: #8a9eff;
+}
+
 body.dark-mode .color-bet-amount label,
 body.dark-mode .color-bets-section h4,
 body.dark-mode .number-bets-section h4 {
@@ -2529,7 +2546,21 @@ body.dark-mode .number-bets-section h4 {
 }
 
 body.dark-mode .color-bet-amount small {
-    color: #aaa;
+    color: #ccc;
+    font-weight: 500;
+}
+
+body.dark-mode .active-bets-list p {
+    color: #ccc !important;
+    font-weight: 500;
+}
+
+body.dark-mode .bet-item span {
+    color: #e0e0e0 !important;
+}
+
+body.dark-mode .bet-controls small {
+    color: #ccc;
 }
 
 body.dark-mode .total-bet-display {

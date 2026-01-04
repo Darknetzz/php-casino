@@ -36,7 +36,7 @@ include __DIR__ . '/../includes/navbar.php';
                             <small>Max: $<span id="maxBet">100</span></small>
                         </div>
                         <div id="activeColorBets" class="active-bets-list" style="margin-top: 15px;">
-                            <p style="color: #666; font-style: italic;">No color/range bets placed yet</p>
+                            <p>No color/range bets placed yet</p>
                         </div>
                     </div>
                     <div class="number-bets-section" style="margin-top: 30px;">
@@ -47,7 +47,7 @@ include __DIR__ . '/../includes/navbar.php';
                             <button id="addNumberBetBtn" class="btn btn-secondary">Add Bet</button>
                         </div>
                         <div id="activeBets" class="active-bets-list">
-                            <p style="color: #666; font-style: italic;">No number bets placed yet</p>
+                            <p>No number bets placed yet</p>
                         </div>
                     </div>
                     <div id="totalBetAmount" class="total-bet-display" style="display: none; margin-top: 20px;">
@@ -71,7 +71,7 @@ include __DIR__ . '/../includes/navbar.php';
             
             <div class="win-rate-section section" style="margin: 20px 0; background: #f8f9fa; border-radius: 8px;">
                 <h4 style="margin: 0 0 10px 0; color: #667eea;">📊 Your Stats</h4>
-                <div id="winRateDisplay" style="color: #666;">
+                <div id="winRateDisplay" style="color: #444; font-weight: 500;">
                     <span>Win Rate: <strong id="winRate">-</strong>%</span>
                     <span style="margin-left: 20px;">Games Played: <strong id="gamesPlayed">-</strong></span>
                     <span style="margin-left: 20px;">Wins: <strong id="wins">-</strong></span>

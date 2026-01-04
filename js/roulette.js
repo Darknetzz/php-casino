@@ -129,7 +129,7 @@ $(document).ready(function() {
         // Update number bets display
         const numberBetsList = $('#activeBets');
         if (numberBets.length === 0) {
-            numberBetsList.html('<p style="color: #666; font-style: italic;">No number bets placed yet</p>');
+            numberBetsList.html('<p>No number bets placed yet</p>');
         } else {
             let html = '<div class="bets-list">';
             numberBets.forEach(function(bet, index) {
@@ -145,7 +145,7 @@ $(document).ready(function() {
         // Update color bets display
         const colorBetsList = $('#activeColorBets');
         if (colorBets.length === 0) {
-            colorBetsList.html('<p style="color: #666; font-style: italic;">No color/range bets placed yet</p>');
+            colorBetsList.html('<p>No color/range bets placed yet</p>');
         } else {
             let html = '<div class="bets-list">';
             colorBets.forEach(function(bet, index) {
