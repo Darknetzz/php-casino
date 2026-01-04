@@ -664,7 +664,8 @@ switch ($action) {
         $lines = intval($_GET['lines'] ?? 100); // Default to last 100 lines
         
         if (!file_exists($logFile)) {
-            echo json_encode(['success' => false, 'message' => 'Log file not found']);
+            // Return success with empty logs and a flag indicating file doesn't exist
+            echo json_encode(['success' => true, 'logs' => '', 'fileExists' => false]);
             break;
         }
         
@@ -684,7 +685,7 @@ switch ($action) {
             }
         }
         
-        echo json_encode(['success' => true, 'logs' => $logContent]);
+        echo json_encode(['success' => true, 'logs' => $logContent, 'fileExists' => true]);
         break;
         
     default:

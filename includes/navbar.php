@@ -51,7 +51,10 @@ if (strpos($_SERVER['PHP_SELF'], '/games/') !== false) {
                 <div class="notification-dropdown" id="notificationDropdown" style="display: none;">
                     <div class="notification-dropdown-header">
                         <h3>Notifications</h3>
-                        <button class="notification-mark-all" id="markAllReadBtn">Mark all read</button>
+                        <div style="display: flex; gap: 8px;">
+                            <a href="<?php echo $basePath; ?>pages/notifications.php" class="notification-view-all" style="font-size: 12px; color: #667eea; text-decoration: none; padding: 4px 8px; border-radius: 4px; transition: background 0.2s;" onmouseover="this.style.background='rgba(102, 126, 234, 0.1)'" onmouseout="this.style.background='transparent'">View All</a>
+                            <button class="notification-mark-all" id="markAllReadBtn">Mark all read</button>
+                        </div>
                     </div>
                     <div class="notification-dropdown-list" id="notificationList"></div>
                     <div class="notification-dropdown-empty" id="notificationEmpty" style="display: none;">

@@ -1623,7 +1623,18 @@ include __DIR__ . '/../includes/navbar.php';
             // Fetch logs
             $.get('../api/api.php?action=getWorkerLogs&lines=' + lines, function(data) {
                 if (data.success) {
-                    if (data.logs && data.logs.trim()) {
+                    if (data.fileExists === false) {
+                        // Log file doesn't exist yet
+                        const infoColor = $('body').hasClass('dark-mode') ? '#60a5fa' : '#0066cc';
+                        const textColor = $('body').hasClass('dark-mode') ? '#d4d4d4' : '#333';
+                        $content.html(
+                            '<div style="text-align: center; padding: 20px; color: ' + textColor + ';">' +
+                            '<div style="color: ' + infoColor + '; font-size: 14px; margin-bottom: 10px;">ℹ️ Log file not found</div>' +
+                            '<div style="font-size: 12px;">The log file will be created automatically when you start the worker.</div>' +
+                            '<div style="font-size: 12px; margin-top: 10px;">Click "Start Worker" to begin logging.</div>' +
+                            '</div>'
+                        );
+                    } else if (data.logs && data.logs.trim()) {
                         // Escape HTML and format logs
                         const logs = $('<div>').text(data.logs).html();
                         $content.html(logs);

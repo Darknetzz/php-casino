@@ -6,6 +6,9 @@
  */
 
 $(document).ready(function() {
+    // Storage key for localStorage
+    const STORAGE_KEY = 'casino_notifications';
+    
     // Track which page we're on
     const currentPage = window.location.pathname;
     const isRoulettePage = currentPage.includes('roulette.php');
@@ -26,6 +29,55 @@ $(document).ready(function() {
     // Polling interval (every 3 seconds)
     const POLL_INTERVAL = 3000;
     let pollInterval = null;
+    
+    /**
+     * Load notifications from localStorage
+     */
+    function loadNotificationsFromStorage() {
+        try {
+            const stored = localStorage.getItem(STORAGE_KEY);
+            if (stored) {
+                const parsed = JSON.parse(stored);
+                // Convert timestamp strings back to Date objects
+                return parsed.map(n => {
+                    n.timestamp = new Date(n.timestamp);
+                    return n;
+                });
+            }
+        } catch (e) {
+            console.error('Error loading notifications from storage:', e);
+        }
+        return [];
+    }
+    
+    /**
+     * Save notifications to localStorage
+     */
+    function saveNotificationsToStorage() {
+        try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(notifications));
+        } catch (e) {
+            console.error('Error saving notifications to storage:', e);
+            // If storage is full, remove oldest notifications
+            if (e.name === 'QuotaExceededError') {
+                // Keep only last 100 notifications
+                notifications = notifications.slice(-100);
+                try {
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(notifications));
+                } catch (e2) {
+                    console.error('Error after cleanup:', e2);
+                }
+            }
+        }
+    }
+    
+    // Load notifications on page load
+    notifications = loadNotificationsFromStorage();
+    unreadCount = notifications.filter(n => !n.read).length;
+    
+    // Make notifications accessible globally for notifications page
+    window.notifications = notifications;
+    window.unreadCount = unreadCount;
     
     /**
      * Get game URL based on current page location
@@ -61,10 +113,21 @@ $(document).ready(function() {
         notifications.unshift(notificationData); // Add to beginning
         unreadCount++;
         
-        // Keep only last 50 notifications
-        if (notifications.length > 50) {
-            notifications = notifications.slice(0, 50);
+        // Keep only last 200 notifications to prevent storage issues
+        if (notifications.length > 200) {
+            // Remove oldest notifications
+            notifications = notifications.slice(-200);
         }
+        
+        // Update unread count
+        unreadCount = notifications.filter(n => !n.read).length;
+        
+        // Save to localStorage
+        saveNotificationsToStorage();
+        
+        // Update global references
+        window.notifications = notifications;
+        window.unreadCount = unreadCount;
         
         // Update dropdown
         updateNotificationDropdown();
@@ -149,6 +212,14 @@ $(document).ready(function() {
         if (notification && !notification.read) {
             notification.read = true;
             unreadCount = Math.max(0, unreadCount - 1);
+            
+            // Save to localStorage
+            saveNotificationsToStorage();
+            
+            // Update global references
+            window.notifications = notifications;
+            window.unreadCount = unreadCount;
+            
             updateNotificationDropdown();
         }
     }
@@ -163,8 +234,19 @@ $(document).ready(function() {
             }
         });
         unreadCount = 0;
+        
+        // Save to localStorage
+        saveNotificationsToStorage();
+        
+        // Update global references
+        window.notifications = notifications;
+        window.unreadCount = unreadCount;
+        
         updateNotificationDropdown();
     }
+    
+    // Make markAllAsRead accessible globally
+    window.markAllAsRead = markAllAsRead;
     
     /**
      * Update notification dropdown
@@ -462,6 +544,10 @@ $(document).ready(function() {
             pollInterval = null;
         }
     }
+    
+    // Make functions accessible globally
+    window.updateNotificationDropdown = updateNotificationDropdown;
+    window.markAllAsRead = markAllAsRead;
     
     // Initialize
     initNotificationContainer();
