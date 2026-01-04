@@ -339,6 +339,118 @@ $(document).ready(function() {
         return 0;
     }
     
+    // Get which symbol indices are part of the winning combination
+    function getWinningSymbolIndices(resultSymbols) {
+        // Accept array of symbols, trim whitespace
+        if (!Array.isArray(resultSymbols)) {
+            resultSymbols = Array.prototype.slice.call(arguments);
+        }
+        resultSymbols = resultSymbols.map(function(s) { return (s || '').trim(); });
+        
+        // Check custom combinations first (exact order matching, empty = any symbol)
+        for (let i = 0; i < customCombinations.length; i++) {
+            const combination = customCombinations[i];
+            if (combination.symbols && Array.isArray(combination.symbols)) {
+                // Check for exact order match (empty string matches any symbol)
+                if (combination.symbols.length === resultSymbols.length) {
+                    let matches = true;
+                    for (let j = 0; j < combination.symbols.length; j++) {
+                        const comboSymbol = (combination.symbols[j] || '').trim();
+                        const resultSymbol = (resultSymbols[j] || '').trim();
+                        // If combo symbol is empty, it matches any symbol; otherwise must match exactly
+                        if (comboSymbol !== '' && comboSymbol !== resultSymbol) {
+                            matches = false;
+                            break;
+                        }
+                    }
+                    if (matches) {
+                        // All symbols in custom combination are winning
+                        return resultSymbols.map(function(_, idx) { return idx; });
+                    }
+                }
+            }
+        }
+        
+        // Check for all-of-a-kind (all symbols the same)
+        if (resultSymbols.length > 0) {
+            const firstSymbol = resultSymbols[0];
+            let allSame = true;
+            for (let i = 1; i < resultSymbols.length; i++) {
+                if (resultSymbols[i] !== firstSymbol || firstSymbol === '') {
+                    allSame = false;
+                    break;
+                }
+            }
+            if (allSame && firstSymbol !== '') {
+                // All symbols are winning
+                return resultSymbols.map(function(_, idx) { return idx; });
+            }
+        }
+        
+        // Check N-of-a-kind rules (ordered by specificity - specific symbols first, then "any")
+        // Sort rules: specific symbols first, then "any", then by count (higher first)
+        const sortedRules = nOfKindRules.slice().sort(function(a, b) {
+            const aSymbol = (a.symbol || '').trim().toLowerCase();
+            const bSymbol = (b.symbol || '').trim().toLowerCase();
+            const aIsAny = !aSymbol || aSymbol === 'any';
+            const bIsAny = !bSymbol || bSymbol === 'any';
+            
+            // Specific symbols come before "any"
+            if (aIsAny && !bIsAny) return 1;
+            if (!aIsAny && bIsAny) return -1;
+            
+            // Within same type, higher count first
+            return (b.count || 0) - (a.count || 0);
+        });
+        
+        // Count occurrences of each symbol
+        const symbolCounts = {};
+        resultSymbols.forEach(function(symbol) {
+            if (symbol) {
+                symbolCounts[symbol] = (symbolCounts[symbol] || 0) + 1;
+            }
+        });
+        
+        // Check each rule
+        for (let i = 0; i < sortedRules.length; i++) {
+            const rule = sortedRules[i];
+            const count = parseInt(rule.count) || 2;
+            const ruleSymbol = (rule.symbol || '').trim();
+            const isAnySymbol = !ruleSymbol || ruleSymbol.toLowerCase() === 'any';
+            
+            if (isAnySymbol) {
+                // Check if any symbol appears exactly N times (and not all symbols)
+                for (const symbol in symbolCounts) {
+                    if (symbolCounts[symbol] === count && resultSymbols.length > count) {
+                        // Return indices of the N matching symbols
+                        const winningIndices = [];
+                        for (let j = 0; j < resultSymbols.length; j++) {
+                            if (resultSymbols[j] === symbol) {
+                                winningIndices.push(j);
+                            }
+                        }
+                        return winningIndices;
+                    }
+                }
+            } else {
+                // Check if the specific symbol appears exactly N times
+                const actualCount = symbolCounts[ruleSymbol] || 0;
+                if (actualCount === count && resultSymbols.length > count) {
+                    // Return indices of the N matching symbols
+                    const winningIndices = [];
+                    for (let j = 0; j < resultSymbols.length; j++) {
+                        if (resultSymbols[j] === ruleSymbol) {
+                            winningIndices.push(j);
+                        }
+                    }
+                    return winningIndices;
+                }
+            }
+        }
+        
+        return [];
+    }
+    
     $('#spinBtn').click(function() {
         if (isSpinning) return;
         
@@ -436,12 +548,16 @@ $(document).ready(function() {
                             winType = '2 of a kind';
                         }
                     }
-                    winDescriptions.push(`Middle row: ${resultSymbols.join('')} (${multiplier}x - ${winType})`);
+                    // Get winning indices to highlight only those symbols
+                    const winningIndices = getWinningSymbolIndices(resultSymbols);
+                    const winningSymbols = winningIndices.map(function(idx) { return resultSymbols[idx]; }).join('');
                     
-                    // Highlight winning symbols (middle row, index 1)
-                    for (let i = 1; i <= numReels; i++) {
-                        $('#reel' + i + ' .symbol').eq(1).addClass('winning');
-                    }
+                    winDescriptions.push(`Middle row: ${resultSymbols.join('')} → ${winningSymbols} (${multiplier}x - ${winType})`);
+                    
+                    // Highlight only the specific winning symbols (middle row, index 1)
+                    winningIndices.forEach(function(reelIndex) {
+                        $('#reel' + (reelIndex + 1) + ' .symbol').eq(1).addClass('winning');
+                    });
                 }
             } else if (betRows === 3) {
                 // Check all 3 rows
@@ -478,13 +594,17 @@ $(document).ready(function() {
                                 winType = '2 of a kind';
                             }
                         }
-                        const rowName = row === 0 ? 'Top' : (row === 1 ? 'Middle' : 'Bottom');
-                        winDescriptions.push(`${rowName} row: ${resultSymbols.join('')} (${multiplier}x - ${winType})`);
+                        // Get winning indices to highlight only those symbols
+                        const winningIndices = getWinningSymbolIndices(resultSymbols);
+                        const winningSymbols = winningIndices.map(function(idx) { return resultSymbols[idx]; }).join('');
                         
-                        // Highlight winning symbols for this row
-                        for (let i = 1; i <= numReels; i++) {
-                            $('#reel' + i + ' .symbol').eq(row).addClass('winning');
-                        }
+                        const rowName = row === 0 ? 'Top' : (row === 1 ? 'Middle' : 'Bottom');
+                        winDescriptions.push(`${rowName} row: ${resultSymbols.join('')} → ${winningSymbols} (${multiplier}x - ${winType})`);
+                        
+                        // Highlight only the specific winning symbols for this row
+                        winningIndices.forEach(function(reelIndex) {
+                            $('#reel' + (reelIndex + 1) + ' .symbol').eq(row).addClass('winning');
+                        });
                     }
                 });
             }
