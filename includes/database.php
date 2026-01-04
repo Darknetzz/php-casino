@@ -92,7 +92,15 @@ class Database {
             'max_deposit' => '10000',
             'max_bet' => '100',
             'starting_balance' => '1000',
-            'default_bet' => '10'
+            'default_bet' => '10',
+            // Slots multipliers
+            'slots_cherry_multiplier' => '2',
+            'slots_lemon_multiplier' => '3',
+            'slots_orange_multiplier' => '4',
+            'slots_grape_multiplier' => '5',
+            'slots_slot_multiplier' => '10',
+            // Plinko multipliers (9 slots, comma-separated)
+            'plinko_multipliers' => '0.2,0.5,0.8,1.0,2.0,1.0,0.8,0.5,0.2'
         ];
         
         foreach ($defaultSettings as $key => $value) {

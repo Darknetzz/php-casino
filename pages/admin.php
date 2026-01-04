@@ -14,11 +14,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $startingBalance = floatval($_POST['starting_balance'] ?? 0);
         $defaultBet = floatval($_POST['default_bet'] ?? 0);
         
-        if ($maxDeposit > 0 && $maxBet > 0 && $startingBalance > 0 && $defaultBet > 0) {
+        // Slots multipliers
+        $slotsCherry = floatval($_POST['slots_cherry_multiplier'] ?? 0);
+        $slotsLemon = floatval($_POST['slots_lemon_multiplier'] ?? 0);
+        $slotsOrange = floatval($_POST['slots_orange_multiplier'] ?? 0);
+        $slotsGrape = floatval($_POST['slots_grape_multiplier'] ?? 0);
+        $slotsSlot = floatval($_POST['slots_slot_multiplier'] ?? 0);
+        
+        // Plinko multipliers
+        $plinkoMultipliers = $_POST['plinko_multipliers'] ?? '';
+        
+        if ($maxDeposit > 0 && $maxBet > 0 && $startingBalance > 0 && $defaultBet > 0 &&
+            $slotsCherry > 0 && $slotsLemon > 0 && $slotsOrange > 0 && $slotsGrape > 0 && $slotsSlot > 0) {
             $db->setSetting('max_deposit', $maxDeposit);
             $db->setSetting('max_bet', $maxBet);
             $db->setSetting('starting_balance', $startingBalance);
             $db->setSetting('default_bet', $defaultBet);
+            
+            // Save slots multipliers
+            $db->setSetting('slots_cherry_multiplier', $slotsCherry);
+            $db->setSetting('slots_lemon_multiplier', $slotsLemon);
+            $db->setSetting('slots_orange_multiplier', $slotsOrange);
+            $db->setSetting('slots_grape_multiplier', $slotsGrape);
+            $db->setSetting('slots_slot_multiplier', $slotsSlot);
+            
+            // Save plinko multipliers
+            $db->setSetting('plinko_multipliers', $plinkoMultipliers);
+            
             $message = 'Settings updated successfully!';
         } else {
             $error = 'All values must be greater than 0.';
@@ -107,6 +129,49 @@ $users = $db->getAllUsers();
                         <small>Default bet amount for all users (can be overridden in user profile)</small>
                     </div>
                     <button type="submit" name="update_settings" class="btn btn-primary">Update Settings</button>
+                </form>
+            </div>
+            
+            <!-- Game Multipliers Section -->
+            <div class="admin-section">
+                <h2>🎰 Game Multipliers</h2>
+                <form method="POST" action="admin.php" class="admin-form">
+                    <h3 style="margin-top: 20px; margin-bottom: 15px; color: #667eea;">Slot Machine Multipliers</h3>
+                    <div class="form-group">
+                        <label for="slots_cherry_multiplier">🍒 Cherry (🍒🍒🍒) Multiplier</label>
+                        <input type="number" id="slots_cherry_multiplier" name="slots_cherry_multiplier" min="0.1" step="0.1" 
+                               value="<?php echo htmlspecialchars($settings['slots_cherry_multiplier'] ?? '2'); ?>" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="slots_lemon_multiplier">🍋 Lemon (🍋🍋🍋) Multiplier</label>
+                        <input type="number" id="slots_lemon_multiplier" name="slots_lemon_multiplier" min="0.1" step="0.1" 
+                               value="<?php echo htmlspecialchars($settings['slots_lemon_multiplier'] ?? '3'); ?>" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="slots_orange_multiplier">🍊 Orange (🍊🍊🍊) Multiplier</label>
+                        <input type="number" id="slots_orange_multiplier" name="slots_orange_multiplier" min="0.1" step="0.1" 
+                               value="<?php echo htmlspecialchars($settings['slots_orange_multiplier'] ?? '4'); ?>" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="slots_grape_multiplier">🍇 Grape (🍇🍇🍇) Multiplier</label>
+                        <input type="number" id="slots_grape_multiplier" name="slots_grape_multiplier" min="0.1" step="0.1" 
+                               value="<?php echo htmlspecialchars($settings['slots_grape_multiplier'] ?? '5'); ?>" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="slots_slot_multiplier">🎰 Slot Machine (🎰🎰🎰) Multiplier</label>
+                        <input type="number" id="slots_slot_multiplier" name="slots_slot_multiplier" min="0.1" step="0.1" 
+                               value="<?php echo htmlspecialchars($settings['slots_slot_multiplier'] ?? '10'); ?>" required>
+                    </div>
+                    
+                    <h3 style="margin-top: 30px; margin-bottom: 15px; color: #667eea;">Plinko Multipliers</h3>
+                    <div class="form-group">
+                        <label for="plinko_multipliers">Plinko Slot Multipliers (comma-separated, 9 values)</label>
+                        <input type="text" id="plinko_multipliers" name="plinko_multipliers" 
+                               value="<?php echo htmlspecialchars($settings['plinko_multipliers'] ?? '0.2,0.5,0.8,1.0,2.0,1.0,0.8,0.5,0.2'); ?>" required>
+                        <small>Enter 9 comma-separated values for slots from left to right (e.g., 0.2,0.5,0.8,1.0,2.0,1.0,0.8,0.5,0.2)</small>
+                    </div>
+                    
+                    <button type="submit" name="update_settings" class="btn btn-primary">Update Multipliers</button>
                 </form>
             </div>
             

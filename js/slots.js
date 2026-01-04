@@ -2,8 +2,15 @@ $(document).ready(function() {
     const symbols = ['🍒', '🍋', '🍊', '🍇', '🎰'];
     let isSpinning = false;
     let maxBet = 100;
+    let multipliers = {
+        '🍒': 2,
+        '🍋': 3,
+        '🍊': 4,
+        '🍇': 5,
+        '🎰': 10
+    };
     
-    // Load max bet and default bet from settings
+    // Load max bet, default bet, and multipliers from settings
     $.get('../api/api.php?action=getSettings', function(data) {
         if (data.success) {
             if (data.settings.max_bet) {
@@ -13,6 +20,15 @@ $(document).ready(function() {
             }
             if (data.settings.default_bet) {
                 $('#betAmount').val(data.settings.default_bet);
+            }
+            if (data.settings.slots_multipliers) {
+                multipliers = {
+                    '🍒': data.settings.slots_multipliers.cherry,
+                    '🍋': data.settings.slots_multipliers.lemon,
+                    '🍊': data.settings.slots_multipliers.orange,
+                    '🍇': data.settings.slots_multipliers.grape,
+                    '🎰': data.settings.slots_multipliers.slot
+                };
             }
         }
     }, 'json');
@@ -107,13 +123,6 @@ $(document).ready(function() {
     
     function calculateWin(s1, s2, s3) {
         if (s1 === s2 && s2 === s3) {
-            const multipliers = {
-                '🍒': 2,
-                '🍋': 3,
-                '🍊': 4,
-                '🍇': 5,
-                '🎰': 10
-            };
             return multipliers[s1] || 0;
         }
         return 0;

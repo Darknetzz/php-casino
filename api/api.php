@@ -54,10 +54,25 @@ switch ($action) {
         $userDefaultBet = isset($user['default_bet']) && $user['default_bet'] !== null ? floatval($user['default_bet']) : null;
         $defaultBet = $userDefaultBet !== null ? $userDefaultBet : $globalDefaultBet;
         
+        // Get slots multipliers
+        $slotsMultipliers = [
+            'cherry' => floatval(getSetting('slots_cherry_multiplier', 2)),
+            'lemon' => floatval(getSetting('slots_lemon_multiplier', 3)),
+            'orange' => floatval(getSetting('slots_orange_multiplier', 4)),
+            'grape' => floatval(getSetting('slots_grape_multiplier', 5)),
+            'slot' => floatval(getSetting('slots_slot_multiplier', 10))
+        ];
+        
+        // Get plinko multipliers
+        $plinkoMultipliersStr = getSetting('plinko_multipliers', '0.2,0.5,0.8,1.0,2.0,1.0,0.8,0.5,0.2');
+        $plinkoMultipliers = array_map('floatval', explode(',', $plinkoMultipliersStr));
+        
         $settings = [
             'max_bet' => floatval(getSetting('max_bet', 100)),
             'max_deposit' => floatval(getSetting('max_deposit', 10000)),
-            'default_bet' => $defaultBet
+            'default_bet' => $defaultBet,
+            'slots_multipliers' => $slotsMultipliers,
+            'plinko_multipliers' => $plinkoMultipliers
         ];
         echo json_encode(['success' => true, 'settings' => $settings]);
         break;

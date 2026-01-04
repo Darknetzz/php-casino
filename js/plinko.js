@@ -6,7 +6,10 @@ $(document).ready(function() {
     let ballElement = null;
     let maxBet = 100;
     
-    // Load max bet and default bet from settings
+    // Multipliers for each slot (0-8, left to right) - will be loaded from settings
+    let multipliers = [0.2, 0.5, 0.8, 1.0, 2.0, 1.0, 0.8, 0.5, 0.2];
+    
+    // Load max bet, default bet, and multipliers from settings
     $.get('../api/api.php?action=getSettings', function(data) {
         if (data.success) {
             if (data.settings.max_bet) {
@@ -17,11 +20,13 @@ $(document).ready(function() {
             if (data.settings.default_bet) {
                 $('#betAmount').val(data.settings.default_bet);
             }
+            if (data.settings.plinko_multipliers && Array.isArray(data.settings.plinko_multipliers) && data.settings.plinko_multipliers.length === 9) {
+                multipliers = data.settings.plinko_multipliers;
+                // Recreate board with new multipliers
+                createBoard();
+            }
         }
     }, 'json');
-    
-    // Multipliers for each slot (0-8, left to right)
-    const multipliers = [0.2, 0.5, 0.8, 1.0, 2.0, 1.0, 0.8, 0.5, 0.2];
     
     // Create the Plinko board
     function createBoard() {
