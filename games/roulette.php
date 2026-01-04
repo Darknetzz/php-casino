@@ -91,7 +91,8 @@ include __DIR__ . '/../includes/navbar.php';
                 
                 <div class="round-history-section section" style="margin-top: 20px; border-radius: 8px; padding: 20px;">
                     <h3 style="margin-top: 0; color: #667eea; margin-bottom: 15px;">📋 Recent Rounds</h3>
-                    <div id="roundHistoryList" style="max-height: 300px; overflow-y: auto;">
+                    <p style="margin-bottom: 10px; font-size: 0.9em; color: #666;" class="admin-description">Hover over circles to see round details</p>
+                    <div id="roundHistoryList" style="min-height: 60px; padding: 10px;">
                         <p class="loading-text" style="text-align: center;">Loading history...</p>
                     </div>
                 </div>

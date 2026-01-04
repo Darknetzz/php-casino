@@ -3164,6 +3164,24 @@ body.dark-mode .loading-text {
     color: #aaa !important;
 }
 
+/* Roulette History Circles */
+.round-history-section [style*="border-radius: 50%"] {
+    flex-shrink: 0;
+}
+
+body.dark-mode .round-history-section [style*="border-radius: 50%"] {
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4) !important;
+}
+
+/* Responsive circles for smaller screens */
+@media (max-width: 768px) {
+    .round-history-section [style*="border-radius: 50%"] {
+        width: 40px !important;
+        height: 40px !important;
+        font-size: 16px !important;
+    }
+}
+
 body.dark-mode .crash-probability-section .prob-stat-card {
     background: rgba(30, 30, 50, 0.8) !important;
     color: #e0e0e0 !important;

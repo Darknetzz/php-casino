@@ -476,37 +476,67 @@ $(document).ready(function() {
         updateBalance();
     }
     
+    // Function to get roulette number color (matching the wheel)
+    function getRouletteNumberColorJS(number) {
+        const num = parseInt(number, 10);
+        const redNumbers = [1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36];
+        const isDarkMode = document.body.classList.contains('dark-mode');
+        if (num === 0) {
+            return { bg: '#28a745', text: '#ffffff' }; // Green
+        } else if (redNumbers.includes(num)) {
+            return { bg: '#dc3545', text: '#ffffff' }; // Red
+        } else {
+            return { bg: isDarkMode ? '#2c2c2c' : '#1a1a1a', text: '#ffffff' }; // Black
+        }
+    }
+    
     function loadHistory() {
         if (!$('#roundHistoryList').length) return; // Section doesn't exist (local mode)
         
         $.get('../api/api.php?action=getRouletteHistory&limit=20', function(data) {
             if (data.success && data.history) {
                 if (data.history.length === 0) {
-                    $('#roundHistoryList').html('<p style="color: #999; text-align: center;">No history yet</p>');
+                    $('#roundHistoryList').html('<p class="loading-text" style="text-align: center;">No history yet</p>');
                     return;
                 }
                 
-                let html = '<table style="width: 100%; border-collapse: collapse;">';
-                html += '<thead><tr style="border-bottom: 2px solid #ddd;"><th style="padding: 10px; text-align: left;">Round</th><th style="padding: 10px; text-align: left;">Result</th><th style="padding: 10px; text-align: left;">Time</th></tr></thead>';
-                html += '<tbody>';
+                // Display as colored circles in a row
+                let html = '<div style="display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; align-items: center;">';
                 
                 data.history.forEach(function(round) {
-                    const finishedTime = round.finished_at ? new Date(round.finished_at).toLocaleTimeString() : '-';
                     const result = round.result_number !== null ? round.result_number : '-';
-                    html += '<tr style="border-bottom: 1px solid #eee;">';
-                    html += '<td style="padding: 8px;">#' + round.round_number + '</td>';
-                    html += '<td style="padding: 8px;"><strong>' + result + '</strong></td>';
-                    html += '<td style="padding: 8px; color: #666; font-size: 0.9em;">' + finishedTime + '</td>';
-                    html += '</tr>';
+                    if (result === '-') return; // Skip rounds without results
+                    
+                    const colors = getRouletteNumberColorJS(result);
+                    html += '<div style="';
+                    html += 'width: 50px; height: 50px; ';
+                    html += 'border-radius: 50%; ';
+                    html += 'background-color: ' + colors.bg + '; ';
+                    html += 'color: ' + colors.text + '; ';
+                    html += 'display: flex; ';
+                    html += 'align-items: center; ';
+                    html += 'justify-content: center; ';
+                    html += 'font-weight: bold; ';
+                    html += 'font-size: 18px; ';
+                    html += 'box-shadow: 0 2px 4px rgba(0,0,0,0.2); ';
+                    html += 'cursor: pointer; ';
+                    html += 'transition: transform 0.2s; ';
+                    html += '" ';
+                    html += 'title="Round #' + round.round_number + (round.finished_at ? ' - ' + new Date(round.finished_at).toLocaleTimeString() : '') + '" ';
+                    html += 'onmouseover="this.style.transform=\'scale(1.1)\'" ';
+                    html += 'onmouseout="this.style.transform=\'scale(1)\'" ';
+                    html += '>';
+                    html += result;
+                    html += '</div>';
                 });
                 
-                html += '</tbody></table>';
+                html += '</div>';
                 $('#roundHistoryList').html(html);
             } else {
-                $('#roundHistoryList').html('<p style="color: #999; text-align: center;">Failed to load history</p>');
+                $('#roundHistoryList').html('<p class="loading-text" style="text-align: center;">Failed to load history</p>');
             }
         }, 'json').fail(function() {
-            $('#roundHistoryList').html('<p style="color: #999; text-align: center;">Error loading history</p>');
+            $('#roundHistoryList').html('<p class="loading-text" style="text-align: center;">Error loading history</p>');
         });
     }
     
@@ -701,6 +731,20 @@ $(document).ready(function() {
     
     let statusCountdownInterval = null;
     
+    // Function to get roulette number color (matching the wheel) - for status display
+    function getRouletteNumberColorJS(number) {
+        const num = parseInt(number, 10);
+        const redNumbers = [1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36];
+        const isDarkMode = document.body.classList.contains('dark-mode');
+        if (num === 0) {
+            return { bg: '#28a745', text: '#ffffff' }; // Green
+        } else if (redNumbers.includes(num)) {
+            return { bg: '#dc3545', text: '#ffffff' }; // Red
+        } else {
+            return { bg: isDarkMode ? '#2c2c2c' : '#1a1a1a', text: '#ffffff' }; // Black
+        }
+    }
+    
     function updateRoundStatusDisplay(round) {
         if (!$('#roundStatusDisplay').length) return; // Section doesn't exist (local mode)
         
@@ -778,31 +822,47 @@ $(document).ready(function() {
         $.get('../api/api.php?action=getRouletteHistory&limit=20', function(data) {
             if (data.success && data.history) {
                 if (data.history.length === 0) {
-                    $('#roundHistoryList').html('<p style="color: #999; text-align: center;">No history yet</p>');
+                    $('#roundHistoryList').html('<p class="loading-text" style="text-align: center;">No history yet</p>');
                     return;
                 }
                 
-                let html = '<table style="width: 100%; border-collapse: collapse;">';
-                html += '<thead><tr style="border-bottom: 2px solid #ddd;"><th style="padding: 10px; text-align: left;">Round</th><th style="padding: 10px; text-align: left;">Result</th><th style="padding: 10px; text-align: left;">Time</th></tr></thead>';
-                html += '<tbody>';
+                // Display as colored circles in a row
+                let html = '<div style="display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; align-items: center;">';
                 
                 data.history.forEach(function(round) {
-                    const finishedTime = round.finished_at ? new Date(round.finished_at).toLocaleTimeString() : '-';
                     const result = round.result_number !== null ? round.result_number : '-';
-                    html += '<tr style="border-bottom: 1px solid #eee;">';
-                    html += '<td style="padding: 8px;">#' + round.round_number + '</td>';
-                    html += '<td style="padding: 8px;"><strong>' + result + '</strong></td>';
-                    html += '<td style="padding: 8px; color: #666; font-size: 0.9em;">' + finishedTime + '</td>';
-                    html += '</tr>';
+                    if (result === '-') return; // Skip rounds without results
+                    
+                    const colors = getRouletteNumberColorJS(result);
+                    html += '<div style="';
+                    html += 'width: 50px; height: 50px; ';
+                    html += 'border-radius: 50%; ';
+                    html += 'background-color: ' + colors.bg + '; ';
+                    html += 'color: ' + colors.text + '; ';
+                    html += 'display: flex; ';
+                    html += 'align-items: center; ';
+                    html += 'justify-content: center; ';
+                    html += 'font-weight: bold; ';
+                    html += 'font-size: 18px; ';
+                    html += 'box-shadow: 0 2px 4px rgba(0,0,0,0.2); ';
+                    html += 'cursor: pointer; ';
+                    html += 'transition: transform 0.2s; ';
+                    html += '" ';
+                    html += 'title="Round #' + round.round_number + (round.finished_at ? ' - ' + new Date(round.finished_at).toLocaleTimeString() : '') + '" ';
+                    html += 'onmouseover="this.style.transform=\'scale(1.1)\'" ';
+                    html += 'onmouseout="this.style.transform=\'scale(1)\'" ';
+                    html += '>';
+                    html += result;
+                    html += '</div>';
                 });
                 
-                html += '</tbody></table>';
+                html += '</div>';
                 $('#roundHistoryList').html(html);
             } else {
-                $('#roundHistoryList').html('<p style="color: #999; text-align: center;">Failed to load history</p>');
+                $('#roundHistoryList').html('<p class="loading-text" style="text-align: center;">Failed to load history</p>');
             }
         }, 'json').fail(function() {
-            $('#roundHistoryList').html('<p style="color: #999; text-align: center;">Error loading history</p>');
+            $('#roundHistoryList').html('<p class="loading-text" style="text-align: center;">Error loading history</p>');
         });
     }
     
