@@ -1453,7 +1453,7 @@ body {
     box-shadow: 0 0 15px rgba(255, 255, 255, 0.9), inset -3px -3px 5px rgba(0, 0, 0, 0.3);
     transform: translate(-50%, -50%);
     z-index: 10;
-    transition: left 0.15s ease-out, top 0.15s ease-out;
+    transition: left 0.3s ease-out, top 0.3s ease-out;
     animation: ballGlow 1s ease-in-out infinite alternate;
     pointer-events: none;
 }

@@ -49,13 +49,30 @@ $(document).ready(function() {
             }
         }
         
-        // Create slots
+        // Create slots - align with bottom row of pegs
         const slotsContainer = $('#plinkoSlots');
         slotsContainer.empty();
+        
+        // Calculate bottom row peg positions to align slots
+        const bottomRow = rows - 1; // Last row index (row 7)
+        const bottomPegsInRow = bottomRow + 1; // 8 pegs
+        const bottomRowWidth = bottomPegsInRow * 8; // Width of bottom row
+        const bottomStartOffset = (100 - bottomRowWidth) / 2; // Center offset
+        
+        // Calculate where slots should be positioned
+        // Slots should align with the spaces between and around the bottom pegs
+        // The bottom row spans from startOffset to startOffset + rowWidth
+        // We need to position 9 slots across this area, extending slightly beyond for edge slots
+        const slotAreaStart = bottomStartOffset - 2; // Start slightly before first peg
+        const slotAreaEnd = bottomStartOffset + bottomRowWidth + 2; // End slightly after last peg
+        const slotAreaWidth = slotAreaEnd - slotAreaStart;
+        
         for (let i = 0; i < cols; i++) {
             const slot = $('<div class="plinko-slot"></div>');
             slot.text(multipliers[i].toFixed(1) + 'x');
-            slot.css('left', (i * 11.11) + '%');
+            // Position slots evenly across the slot area, aligned with peg positions
+            const slotPosition = slotAreaStart + (i / (cols - 1)) * slotAreaWidth;
+            slot.css('left', slotPosition + '%');
             slotsContainer.append(slot);
         }
     }
@@ -133,7 +150,7 @@ $(document).ready(function() {
                 }
                 
                 // Animate all balls dropping step by step
-                const stepDelay = 150; // Milliseconds between steps
+                const stepDelay = 350; // Milliseconds between steps (slower movement)
                 
                 const dropInterval = setInterval(function() {
                     let allCompleted = true;
@@ -245,16 +262,23 @@ $(document).ready(function() {
         
         if (currentRow >= rows) {
             // Ball reached bottom, map to final slot position
-            // Map column from last peg row to slot position
+            // Use the same calculation as slot positioning for alignment
             const lastPegRow = rows - 1;
+            const bottomPegsInRow = lastPegRow + 1;
+            const bottomRowWidth = bottomPegsInRow * 8;
+            const bottomStartOffset = (100 - bottomRowWidth) / 2;
+            const slotAreaStart = bottomStartOffset - 2;
+            const slotAreaEnd = bottomStartOffset + bottomRowWidth + 2;
+            const slotAreaWidth = slotAreaEnd - slotAreaStart;
+            
+            // Map column position to slot area
             const colRatio = currentCol / Math.max(1, lastPegRow);
-            const slotIndex = Math.round(colRatio * (cols - 1));
-            const leftPercent = (slotIndex / (cols - 1)) * 100;
+            const slotPosition = slotAreaStart + (colRatio * slotAreaWidth);
             const topPercent = 100; // At the bottom
             ball.element.css({
-                left: leftPercent + '%',
+                left: slotPosition + '%',
                 top: topPercent + '%',
-                transition: 'left 0.15s ease-out, top 0.15s ease-out'
+                transition: 'left 0.3s ease-out, top 0.3s ease-out'
             });
         } else {
             // Calculate position based on triangle structure
@@ -267,7 +291,7 @@ $(document).ready(function() {
             ball.element.css({
                 left: leftPercent + '%',
                 top: topPercent + '%',
-                transition: 'left 0.15s ease-out, top 0.15s ease-out'
+                transition: 'left 0.3s ease-out, top 0.3s ease-out'
             });
         }
     }
