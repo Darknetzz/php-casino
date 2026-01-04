@@ -14,9 +14,9 @@ README.md
 TODO.md
 SYNCHRONIZED_GAMES.md
 
-# Docker files
-Dockerfile
+# Docker files (keep Dockerfile for build, but ignore compose files)
 docker-compose.yml
+docker-compose.ssh.yml
 .dockerignore
 
 # IDE
