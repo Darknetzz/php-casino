@@ -110,6 +110,19 @@ switch ($action) {
         }
         break;
         
+    case 'getDarkMode':
+        $user = getCurrentUser();
+        $darkMode = $db->getDarkMode($user['id']);
+        echo json_encode(['success' => true, 'darkMode' => $darkMode]);
+        break;
+        
+    case 'updateDarkMode':
+        $user = getCurrentUser();
+        $darkMode = isset($_POST['darkMode']) ? (bool)$_POST['darkMode'] : false;
+        $db->setDarkMode($user['id'], $darkMode);
+        echo json_encode(['success' => true, 'darkMode' => $darkMode]);
+        break;
+        
     default:
         echo json_encode(['success' => false, 'message' => 'Invalid action']);
 }

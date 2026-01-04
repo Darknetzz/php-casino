@@ -43,6 +43,7 @@ class Database {
                 balance REAL DEFAULT 1000.00,
                 is_admin INTEGER DEFAULT 0,
                 default_bet REAL,
+                dark_mode INTEGER DEFAULT 0,
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP
             )
         ");
@@ -57,6 +58,13 @@ class Database {
         // Try to add default_bet column if table already exists
         try {
             $this->db->exec("ALTER TABLE users ADD COLUMN default_bet REAL");
+        } catch (PDOException $e) {
+            // Column already exists, ignore
+        }
+        
+        // Try to add dark_mode column if table already exists
+        try {
+            $this->db->exec("ALTER TABLE users ADD COLUMN dark_mode INTEGER DEFAULT 0");
         } catch (PDOException $e) {
             // Column already exists, ignore
         }
@@ -185,6 +193,18 @@ class Database {
     public function setUserDefaultBet($userId, $defaultBet) {
         $stmt = $this->db->prepare("UPDATE users SET default_bet = ? WHERE id = ?");
         return $stmt->execute([$defaultBet, $userId]);
+    }
+    
+    public function setDarkMode($userId, $darkMode) {
+        $stmt = $this->db->prepare("UPDATE users SET dark_mode = ? WHERE id = ?");
+        return $stmt->execute([$darkMode ? 1 : 0, $userId]);
+    }
+    
+    public function getDarkMode($userId) {
+        $stmt = $this->db->prepare("SELECT dark_mode FROM users WHERE id = ?");
+        $stmt->execute([$userId]);
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $result ? (bool)$result['dark_mode'] : false;
     }
     
     public function deleteUser($userId) {

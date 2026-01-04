@@ -36,6 +36,9 @@ if (strpos($_SERVER['PHP_SELF'], '/games/') !== false) {
             </div>
         </div>
         <div class="nav-right">
+            <button id="darkModeToggle" class="dark-mode-toggle" title="Toggle Dark Mode">
+                <span id="darkModeIcon">🌙</span>
+            </button>
             <span class="balance">Balance: $<span id="balance"><?php echo number_format($user['balance'], 2); ?></span></span>
             <?php if (strpos($_SERVER['PHP_SELF'], '/games/') !== false || strpos($_SERVER['PHP_SELF'], '/pages/') !== false): ?>
             <a href="<?php echo $basePath; ?>index.php" class="btn btn-secondary">Home</a>
