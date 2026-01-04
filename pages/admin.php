@@ -315,14 +315,13 @@ include __DIR__ . '/../includes/navbar.php';
                 <?php if ($currentGame === 'slots'): ?>
                 <form method="POST" action="admin.php?tab=multipliers&game=slots" class="admin-form">
                     <h3 style="margin-top: 20px; margin-bottom: 15px; color: #667eea;">Slot Machine Symbols</h3>
-                    <p style="margin-bottom: 15px; color: #666;">Add, edit, or remove slot symbols. Each symbol needs an emoji and a multiplier for 3-of-a-kind wins.</p>
+                    <p style="margin-bottom: 15px; color: #666;">Add, edit, or remove slot symbols. Each symbol needs an emoji and a multiplier for all-of-a-kind wins. Adding a symbol will suggest a combination in the Custom Combinations section below.</p>
                     <div id="slotsSymbolsContainer">
                         <table class="multiplier-table" id="slotsSymbolsTable">
                             <thead>
                                 <tr>
                                     <th>Emoji</th>
-                                    <th>Combination</th>
-                                    <th>Multiplier (3 of a kind)</th>
+                                    <th>Multiplier (all of a kind)</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
@@ -330,6 +329,7 @@ include __DIR__ . '/../includes/navbar.php';
                                 <?php
                                 $slotsSymbolsJson = $settings['slots_symbols'] ?? '[]';
                                 $slotsSymbols = json_decode($slotsSymbolsJson, true);
+                                $numReelsForDisplay = intval($settings['slots_num_reels'] ?? 3);
                                 if (empty($slotsSymbols) || !is_array($slotsSymbols)) {
                                     // Default symbols if none exist
                                     $slotsSymbols = [
@@ -347,13 +347,7 @@ include __DIR__ . '/../includes/navbar.php';
                                         <input type="text" class="slots-emoji-input" 
                                                value="<?php echo htmlspecialchars($symbol['emoji'] ?? ''); ?>" 
                                                maxlength="2" style="width: 80px; padding: 8px; font-size: 20px; text-align: center;" 
-                                               placeholder="🎰" required oninput="updateSlotsCombination(this)">
-                                    </td>
-                                    <td class="slots-combination-display" style="font-size: 20px; text-align: center;">
-                                        <?php 
-                                        $emoji = htmlspecialchars($symbol['emoji'] ?? '');
-                                        echo $emoji . $emoji . $emoji;
-                                        ?>
+                                               placeholder="🎰" required>
                                     </td>
                                     <td>
                                         <input type="number" class="slots-multiplier-input" 
@@ -746,9 +740,8 @@ include __DIR__ . '/../includes/navbar.php';
                     <input type="text" class="slots-emoji-input" 
                            value="🎰" maxlength="2" 
                            style="width: 80px; padding: 8px; font-size: 20px; text-align: center;" 
-                           placeholder="🎰" required oninput="updateSlotsCombination(this)">
+                           placeholder="🎰" required>
                 </td>
-                <td class="slots-combination-display" style="font-size: 20px; text-align: center;">🎰🎰🎰</td>
                 <td>
                     <input type="number" class="slots-multiplier-input" 
                            value="1" min="0" step="0.1" 
@@ -759,6 +752,11 @@ include __DIR__ . '/../includes/navbar.php';
                 </td>
             `;
             tbody.appendChild(row);
+            
+            // Auto-suggest a combination when symbol is added
+            const emoji = '🎰';
+            const multiplier = 1;
+            suggestCombinationFromSymbol(emoji, multiplier);
         }
         
         function removeSlotsSymbol(button) {
@@ -767,11 +765,64 @@ include __DIR__ . '/../includes/navbar.php';
             updateSlotsSymbolsIndices();
         }
         
-        function updateSlotsCombination(input) {
-            const row = input.closest('tr');
-            const emoji = input.value || '🎰';
-            const combinationCell = row.querySelector('.slots-combination-display');
-            combinationCell.textContent = emoji + emoji + emoji;
+        // Suggest a combination from a symbol (all-of-a-kind)
+        function suggestCombinationFromSymbol(emoji, multiplier) {
+            const numReels = parseInt($('#slots_num_reels').val()) || 3;
+            const symbols = [];
+            for (let i = 0; i < numReels; i++) {
+                symbols.push(emoji);
+            }
+            
+            // Check if this combination already exists
+            let exists = false;
+            $('#slotsCustomCombinationsBody tr').each(function() {
+                const $row = $(this);
+                const combinationSymbols = [];
+                $row.find('.custom-combo-emoji').each(function() {
+                    combinationSymbols.push($(this).val().trim());
+                });
+                if (combinationSymbols.length === symbols.length && 
+                    combinationSymbols.every((s, i) => s === symbols[i])) {
+                    exists = true;
+                    return false; // break
+                }
+            });
+            
+            if (!exists) {
+                // Add the combination
+                addCustomCombinationWithValues(symbols, multiplier);
+            }
+        }
+        
+        // Add custom combination with specific values
+        function addCustomCombinationWithValues(symbols, multiplier) {
+            const tbody = document.getElementById('slotsCustomCombinationsBody');
+            const index = tbody.children.length;
+            const row = document.createElement('tr');
+            row.setAttribute('data-index', index);
+            
+            let symbolsHtml = '<div class="custom-combination-symbols" style="display: flex; flex-wrap: nowrap; gap: 10px; align-items: center;">';
+            for (let i = 0; i < symbols.length; i++) {
+                symbolsHtml += '<div style="display: flex; align-items: center; gap: 5px;">';
+                symbolsHtml += '<span style="font-size: 14px; color: #666;">#' + (i + 1) + '</span>';
+                symbolsHtml += '<input type="text" class="custom-combo-emoji" data-position="' + i + '" value="' + (symbols[i] || '') + '" maxlength="2" style="width: 60px; padding: 5px; font-size: 18px; text-align: center;" placeholder="Any">';
+                symbolsHtml += '</div>';
+            }
+            symbolsHtml += '</div>';
+            
+            row.innerHTML = `
+                <td style="white-space: nowrap;">
+                    ${symbolsHtml}
+                </td>
+                <td>
+                    <input type="number" class="custom-combo-multiplier" value="${multiplier}" min="0" step="0.1" style="width: 100px; padding: 8px;" required>
+                </td>
+                <td>
+                    <button type="button" class="btn btn-secondary" onclick="removeCustomCombination(this)" style="padding: 5px 10px; font-size: 12px;">Remove</button>
+                </td>
+            `;
+            tbody.appendChild(row);
+            updateCustomCombinationsIndices();
         }
         
         function updateSlotsSymbolsIndices() {
