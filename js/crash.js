@@ -204,7 +204,20 @@ $(document).ready(function() {
                     $('#placeBetBtn').hide();
                     $('#roundCountdown').show();
                     $('#crashControls').hide();
-                    updateBettingCountdown(timeLeft);
+                    
+                    // Only update countdown if round changed or countdown isn't running
+                    // Also sync if there's a significant drift (more than 2 seconds difference)
+                    if (roundChanged || !bettingCountdownInterval) {
+                        updateBettingCountdown(timeLeft);
+                    } else if (bettingCountdownInterval) {
+                        // Sync countdown with server time if drift is significant
+                        // This prevents the countdown from getting stuck
+                        const currentDisplayed = parseInt($('#countdownText').text().match(/\d+/)?.[0] || '0');
+                        const serverTime = Math.ceil(timeLeft);
+                        if (Math.abs(currentDisplayed - serverTime) > 2) {
+                            updateBettingCountdown(timeLeft);
+                        }
+                    }
                     
                     // Reset game state when entering betting phase
                     if (roundChanged) {
@@ -262,9 +275,9 @@ $(document).ready(function() {
             clearInterval(bettingCountdownInterval);
         }
         
-        let timeLeft = Math.ceil(seconds);
+        let timeLeft = Math.max(0, Math.ceil(seconds));
         const updateCountdown = function() {
-            if (currentRound && currentRound.status === 'betting') {
+            if (currentRound && currentRound.status === 'betting' && currentRound.id) {
                 if (timeLeft > 0) {
                     $('#multiplierDisplay').text(`Round #${currentRound.round_number} - Betting ends in ${timeLeft}s`);
                     $('#countdownText').html(`Next round in: <span style="font-size: 1.5em; color: #667eea;">${timeLeft}s</span>`);
@@ -273,6 +286,8 @@ $(document).ready(function() {
                     clearInterval(bettingCountdownInterval);
                     bettingCountdownInterval = null;
                     // Poll will update when status changes
+                    $('#multiplierDisplay').text(`Round #${currentRound.round_number} - Betting ended`);
+                    $('#countdownText').html('Round starting...');
                 }
             } else {
                 clearInterval(bettingCountdownInterval);
