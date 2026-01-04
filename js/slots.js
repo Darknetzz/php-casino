@@ -115,12 +115,17 @@ $(document).ready(function() {
             }
         });
         
-        // Add 3-of-a-kind payouts
+        // Add all-of-a-kind payouts
         symbols.forEach(function(emoji) {
             const multiplier = multipliers[emoji] || 0;
+            // Repeat emoji for number of reels
+            let allOfKindText = '';
+            for (let i = 0; i < numReels; i++) {
+                allOfKindText += emoji;
+            }
             tbody.append(
                 $('<tr>').append(
-                    $('<td>').text(emoji + emoji + emoji)
+                    $('<td>').text(allOfKindText)
                 ).append(
                     $('<td>').text(multiplier + 'x bet')
                 )
@@ -225,71 +230,62 @@ $(document).ready(function() {
         return [s1, s2, s3];
     }
     
-    function calculateWin(s1, s2, s3) {
-        // Trim whitespace and ensure we have valid symbols
-        s1 = (s1 || '').trim();
-        s2 = (s2 || '').trim();
-        s3 = (s3 || '').trim();
+    function calculateWin(resultSymbols) {
+        // Accept array of symbols, trim whitespace
+        if (!Array.isArray(resultSymbols)) {
+            resultSymbols = Array.prototype.slice.call(arguments);
+        }
+        resultSymbols = resultSymbols.map(function(s) { return (s || '').trim(); });
         
-        // Create array of symbols for matching
-        const resultSymbols = [s1, s2, s3];
-        
-        // Check custom combinations first (most specific)
+        // Check custom combinations first (exact order matching)
         for (let i = 0; i < customCombinations.length; i++) {
             const combination = customCombinations[i];
             if (combination.symbols && Array.isArray(combination.symbols)) {
-                // Count occurrences of each symbol in the result
-                const resultCounts = {};
-                resultSymbols.forEach(function(symbol) {
-                    resultCounts[symbol] = (resultCounts[symbol] || 0) + 1;
-                });
-                
-                // Build set of required emojis
-                const requiredEmojis = {};
-                combination.symbols.forEach(function(reqSymbol) {
-                    requiredEmojis[reqSymbol.emoji] = true;
-                });
-                
-                // Check if we have any symbols not in the combination
-                let hasExtraSymbols = false;
-                for (const symbol in resultCounts) {
-                    if (!requiredEmojis[symbol]) {
-                        hasExtraSymbols = true;
-                        break;
+                // Check for exact order match
+                if (combination.symbols.length === resultSymbols.length) {
+                    let matches = true;
+                    for (let j = 0; j < combination.symbols.length; j++) {
+                        if (combination.symbols[j] !== resultSymbols[j]) {
+                            matches = false;
+                            break;
+                        }
                     }
-                }
-                
-                if (hasExtraSymbols) {
-                    continue; // Skip this combination if we have extra symbols
-                }
-                
-                // Check if combination matches exactly
-                let matches = true;
-                combination.symbols.forEach(function(reqSymbol) {
-                    const emoji = reqSymbol.emoji || '';
-                    const requiredCount = parseInt(reqSymbol.count) || 1;
-                    const actualCount = resultCounts[emoji] || 0;
-                    if (actualCount !== requiredCount) {
-                        matches = false;
+                    if (matches) {
+                        return parseFloat(combination.multiplier) || 0;
                     }
-                });
-                
-                if (matches) {
-                    return parseFloat(combination.multiplier) || 0;
                 }
             }
         }
         
-        // Check for 3 of a kind
-        if (s1 === s2 && s2 === s3 && s1 !== '') {
-            return multipliers[s1] || 0;
+        // Check for all-of-a-kind (all symbols the same)
+        if (resultSymbols.length > 0) {
+            const firstSymbol = resultSymbols[0];
+            let allSame = true;
+            for (let i = 1; i < resultSymbols.length; i++) {
+                if (resultSymbols[i] !== firstSymbol || firstSymbol === '') {
+                    allSame = false;
+                    break;
+                }
+            }
+            if (allSame && firstSymbol !== '') {
+                return multipliers[firstSymbol] || 0;
+            }
         }
         
-        // Check for 2 of a kind (exactly 2 matching, not all 3)
-        if ((s1 === s2 && s1 !== s3 && s1 !== '') || 
-            (s1 === s3 && s1 !== s2 && s1 !== '') || 
-            (s2 === s3 && s2 !== s1 && s2 !== '')) {
-            return twoOfKindMultiplier;
+        // Check for 2 of a kind (exactly 2 matching, not all)
+        // Count occurrences
+        const symbolCounts = {};
+        resultSymbols.forEach(function(symbol) {
+            if (symbol) {
+                symbolCounts[symbol] = (symbolCounts[symbol] || 0) + 1;
+            }
+        });
+        
+        // Check if we have exactly 2 of any symbol
+        for (const symbol in symbolCounts) {
+            if (symbolCounts[symbol] === 2 && resultSymbols.length > 2) {
+                return twoOfKindMultiplier;
+            }
         }
         
         return 0;
@@ -327,28 +323,29 @@ $(document).ready(function() {
                 }
             });
         
-        // Determine final symbols
-        const s1 = getRandomSymbol();
-        const s2 = getRandomSymbol();
-        const s3 = getRandomSymbol();
+        // Determine final symbols (one per reel)
+        const finalSymbols = [];
+        for (let i = 0; i < numReels; i++) {
+            finalSymbols.push(getRandomSymbol());
+        }
         
         // Spin animation with staggered timing for visual effect (left to right, slower stops)
         const spinDuration = slotsDuration;
-        const reel1Delay = 0;
-        const reel2Delay = 200;
-        const reel3Delay = 400;
+        const reelDelays = [];
+        const reelStopTimes = [];
+        for (let i = 0; i < numReels; i++) {
+            reelDelays.push(i * 200);
+            reelStopTimes.push(spinDuration + (i * 300));
+        }
         
-        // Staggered stop times (left to right, each stops slower)
-        const reel1StopTime = spinDuration;
-        const reel2StopTime = spinDuration + 300;
-        const reel3StopTime = spinDuration + 600;
+        // Start spinning all reels
+        for (let i = 0; i < numReels; i++) {
+            setTimeout(() => spinReel('#reel' + (i + 1), reelStopTimes[i], finalSymbols[i]), reelDelays[i]);
+        }
         
-        setTimeout(() => spinReel('#reel1', reel1StopTime, s1), reel1Delay);
-        setTimeout(() => spinReel('#reel2', reel2StopTime, s2), reel2Delay);
-        setTimeout(() => spinReel('#reel3', reel3StopTime, s3), reel3Delay);
-        
+        // Wait for all reels to stop (use the last reel's stop time)
+        const lastReelStopTime = reelStopTimes[reelStopTimes.length - 1];
         setTimeout(function() {
-            // Wait for all reels to stop
             // Get bet rows from user selection (1 = one row, 3 = all rows)
             const betRows = parseInt($('#betRows').val()) || 1;
             const actualBetAmount = betRows === 3 ? betAmount * 3 : betAmount; // Betting on all 3 rows costs 3x
@@ -357,43 +354,75 @@ $(document).ready(function() {
             
             if (betRows === 1) {
                 // Check only middle row (row 1)
-                const s1 = $('#reel1 .symbol').eq(1).text().trim();
-                const s2 = $('#reel2 .symbol').eq(1).text().trim();
-                const s3 = $('#reel3 .symbol').eq(1).text().trim();
+                const resultSymbols = [];
+                for (let i = 1; i <= numReels; i++) {
+                    resultSymbols.push($('#reel' + i + ' .symbol').eq(1).text().trim());
+                }
                 
-                const multiplier = calculateWin(s1, s2, s3);
+                const multiplier = calculateWin(resultSymbols);
                 
                 if (multiplier > 0) {
                     totalWin = betAmount * multiplier; // Use original bet amount, not multiplied
-                    let winType = '';
-                    if (s1 === s2 && s2 === s3) {
-                        winType = '3 of a kind';
+                    let winType = 'custom';
+                    // Check win type
+                    const allSame = resultSymbols.length > 0 && resultSymbols.every(function(s) { return s === resultSymbols[0]; });
+                    if (allSame) {
+                        winType = 'all of a kind';
                     } else {
-                        winType = '2 of a kind';
+                        const symbolCounts = {};
+                        resultSymbols.forEach(function(s) {
+                            symbolCounts[s] = (symbolCounts[s] || 0) + 1;
+                        });
+                        let hasTwoOfKind = false;
+                        for (const s in symbolCounts) {
+                            if (symbolCounts[s] === 2) {
+                                hasTwoOfKind = true;
+                                break;
+                            }
+                        }
+                        if (hasTwoOfKind) {
+                            winType = '2 of a kind';
+                        }
                     }
-                    winDescriptions.push(`Middle row: ${s1}${s2}${s3} (${multiplier}x - ${winType})`);
+                    winDescriptions.push(`Middle row: ${resultSymbols.join('')} (${multiplier}x - ${winType})`);
                 }
             } else if (betRows === 3) {
                 // Check all 3 rows
                 const rows = [0, 1, 2]; // top, middle, bottom
                 rows.forEach(function(row) {
-                    const s1 = $('#reel1 .symbol').eq(row).text().trim();
-                    const s2 = $('#reel2 .symbol').eq(row).text().trim();
-                    const s3 = $('#reel3 .symbol').eq(row).text().trim();
+                    const resultSymbols = [];
+                    for (let i = 1; i <= numReels; i++) {
+                        resultSymbols.push($('#reel' + i + ' .symbol').eq(row).text().trim());
+                    }
                     
-                    const multiplier = calculateWin(s1, s2, s3);
+                    const multiplier = calculateWin(resultSymbols);
                     
                     if (multiplier > 0) {
                         const rowWin = betAmount * multiplier; // Use original bet amount per row
                         totalWin += rowWin;
-                        let winType = '';
-                        if (s1 === s2 && s2 === s3) {
-                            winType = '3 of a kind';
+                        let winType = 'custom';
+                        // Check win type
+                        const allSame = resultSymbols.length > 0 && resultSymbols.every(function(s) { return s === resultSymbols[0]; });
+                        if (allSame) {
+                            winType = 'all of a kind';
                         } else {
-                            winType = '2 of a kind';
+                            const symbolCounts = {};
+                            resultSymbols.forEach(function(s) {
+                                symbolCounts[s] = (symbolCounts[s] || 0) + 1;
+                            });
+                            let hasTwoOfKind = false;
+                            for (const s in symbolCounts) {
+                                if (symbolCounts[s] === 2) {
+                                    hasTwoOfKind = true;
+                                    break;
+                                }
+                            }
+                            if (hasTwoOfKind) {
+                                winType = '2 of a kind';
+                            }
                         }
                         const rowName = row === 0 ? 'Top' : (row === 1 ? 'Middle' : 'Bottom');
-                        winDescriptions.push(`${rowName} row: ${s1}${s2}${s3} (${multiplier}x - ${winType})`);
+                        winDescriptions.push(`${rowName} row: ${resultSymbols.join('')} (${multiplier}x - ${winType})`);
                     }
                 });
             }
@@ -443,7 +472,7 @@ $(document).ready(function() {
             
             // Remove beforeunload warning
             $(window).off('beforeunload');
-        }, reel3StopTime + 100); // Wait for all reels to stop
+        }, lastReelStopTime + 100); // Wait for all reels to stop
         }, 'json');
     });
     

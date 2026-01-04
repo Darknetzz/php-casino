@@ -119,6 +119,8 @@ class Database {
             ]),
             // Slots multipliers (2 of a kind)
             'slots_two_of_kind_multiplier' => '1.0',
+            // Slots number of reels/columns
+            'slots_num_reels' => '3',
             // Slots win row (0 = top, 1 = middle, 2 = bottom)
             'slots_win_row' => '1',
             // Slots bet rows (1 = middle row only, 3 = all rows)
