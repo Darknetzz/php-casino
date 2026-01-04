@@ -3075,3 +3075,55 @@ body.dark-mode .rounds-card h4 {
     color: #e0e0e0;
     margin-bottom: 10px;
 }
+
+/* Round Info and History Sections Dark Mode */
+.round-info-section,
+.round-history-section {
+    background: #f8f9fa;
+    color: #333;
+}
+
+body.dark-mode .round-info-section,
+body.dark-mode .round-history-section {
+    background: rgba(40, 40, 60, 0.9);
+    color: #e0e0e0;
+    border: 1px solid rgba(102, 126, 234, 0.3);
+}
+
+body.dark-mode .round-info-section h3,
+body.dark-mode .round-history-section h3 {
+    color: #667eea;
+}
+
+body.dark-mode .round-info-section #roundStatusDisplay,
+body.dark-mode .round-history-section #roundHistoryList {
+    color: #e0e0e0;
+}
+
+body.dark-mode .round-info-section #roundStatusDisplay strong {
+    color: #fff;
+}
+
+body.dark-mode .round-info-section #countdownValue {
+    color: #667eea;
+}
+
+body.dark-mode .round-history-section table {
+    color: #e0e0e0;
+}
+
+body.dark-mode .round-history-section table thead tr {
+    border-bottom-color: rgba(102, 126, 234, 0.5);
+}
+
+body.dark-mode .round-history-section table tbody tr {
+    border-bottom-color: rgba(102, 126, 234, 0.2);
+}
+
+body.dark-mode .round-history-section table th {
+    color: #667eea;
+}
+
+body.dark-mode .round-history-section table td {
+    color: #e0e0e0;
+}

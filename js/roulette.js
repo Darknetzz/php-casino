@@ -211,6 +211,10 @@ $(document).ready(function() {
                     $('#roundCountdown').show();
                     $('#countdownText').html('Waiting for next round...');
                     currentRound = null;
+                    // Update status display
+                    updateRoundStatusDisplay(null);
+                    // Load history anyway
+                    loadHistory();
                     // Continue polling to catch when a round starts
                     return;
                 }
@@ -218,6 +222,9 @@ $(document).ready(function() {
                 // Check if round changed
                 const roundChanged = !currentRound || currentRound.id !== round.id || currentRound.status !== round.status;
                 currentRound = round;
+                
+                // Update round status display
+                updateRoundStatusDisplay(round);
                 
                 // Update round info display
                 if (round.status === 'betting') {
@@ -470,11 +477,37 @@ $(document).ready(function() {
     }
     
     function loadHistory() {
-        $.get('../api/api.php?action=getRouletteHistory&limit=10', function(data) {
+        if (!$('#roundHistoryList').length) return; // Section doesn't exist (local mode)
+        
+        $.get('../api/api.php?action=getRouletteHistory&limit=20', function(data) {
             if (data.success && data.history) {
-                // Could display history here if needed
+                if (data.history.length === 0) {
+                    $('#roundHistoryList').html('<p style="color: #999; text-align: center;">No history yet</p>');
+                    return;
+                }
+                
+                let html = '<table style="width: 100%; border-collapse: collapse;">';
+                html += '<thead><tr style="border-bottom: 2px solid #ddd;"><th style="padding: 10px; text-align: left;">Round</th><th style="padding: 10px; text-align: left;">Result</th><th style="padding: 10px; text-align: left;">Time</th></tr></thead>';
+                html += '<tbody>';
+                
+                data.history.forEach(function(round) {
+                    const finishedTime = round.finished_at ? new Date(round.finished_at).toLocaleTimeString() : '-';
+                    const result = round.result_number !== null ? round.result_number : '-';
+                    html += '<tr style="border-bottom: 1px solid #eee;">';
+                    html += '<td style="padding: 8px;">#' + round.round_number + '</td>';
+                    html += '<td style="padding: 8px;"><strong>' + result + '</strong></td>';
+                    html += '<td style="padding: 8px; color: #666; font-size: 0.9em;">' + finishedTime + '</td>';
+                    html += '</tr>';
+                });
+                
+                html += '</tbody></table>';
+                $('#roundHistoryList').html(html);
+            } else {
+                $('#roundHistoryList').html('<p style="color: #999; text-align: center;">Failed to load history</p>');
             }
-        }, 'json');
+        }, 'json').fail(function() {
+            $('#roundHistoryList').html('<p style="color: #999; text-align: center;">Error loading history</p>');
+        });
     }
     
     // Handle color/range bet buttons
@@ -666,9 +699,119 @@ $(document).ready(function() {
         }, 'json');
     }
     
+    let statusCountdownInterval = null;
+    
+    function updateRoundStatusDisplay(round) {
+        if (!$('#roundStatusDisplay').length) return; // Section doesn't exist (local mode)
+        
+        // Clear existing countdown interval
+        if (statusCountdownInterval) {
+            clearInterval(statusCountdownInterval);
+            statusCountdownInterval = null;
+        }
+        
+        if (!round) {
+            $('#currentRoundNumber').text('-');
+            $('#roundStatusText').text('Waiting for next round...');
+            $('#countdownValue').text('Waiting...');
+            return;
+        }
+        
+        $('#currentRoundNumber').text('#' + round.round_number);
+        
+        let statusText = round.status.charAt(0).toUpperCase() + round.status.slice(1);
+        
+        if (round.status === 'betting') {
+            statusText = 'Betting Phase';
+            let timeLeft = Math.ceil(round.time_until_betting_ends || 0);
+            const updateCountdown = function() {
+                if (currentRound && currentRound.status === 'betting' && currentRound.id === round.id) {
+                    $('#countdownValue').text(`Next spin in: ${timeLeft}s`);
+                    if (timeLeft > 0) {
+                        timeLeft--;
+                    } else {
+                        clearInterval(statusCountdownInterval);
+                        statusCountdownInterval = null;
+                    }
+                } else {
+                    clearInterval(statusCountdownInterval);
+                    statusCountdownInterval = null;
+                }
+            };
+            updateCountdown();
+            statusCountdownInterval = setInterval(updateCountdown, 1000);
+        } else if (round.status === 'spinning') {
+            statusText = 'Spinning';
+            let timeLeft = Math.ceil(round.time_until_finish || 0);
+            const updateCountdown = function() {
+                if (currentRound && currentRound.status === 'spinning' && currentRound.id === round.id) {
+                    if (timeLeft > 0) {
+                        $('#countdownValue').text(`Result in: ${timeLeft}s`);
+                        timeLeft--;
+                    } else {
+                        $('#countdownValue').text('Spinning...');
+                        clearInterval(statusCountdownInterval);
+                        statusCountdownInterval = null;
+                    }
+                } else {
+                    clearInterval(statusCountdownInterval);
+                    statusCountdownInterval = null;
+                }
+            };
+            updateCountdown();
+            statusCountdownInterval = setInterval(updateCountdown, 1000);
+        } else if (round.status === 'finished') {
+            statusText = 'Finished';
+            if (round.result_number !== null) {
+                $('#countdownValue').text(`Result: ${round.result_number}`);
+            } else {
+                $('#countdownValue').text('Waiting for next round...');
+            }
+        }
+        
+        $('#roundStatusText').text(statusText);
+    }
+    
+    function loadHistory() {
+        if (!$('#roundHistoryList').length) return; // Section doesn't exist (local mode)
+        
+        $.get('../api/api.php?action=getRouletteHistory&limit=20', function(data) {
+            if (data.success && data.history) {
+                if (data.history.length === 0) {
+                    $('#roundHistoryList').html('<p style="color: #999; text-align: center;">No history yet</p>');
+                    return;
+                }
+                
+                let html = '<table style="width: 100%; border-collapse: collapse;">';
+                html += '<thead><tr style="border-bottom: 2px solid #ddd;"><th style="padding: 10px; text-align: left;">Round</th><th style="padding: 10px; text-align: left;">Result</th><th style="padding: 10px; text-align: left;">Time</th></tr></thead>';
+                html += '<tbody>';
+                
+                data.history.forEach(function(round) {
+                    const finishedTime = round.finished_at ? new Date(round.finished_at).toLocaleTimeString() : '-';
+                    const result = round.result_number !== null ? round.result_number : '-';
+                    html += '<tr style="border-bottom: 1px solid #eee;">';
+                    html += '<td style="padding: 8px;">#' + round.round_number + '</td>';
+                    html += '<td style="padding: 8px;"><strong>' + result + '</strong></td>';
+                    html += '<td style="padding: 8px; color: #666; font-size: 0.9em;">' + finishedTime + '</td>';
+                    html += '</tr>';
+                });
+                
+                html += '</tbody></table>';
+                $('#roundHistoryList').html(html);
+            } else {
+                $('#roundHistoryList').html('<p style="color: #999; text-align: center;">Failed to load history</p>');
+            }
+        }, 'json').fail(function() {
+            $('#roundHistoryList').html('<p style="color: #999; text-align: center;">Error loading history</p>');
+        });
+    }
+    
     // Start polling
     pollRoundState();
     pollInterval = setInterval(pollRoundState, 2000); // Poll every 2 seconds
+    
+    // Load history immediately
+    loadHistory();
     
     // Update balance periodically
     setInterval(updateBalance, 5000);
@@ -680,6 +823,9 @@ $(document).ready(function() {
         }
         if (bettingCountdownInterval) {
             clearInterval(bettingCountdownInterval);
+        }
+        if (statusCountdownInterval) {
+            clearInterval(statusCountdownInterval);
         }
     });
 });

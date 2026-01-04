@@ -181,11 +181,20 @@ $(document).ready(function() {
                     $('#countdownText').html('Waiting for next round...');
                     $('#crashControls').hide();
                     currentRound = null;
+                    // Update status display
+                    updateRoundStatusDisplay(null);
+                    // Load history anyway
+                    loadHistory();
                     // Continue polling to catch when a round starts
                     return;
                 }
                 
+                // Check if round changed
+                const roundChanged = !currentRound || currentRound.id !== round.id || currentRound.status !== round.status;
                 currentRound = round;
+                
+                // Update round status display
+                updateRoundStatusDisplay(round);
                 
                 // Update round info
                 if (round.status === 'betting') {
@@ -449,14 +458,48 @@ $(document).ready(function() {
     }
     
     function loadHistory() {
-        $.get('../api/api.php?action=getCrashHistory&limit=10', function(data) {
+        $.get('../api/api.php?action=getCrashHistory&limit=20', function(data) {
             if (data.success && data.history) {
                 crashHistory = data.history.map(function(round) {
                     return round.crash_point ? round.crash_point.toFixed(2) + 'x' : '1.00x';
                 });
                 updateHistory();
+                
+                // Also update table format if section exists
+                if ($('#historyList').length && $('#historyList').parent().hasClass('crash-history')) {
+                    if (data.history.length === 0) {
+                        $('#historyList').html('<p style="color: #999; text-align: center;">No history yet</p>');
+                        return;
+                    }
+                    
+                    let html = '<table style="width: 100%; border-collapse: collapse;">';
+                    html += '<thead><tr style="border-bottom: 2px solid #ddd;"><th style="padding: 10px; text-align: left;">Round</th><th style="padding: 10px; text-align: left;">Crash Point</th><th style="padding: 10px; text-align: left;">Time</th></tr></thead>';
+                    html += '<tbody>';
+                    
+                    data.history.forEach(function(round) {
+                        const finishedTime = round.finished_at ? new Date(round.finished_at).toLocaleTimeString() : '-';
+                        const crashPoint = round.crash_point ? parseFloat(round.crash_point).toFixed(2) + 'x' : '-';
+                        const multValue = round.crash_point ? parseFloat(round.crash_point) : 0;
+                        let color = '#dc3545'; // Red for low
+                        if (multValue >= 5) color = '#ffc107'; // Yellow for medium
+                        if (multValue >= 10) color = '#28a745'; // Green for high
+                        
+                        html += '<tr style="border-bottom: 1px solid #eee;">';
+                        html += '<td style="padding: 8px;">#' + round.round_number + '</td>';
+                        html += '<td style="padding: 8px;"><strong style="color: ' + color + ';">' + crashPoint + '</strong></td>';
+                        html += '<td style="padding: 8px; color: #666; font-size: 0.9em;">' + finishedTime + '</td>';
+                        html += '</tr>';
+                    });
+                    
+                    html += '</tbody></table>';
+                    $('#historyList').html(html);
+                }
             }
-        }, 'json');
+        }, 'json').fail(function() {
+            if ($('#historyList').length && $('#historyList').parent().hasClass('crash-history')) {
+                $('#historyList').html('<p style="color: #999; text-align: center;">Error loading history</p>');
+            }
+        });
     }
     
     // Update balance display
@@ -547,9 +590,72 @@ $(document).ready(function() {
     // Initial graph draw and probability stats
     drawGraph();
     
+    let statusCountdownInterval = null;
+    
+    function updateRoundStatusDisplay(round) {
+        if (!$('#roundStatusDisplay').length) return; // Section doesn't exist (local mode)
+        
+        // Clear existing countdown interval
+        if (statusCountdownInterval) {
+            clearInterval(statusCountdownInterval);
+            statusCountdownInterval = null;
+        }
+        
+        if (!round) {
+            $('#currentRoundNumber').text('-');
+            $('#roundStatusText').text('Waiting for next round...');
+            $('#countdownValue').text('Waiting...');
+            return;
+        }
+        
+        $('#currentRoundNumber').text('#' + round.round_number);
+        
+        let statusText = round.status.charAt(0).toUpperCase() + round.status.slice(1);
+        
+        if (round.status === 'betting') {
+            statusText = 'Betting Phase';
+            let timeLeft = Math.ceil(round.time_until_betting_ends || 0);
+            const updateCountdown = function() {
+                if (currentRound && currentRound.status === 'betting' && currentRound.id === round.id) {
+                    $('#countdownValue').text(`Next round in: ${timeLeft}s`);
+                    if (timeLeft > 0) {
+                        timeLeft--;
+                    } else {
+                        clearInterval(statusCountdownInterval);
+                        statusCountdownInterval = null;
+                    }
+                } else {
+                    clearInterval(statusCountdownInterval);
+                    statusCountdownInterval = null;
+                }
+            };
+            updateCountdown();
+            statusCountdownInterval = setInterval(updateCountdown, 1000);
+        } else if (round.status === 'running') {
+            statusText = 'Running';
+            if (round.crash_point) {
+                $('#countdownValue').text(`Crash point: ${parseFloat(round.crash_point).toFixed(2)}x`);
+            } else {
+                $('#countdownValue').text('Round in progress...');
+            }
+        } else if (round.status === 'finished') {
+            statusText = 'Finished';
+            if (round.crash_point) {
+                $('#countdownValue').text(`Crashed at: ${parseFloat(round.crash_point).toFixed(2)}x`);
+            } else {
+                $('#countdownValue').text('Waiting for next round...');
+            }
+        }
+        
+        $('#roundStatusText').text(statusText);
+    }
+    
     // Start polling
     pollRoundState();
     pollInterval = setInterval(pollRoundState, 2000); // Poll every 2 seconds
+    
+    // Load history immediately
+    loadHistory();
     
     // Cleanup on page unload
     $(window).on('beforeunload', function() {
@@ -558,6 +664,9 @@ $(document).ready(function() {
         }
         if (bettingCountdownInterval) {
             clearInterval(bettingCountdownInterval);
+        }
+        if (statusCountdownInterval) {
+            clearInterval(statusCountdownInterval);
         }
         if (animationFrame) {
             cancelAnimationFrame(animationFrame);
