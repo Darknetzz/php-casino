@@ -296,5 +296,47 @@ class Database {
         
         return $winRates;
     }
+    
+    public function getTotalWinLoss($userId) {
+        // Get all bet transactions
+        $stmt = $this->db->prepare("SELECT SUM(amount) as total FROM transactions WHERE user_id = ? AND type = 'bet' AND game IS NOT NULL");
+        $stmt->execute([$userId]);
+        $betResult = $stmt->fetch(PDO::FETCH_ASSOC);
+        $totalBets = floatval($betResult['total'] ?? 0);
+        
+        // Get all win transactions with their descriptions to filter by multiplier
+        $stmt = $this->db->prepare("SELECT amount, description FROM transactions WHERE user_id = ? AND type = 'win' AND game IS NOT NULL");
+        $stmt->execute([$userId]);
+        $winTransactions = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        $totalWins = 0;
+        
+        foreach ($winTransactions as $win) {
+            $winAmount = floatval($win['amount']);
+            $description = $win['description'] ?? '';
+            
+            // Check if description contains multiplier info
+            $multiplier = null;
+            if (preg_match('/(\d+\.?\d*)x/i', $description, $matches)) {
+                $multiplier = floatval($matches[1]);
+            }
+            
+            // Only count wins with multiplier >= 1
+            // If no multiplier found in description, we'll need to check against bets
+            // For now, if multiplier is not found, we'll include it (could be improved)
+            if ($multiplier === null || $multiplier >= 1) {
+                $totalWins += $winAmount;
+            }
+            // If multiplier < 1, don't count it (like 0.5x for 2-of-a-kind)
+        }
+        
+        $netWinLoss = $totalWins - $totalBets;
+        
+        return [
+            'totalBets' => round($totalBets, 2),
+            'totalWins' => round($totalWins, 2),
+            'netWinLoss' => round($netWinLoss, 2)
+        ];
+    }
 }
 ?>

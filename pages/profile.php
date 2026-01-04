@@ -31,6 +31,24 @@ include __DIR__ . '/../includes/navbar.php';
                 </div>
             </div>
             
+            <div class="win-loss-section section">
+                <h2>💰 Total Win/Loss</h2>
+                <div id="winLossDisplay" class="win-loss-info">
+                    <div class="win-loss-item">
+                        <label>Total Bets:</label>
+                        <span id="totalBets" class="win-loss-value">$0.00</span>
+                    </div>
+                    <div class="win-loss-item">
+                        <label>Total Wins:</label>
+                        <span id="totalWins" class="win-loss-value">$0.00</span>
+                    </div>
+                    <div class="win-loss-item">
+                        <label>Net Win/Loss:</label>
+                        <span id="netWinLoss" class="win-loss-value">$0.00</span>
+                    </div>
+                </div>
+            </div>
+            
             <div class="win-rates-section section">
                 <h2>📊 Win Rates</h2>
                 <div id="winRatesDisplay" class="win-rates-grid">
@@ -170,6 +188,34 @@ include __DIR__ . '/../includes/navbar.php';
                     }
                 }, 'json');
             }, 5000);
+        });
+        
+        // Load total win/loss
+        $(document).ready(function() {
+            $.get(getApiPath('getTotalWinLoss'), function(data) {
+                if (data.success && data.winLoss) {
+                    const winLoss = data.winLoss;
+                    $('#totalBets').text('$' + winLoss.totalBets.toFixed(2));
+                    $('#totalWins').text('$' + winLoss.totalWins.toFixed(2));
+                    
+                    const netAmount = winLoss.netWinLoss;
+                    const $netElement = $('#netWinLoss');
+                    $netElement.text('$' + Math.abs(netAmount).toFixed(2));
+                    
+                    // Color code the net win/loss
+                    if (netAmount > 0) {
+                        $netElement.css('color', '#28a745').text('+$' + netAmount.toFixed(2));
+                    } else if (netAmount < 0) {
+                        $netElement.css('color', '#dc3545').text('-$' + Math.abs(netAmount).toFixed(2));
+                    } else {
+                        $netElement.css('color', '#666');
+                    }
+                } else {
+                    console.error('Failed to load win/loss:', data);
+                }
+            }, 'json').fail(function(xhr, status, error) {
+                console.error('Error loading win/loss:', status, error);
+            });
         });
         
         // Load win rates

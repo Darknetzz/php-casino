@@ -1356,6 +1356,47 @@ body {
     color: #28a745;
 }
 
+.win-loss-section {
+    margin-top: 30px;
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 8px;
+}
+
+.win-loss-section h2 {
+    margin-top: 0;
+    color: #667eea;
+}
+
+.win-loss-info {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-top: 15px;
+}
+
+.win-loss-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    background: white;
+    border-radius: 8px;
+    border: 1px solid #e0e0e0;
+}
+
+.win-loss-item label {
+    font-weight: 600;
+    color: #333;
+    font-size: 16px;
+}
+
+.win-loss-value {
+    font-size: 20px;
+    font-weight: bold;
+    color: #333;
+}
+
 .win-rates-section {
     margin-top: 30px;
     padding: 20px;
@@ -2277,6 +2318,28 @@ body.dark-mode .profile-info {
     color: #e0e0e0;
 }
 
+body.dark-mode .win-loss-section {
+    background: #16213e;
+    border: 1px solid #2a2a3e;
+}
+
+body.dark-mode .win-loss-section h2 {
+    color: #8a9eff;
+}
+
+body.dark-mode .win-loss-item {
+    background: #0f1419;
+    border: 1px solid #2a2a3e;
+}
+
+body.dark-mode .win-loss-item label {
+    color: #e0e0e0;
+}
+
+body.dark-mode .win-loss-value {
+    color: #e0e0e0;
+}
+
 body.dark-mode .win-rates-section {
     background: #16213e;
     border: 1px solid #2a2a3e;
@@ -2341,6 +2404,7 @@ body.dark-mode .win-rates-section {
 }
 
 body.dark-mode .refill-section h2,
+body.dark-mode .win-loss-section h2,
 body.dark-mode .win-rates-section h2 {
     color: #8a9eff;
 }

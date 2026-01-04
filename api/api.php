@@ -131,6 +131,12 @@ switch ($action) {
         }
         break;
         
+    case 'getTotalWinLoss':
+        $user = getCurrentUser();
+        $winLoss = $db->getTotalWinLoss($user['id']);
+        echo json_encode(['success' => true, 'winLoss' => $winLoss]);
+        break;
+        
     case 'getDarkMode':
         $user = getCurrentUser();
         $darkMode = $db->getDarkMode($user['id']);
