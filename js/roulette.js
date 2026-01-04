@@ -150,7 +150,15 @@ $(document).ready(function() {
             let html = '<div class="bets-list">';
             colorBets.forEach(function(bet, index) {
                 const betName = bet.type.charAt(0).toUpperCase() + bet.type.slice(1);
-                html += `<div class="bet-item" data-index="${index}">
+                let colorClass = '';
+                if (bet.type === 'red') {
+                    colorClass = 'bet-item-red';
+                } else if (bet.type === 'black') {
+                    colorClass = 'bet-item-black';
+                } else if (bet.type === 'green') {
+                    colorClass = 'bet-item-green';
+                }
+                html += `<div class="bet-item ${colorClass}" data-index="${index}">
                     <span>${betName}: $${bet.amount.toFixed(2)} (${bet.multiplier}x)</span>
                     <button class="btn-remove-bet" data-index="${index}" data-type="color">×</button>
                 </div>`;
