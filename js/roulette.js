@@ -286,6 +286,12 @@ $(document).ready(function() {
         const totalBetAmount = numberBets.reduce((sum, bet) => sum + bet.amount, 0) + 
                               colorBets.reduce((sum, bet) => sum + bet.amount, 0);
         
+        // Check if total bet amount exceeds maximum
+        if (totalBetAmount > maxBet) {
+            $('#result').html('<div class="alert alert-error">Total bet amount ($' + totalBetAmount.toFixed(2) + ') exceeds maximum of $' + formatNumber(maxBet) + '</div>');
+            return;
+        }
+        
         // Check if user has enough balance
         $.get('../api/api.php?action=getBalance', function(data) {
             if (!data.success || parseFloat(data.balance) < totalBetAmount) {
