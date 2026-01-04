@@ -81,6 +81,30 @@ $(document).ready(function() {
             pocketDiv.attr('data-angle', angle); // Store the angle for calculation
             wheel.append(pocketDiv);
         });
+        
+        // Create center circle for displaying result number
+        const centerCircle = $('<div id="rouletteCenterResult" class="roulette-center-result"></div>');
+        centerCircle.css({
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            width: '25%',
+            height: '25%',
+            borderRadius: '50%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 10,
+            fontSize: '2.5em',
+            fontWeight: 'bold',
+            color: '#ffffff',
+            textShadow: '2px 2px 4px rgba(0, 0, 0, 0.8)',
+            boxShadow: '0 4px 8px rgba(0, 0, 0, 0.5), inset 0 2px 4px rgba(0, 0, 0, 0.3)',
+            opacity: 0,
+            transition: 'opacity 0.5s ease-in-out'
+        });
+        wheel.append(centerCircle);
     }
     
     createWheel();
@@ -255,6 +279,8 @@ $(document).ready(function() {
                 if (round.status === 'betting') {
                     // Clear last result when new round starts
                     lastRoundResult = null;
+                    // Hide center circle result
+                    $('#rouletteCenterResult').css('opacity', 0);
                     const bettingEndsIn = round.time_until_betting_ends || 0;
                     const resultIn = round.time_until_result || (bettingEndsIn + 4); // fallback to +4 if not provided
                     $('#rouletteResult').html(`Round #${round.round_number} - Betting ends in ${Math.ceil(bettingEndsIn)}s`);
@@ -385,6 +411,9 @@ $(document).ready(function() {
     function startSpinningAnimation(round) {
         if (isSpinning && spinAnimationInterval) return;
         
+        // Hide center circle during spinning
+        $('#rouletteCenterResult').css('opacity', 0);
+        
         isSpinning = true;
         $('#spinBtn').prop('disabled', true).text('SPINNING...');
         
@@ -438,6 +467,16 @@ $(document).ready(function() {
         
         const resultColor = getNumberColor(resultNum);
         $('#rouletteResult').html(`<span class="roulette-number roulette-${resultColor}">${resultNum}</span>`);
+        
+        // Display result in center circle
+        const centerCircle = $('#rouletteCenterResult');
+        const colors = getRouletteNumberColors(resultNum);
+        centerCircle.css({
+            backgroundColor: colors.bg,
+            color: colors.text,
+            opacity: 1
+        });
+        centerCircle.text(resultNum);
         
         // Animate wheel to result
         animateWheelToResult(resultNum);
