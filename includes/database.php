@@ -230,7 +230,10 @@ class Database {
             'roulette_round_interval' => '5', // seconds between rounds
             // Crash round settings
             'crash_betting_duration' => '15', // seconds
-            'crash_round_interval' => '5' // seconds between rounds
+            'crash_round_interval' => '5', // seconds between rounds
+            // Game mode settings
+            'roulette_mode' => 'local', // 'local' or 'central'
+            'crash_mode' => 'local' // 'local' or 'central'
         ];
         
         foreach ($defaultSettings as $key => $value) {

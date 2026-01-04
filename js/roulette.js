@@ -205,32 +205,48 @@ $(document).ready(function() {
                 const round = data.round;
                 
                 if (!round) {
-                    // No active round
-                    $('#rouletteResult').html('Waiting for next round...');
+                    // No active round - worker might not be running
+                    $('#rouletteResult').html('Waiting for next round...<br><small style="color: #999;">Make sure the game rounds worker is running</small>');
                     $('#spinBtn').prop('disabled', true).text('WAITING FOR ROUND');
+                    currentRound = null;
                     return;
                 }
                 
+                // Check if round changed
+                const roundChanged = !currentRound || currentRound.id !== round.id || currentRound.status !== round.status;
                 currentRound = round;
                 
                 // Update round info display
                 if (round.status === 'betting') {
                     const timeLeft = round.time_until_betting_ends || 0;
                     $('#rouletteResult').html(`Round #${round.round_number} - Betting ends in ${Math.ceil(timeLeft)}s`);
-                    $('#spinBtn').prop('disabled', false).text('PLACE BETS');
+                    $('#spinBtn').prop('disabled', false).text('PLACE BETS & SPIN');
+                    // Reset spinning state when entering betting
+                    if (isSpinning) {
+                        isSpinning = false;
+                        if (spinAnimationInterval) {
+                            clearInterval(spinAnimationInterval);
+                            spinAnimationInterval = null;
+                        }
+                    }
                     updateBettingCountdown(timeLeft);
                 } else if (round.status === 'spinning') {
                     $('#spinBtn').prop('disabled', true).text('SPINNING...');
+                    // Start spinning animation when entering spinning state
+                    if (roundChanged || !isSpinning) {
+                        startSpinningAnimation(round);
+                    }
+                    // Check if result is available
                     if (round.result_number !== null && round.result_number !== undefined) {
                         // Round finished, show result
                         showRoundResult(round.result_number);
-                    } else {
-                        // Start spinning animation
-                        startSpinningAnimation(round);
                     }
                 } else if (round.status === 'finished') {
                     if (round.result_number !== null) {
                         showRoundResult(round.result_number);
+                    } else {
+                        // Reset if no result yet
+                        isSpinning = false;
                     }
                     // Wait for next round
                     setTimeout(pollRoundState, 1000);
@@ -239,8 +255,9 @@ $(document).ready(function() {
                 // Load history
                 loadHistory();
             }
-        }, 'json').fail(function() {
-            console.error('Failed to poll round state');
+        }, 'json').fail(function(xhr, status, error) {
+            console.error('Failed to poll round state:', status, error);
+            $('#rouletteResult').html('Error connecting to server<br><small style="color: #999;">Check console for details</small>');
         });
     }
     
@@ -261,29 +278,62 @@ $(document).ready(function() {
         }, 1000);
     }
     
+    let spinAnimationInterval = null;
+    
     function startSpinningAnimation(round) {
-        if (isSpinning) return;
+        if (isSpinning && spinAnimationInterval) return;
         
         isSpinning = true;
         $('#spinBtn').prop('disabled', true).text('SPINNING...');
         
-        // We'll get the result when the round finishes
-        // For now, show a spinning animation
+        // Clear any existing animation
+        if (spinAnimationInterval) {
+            clearInterval(spinAnimationInterval);
+        }
+        
+        // Start wheel rotation animation
+        const fullSpins = 5 + Math.random() * 3;
+        const randomRotation = Math.random() * 360;
+        let totalRotation = (fullSpins * 360) + randomRotation;
+        
+        // Reset wheel first
+        $('#rouletteWheel').css({
+            transition: 'none',
+            transform: 'rotate(0deg)'
+        });
+        
+        // Force reflow
+        $('#rouletteWheel')[0].offsetHeight;
+        
+        // Animate wheel
+        $('#rouletteWheel').css({
+            transition: 'transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99)',
+            transform: `rotate(${totalRotation}deg)`
+        });
+        
+        // Show spinning numbers in result display
         let spinCount = 0;
         const maxSpins = 40;
-        const spinInterval = setInterval(function() {
+        spinAnimationInterval = setInterval(function() {
             const randomNum = Math.floor(Math.random() * 37);
             const color = getNumberColor(randomNum);
             $('#rouletteResult').html(`<span class="roulette-number roulette-${color}">${randomNum}</span>`);
             spinCount++;
             
             if (spinCount >= maxSpins) {
-                clearInterval(spinInterval);
+                clearInterval(spinAnimationInterval);
+                spinAnimationInterval = null;
             }
         }, 100);
     }
     
     function showRoundResult(resultNum) {
+        // Clear spinning animation
+        if (spinAnimationInterval) {
+            clearInterval(spinAnimationInterval);
+            spinAnimationInterval = null;
+        }
+        
         const resultColor = getNumberColor(resultNum);
         $('#rouletteResult').html(`<span class="roulette-number roulette-${resultColor}">${resultNum}</span>`);
         
@@ -535,8 +585,14 @@ $(document).ready(function() {
                         placeNextBet();
                     } else {
                         $('#result').html('<div class="alert alert-error">' + (data.message || 'Failed to place bet') + '</div>');
+                        // Stop trying to place more bets
+                        betsPlaced = betsToPlace;
                     }
-                }, 'json');
+                }, 'json').fail(function(xhr, status, error) {
+                    console.error('Failed to place bet:', status, error);
+                    $('#result').html('<div class="alert alert-error">Error placing bet. Please try again.</div>');
+                    betsPlaced = betsToPlace;
+                });
             }
             
             placeNextBet();
