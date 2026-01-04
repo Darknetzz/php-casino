@@ -150,7 +150,11 @@ include __DIR__ . '/../includes/navbar.php';
                         <div class="form-group">
                             <label for="refill_amount">Refill Amount ($)</label>
                             <input type="number" id="refill_amount" name="refill_amount" min="1" step="0.01" required placeholder="Enter amount">
+                            <?php if (getSetting('max_deposit_enabled', '1') === '1'): ?>
                             <small>Maximum refill: $<span id="maxDeposit"><?php echo number_format(getSetting('max_deposit', 10000), 2); ?></span></small>
+                            <?php else: ?>
+                            <small>No deposit limit</small>
+                            <?php endif; ?>
                         </div>
                         <button type="submit" class="btn btn-primary">Refill Balance</button>
                     </form>

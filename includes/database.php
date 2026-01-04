@@ -212,6 +212,8 @@ class Database {
         $defaultSettings = [
             'max_deposit' => '10000',
             'max_bet' => '100',
+            'max_deposit_enabled' => '1',
+            'max_bet_enabled' => '1',
             'starting_balance' => '1000',
             'default_bet' => '10',
             // Slots multipliers (stored as JSON array of {emoji, multiplier})

@@ -639,7 +639,6 @@ $(document).ready(function() {
                     // Show betting countdown
                     if (bettingEnds > 0) {
                         $('#rouletteResult').html(`Round #${currentRound.round_number} - Place your bets (${bettingEnds}s)...`);
-                        $('#countdownText').html(`Place your bets (${bettingEnds}s)...`);
                         
                         // Enable betting
                         $('.bet-btn, #addNumberBetBtn').prop('disabled', false).removeClass('disabled');
@@ -649,7 +648,6 @@ $(document).ready(function() {
                     // Show spinning countdown
                     if (spinningTime > 0) {
                         $('#rouletteResult').html(`Round #${currentRound.round_number} - Spinning...`);
-                        $('#countdownText').html(`Spinning in ${spinningTime}s...`);
                     } else {
                         clearInterval(bettingCountdownInterval);
                         bettingCountdownInterval = null;

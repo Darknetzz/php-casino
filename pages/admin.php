@@ -20,15 +20,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $maxBet = floatval($_POST['max_bet'] ?? 0);
             $startingBalance = floatval($_POST['starting_balance'] ?? 0);
             $defaultBet = floatval($_POST['default_bet'] ?? 0);
+            $maxDepositEnabled = isset($_POST['max_deposit_enabled']) ? '1' : '0';
+            $maxBetEnabled = isset($_POST['max_bet_enabled']) ? '1' : '0';
             
-            if ($maxDeposit <= 0) $errors[] = 'Max Deposit must be greater than 0';
-            if ($maxBet <= 0) $errors[] = 'Max Bet must be greater than 0';
+            // Only validate limits if they are enabled
+            if ($maxDepositEnabled === '1' && $maxDeposit <= 0) $errors[] = 'Max Deposit must be greater than 0';
+            if ($maxBetEnabled === '1' && $maxBet <= 0) $errors[] = 'Max Bet must be greater than 0';
             if ($startingBalance < 0) $errors[] = 'Starting Balance must be greater than or equal to 0';
             if ($defaultBet <= 0) $errors[] = 'Default Bet must be greater than 0';
             
             if (empty($errors)) {
                 $db->setSetting('max_deposit', $maxDeposit);
                 $db->setSetting('max_bet', $maxBet);
+                $db->setSetting('max_deposit_enabled', $maxDepositEnabled);
+                $db->setSetting('max_bet_enabled', $maxBetEnabled);
                 $db->setSetting('starting_balance', $startingBalance);
                 $db->setSetting('default_bet', $defaultBet);
                 header('Location: admin.php?tab=limits&success=1');
@@ -512,14 +517,32 @@ include __DIR__ . '/../includes/navbar.php';
                 <p style="margin-bottom: 20px; color: #666;">Configure betting and deposit limits for the casino.</p>
                 <form method="POST" action="admin.php?tab=limits" class="admin-form">
                     <div class="form-group">
+                        <label style="display: flex; align-items: center; gap: 10px;">
+                            <input type="checkbox" id="max_deposit_enabled" name="max_deposit_enabled" value="1" 
+                                   <?php echo (getSetting('max_deposit_enabled', '1') === '1') ? 'checked' : ''; ?>>
+                            <span>Enable Max Deposit Limit</span>
+                        </label>
+                    </div>
+                    <div class="form-group">
                         <label for="max_deposit">Max Deposit ($)</label>
-                        <input type="number" id="max_deposit" name="max_deposit" min="1" step="0.01" 
-                               value="<?php echo htmlspecialchars($settings['max_deposit'] ?? '10000'); ?>" required>
+                        <input type="number" id="max_deposit" name="max_deposit" min="0" step="0.01" 
+                               value="<?php echo htmlspecialchars($settings['max_deposit'] ?? '10000'); ?>" 
+                               <?php echo (getSetting('max_deposit_enabled', '1') === '1') ? 'required' : ''; ?>>
+                        <small>Leave disabled to allow unlimited deposits</small>
+                    </div>
+                    <div class="form-group">
+                        <label style="display: flex; align-items: center; gap: 10px;">
+                            <input type="checkbox" id="max_bet_enabled" name="max_bet_enabled" value="1" 
+                                   <?php echo (getSetting('max_bet_enabled', '1') === '1') ? 'checked' : ''; ?>>
+                            <span>Enable Max Bet Limit</span>
+                        </label>
                     </div>
                     <div class="form-group">
                         <label for="max_bet">Max Bet ($)</label>
-                        <input type="number" id="max_bet" name="max_bet" min="1" step="0.01" 
-                               value="<?php echo htmlspecialchars($settings['max_bet'] ?? '100'); ?>" required>
+                        <input type="number" id="max_bet" name="max_bet" min="0" step="0.01" 
+                               value="<?php echo htmlspecialchars($settings['max_bet'] ?? '100'); ?>" 
+                               <?php echo (getSetting('max_bet_enabled', '1') === '1') ? 'required' : ''; ?>>
+                        <small>Leave disabled to allow unlimited bets</small>
                     </div>
                     <div class="form-group">
                         <label for="starting_balance">Starting Balance ($)</label>

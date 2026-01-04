@@ -27,19 +27,25 @@ switch ($action) {
         
         // Check max deposit for deposits
         if ($type === 'deposit') {
-            $maxDeposit = floatval(getSetting('max_deposit', 10000));
-            if ($amount > $maxDeposit) {
-                echo json_encode(['success' => false, 'message' => 'Deposit amount exceeds maximum of $' . number_format($maxDeposit, 2)]);
-                break;
+            $maxDepositEnabled = getSetting('max_deposit_enabled', '1') === '1';
+            if ($maxDepositEnabled) {
+                $maxDeposit = floatval(getSetting('max_deposit', 10000));
+                if ($amount > $maxDeposit) {
+                    echo json_encode(['success' => false, 'message' => 'Deposit amount exceeds maximum of $' . number_format($maxDeposit, 2)]);
+                    break;
+                }
             }
         }
         
         // Check max bet for bets
         if ($type === 'bet' && $amount < 0) {
-            $maxBet = floatval(getSetting('max_bet', 100));
-            if (abs($amount) > $maxBet) {
-                echo json_encode(['success' => false, 'message' => 'Bet amount exceeds maximum of $' . number_format($maxBet, 2)]);
-                break;
+            $maxBetEnabled = getSetting('max_bet_enabled', '1') === '1';
+            if ($maxBetEnabled) {
+                $maxBet = floatval(getSetting('max_bet', 100));
+                if (abs($amount) > $maxBet) {
+                    echo json_encode(['success' => false, 'message' => 'Bet amount exceeds maximum of $' . number_format($maxBet, 2)]);
+                    break;
+                }
             }
         }
         
@@ -331,10 +337,13 @@ switch ($action) {
             break;
         }
         
-        $maxBet = floatval(getSetting('max_bet', 100));
-        if ($amount > $maxBet) {
-            echo json_encode(['success' => false, 'message' => 'Bet amount exceeds maximum of $' . number_format($maxBet, 2)]);
-            break;
+        $maxBetEnabled = getSetting('max_bet_enabled', '1') === '1';
+        if ($maxBetEnabled) {
+            $maxBet = floatval(getSetting('max_bet', 100));
+            if ($amount > $maxBet) {
+                echo json_encode(['success' => false, 'message' => 'Bet amount exceeds maximum of $' . number_format($maxBet, 2)]);
+                break;
+            }
         }
         
         // Check balance
