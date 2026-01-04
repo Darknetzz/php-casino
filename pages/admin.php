@@ -127,13 +127,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         } else {
                             // Validate that symbols array matches number of reels
                             if (count($combination['symbols']) !== $numReels) {
-                                $errors[] = "Custom combination #" . ($index + 1) . " must have exactly " . $numReels . " symbols (one per reel, empty allowed)";
+                                $errors[] = "Custom combination #" . ($index + 1) . " must have exactly " . $numReels . " symbols (one per reel, \"any\" allowed)";
                             }
-                            // Check that at least one symbol is specified (not all empty)
+                            // Check that at least one symbol is specified (not all "any")
                             $hasAtLeastOneSymbol = false;
                             foreach ($combination['symbols'] as $symbolIndex => $symbol) {
                                 $symbol = trim($symbol);
-                                if (!empty($symbol)) {
+                                // Convert empty strings to "any" for consistency
+                                if ($symbol === '') {
+                                    $symbol = 'any';
+                                }
+                                if (!empty($symbol) && strtolower($symbol) !== 'any') {
                                     $hasAtLeastOneSymbol = true;
                                     // Validate that symbol is from the available symbols list
                                     if (!in_array($symbol, $availableSymbols)) {
@@ -142,7 +146,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 }
                             }
                             if (!$hasAtLeastOneSymbol) {
-                                $errors[] = "Custom combination #" . ($index + 1) . " must have at least one symbol specified (empty positions are allowed)";
+                                $errors[] = "Custom combination #" . ($index + 1) . " must have at least one symbol specified (\"any\" positions are allowed)";
                             }
                         }
                         if (!isset($combination['multiplier']) || floatval($combination['multiplier']) < 0) {
@@ -617,7 +621,7 @@ include __DIR__ . '/../includes/navbar.php';
                     <hr style="border: none; border-top: 2px solid #e0e0e0; margin: 30px 0 20px 0;">
                     
                     <h4 style="margin-top: 20px; margin-bottom: 15px; color: #667eea;">Custom Combinations</h4>
-                    <p style="margin-bottom: 15px; color: #666;">Define custom winning combinations with exact order (e.g., 🔥🔥❤️). Symbols are matched in order from left to right. Select symbols from the Slot Machine Symbols list above, or leave empty to match any symbol. <strong>Adding a symbol above will automatically suggest an all-of-a-kind combination here.</strong></p>
+                    <p style="margin-bottom: 15px; color: #666;">Define custom winning combinations with exact order (e.g., 🔥🔥❤️). Symbols are matched in order from left to right. Select symbols from the Slot Machine Symbols list above, or select "any" to match any symbol. <strong>Adding a symbol above will automatically suggest an all-of-a-kind combination here.</strong></p>
                     <div id="slotsCustomCombinationsContainer">
                         <table class="multiplier-table" id="slotsCustomCombinationsTable" style="max-width: 100%;">
                             <thead>
@@ -665,10 +669,15 @@ include __DIR__ . '/../includes/navbar.php';
                                             $emojisArray = array_slice($emojisArray, 0, $numReels);
                                             for ($i = 0; $i < $numReels; $i++) {
                                                 $emoji = isset($emojisArray[$i]) && is_string($emojisArray[$i]) ? htmlspecialchars($emojisArray[$i]) : '';
+                                                // Convert empty string to "any" for consistency
+                                                if ($emoji === '') {
+                                                    $emoji = 'any';
+                                                }
                                                 echo '<div style="display: flex; align-items: center; gap: 5px;">';
                                                 echo '<span style="font-size: 14px; color: #666;">#' . ($i + 1) . '</span>';
                                                 echo '<select class="custom-combo-emoji" data-position="' . $i . '" style="width: 80px; padding: 5px; font-size: 16px;">';
-                                                echo '<option value="">(empty)</option>';
+                                                $anySelected = ($emoji === 'any' || $emoji === '') ? 'selected' : '';
+                                                echo '<option value="any" ' . $anySelected . '>any</option>';
                                                 foreach ($slotsSymbols as $symbol) {
                                                     $symbolEmoji = htmlspecialchars($symbol['emoji'] ?? '');
                                                     if ($symbolEmoji) {
@@ -1514,10 +1523,10 @@ include __DIR__ . '/../includes/navbar.php';
             return availableSymbols;
         }
         
-        function buildSymbolSelectOptionsHTML(includeEmpty, selectedValue) {
-            // includeEmpty: true for "(empty)", false/null for "any"
-            const emptyOption = includeEmpty ? '<option value="">(empty)</option>' : '<option value="any"' + (selectedValue === 'any' || !selectedValue ? ' selected' : '') + '>any</option>';
-            let options = emptyOption;
+        function buildSymbolSelectOptionsHTML(selectedValue) {
+            // Always use "any" as the wildcard option
+            const anySelected = (selectedValue === 'any' || selectedValue === '' || !selectedValue) ? ' selected' : '';
+            let options = '<option value="any"' + anySelected + '>any</option>';
             const availableSymbols = getAvailableSlotsSymbols();
             availableSymbols.forEach(function(emoji) {
                 const selected = (selectedValue === emoji) ? ' selected' : '';
@@ -1604,8 +1613,12 @@ include __DIR__ . '/../includes/navbar.php';
 
             let symbolsHtml = '<div class="custom-combination-symbols" style="display: flex; flex-wrap: nowrap; gap: 10px; align-items: center;">';
             for (let i = 0; i < symbols.length; i++) {
-                const symbolValue = symbols[i] || '';
-                const symbolOptions = buildSymbolSelectOptionsHTML(true, symbolValue);
+                // Convert empty strings to "any" for consistency
+                let symbolValue = symbols[i] || '';
+                if (symbolValue === '') {
+                    symbolValue = 'any';
+                }
+                const symbolOptions = buildSymbolSelectOptionsHTML(symbolValue);
                 symbolsHtml += '<div style="display: flex; align-items: center; gap: 5px;">';
                 symbolsHtml += '<span style="font-size: 14px; color: #666;">#' + (i + 1) + '</span>';
                 symbolsHtml += '<select class="custom-combo-emoji" data-position="' + i + '" style="width: 80px; padding: 5px; font-size: 16px;">';
@@ -1659,10 +1672,10 @@ include __DIR__ . '/../includes/navbar.php';
                         comboSymbols.push($(this).val().trim());
                     });
                     
-                    // Check if this is an all-of-a-kind combination (all symbols the same)
+                    // Check if this is an all-of-a-kind combination (all symbols the same, not "any")
                     if (comboSymbols.length === numReels && 
                         comboSymbols.length > 0 && 
-                        comboSymbols.every(s => s === comboSymbols[0] && s !== '')) {
+                        comboSymbols.every(s => s === comboSymbols[0] && s !== '' && s.toLowerCase() !== 'any')) {
                         // Update it to the new emoji
                         $comboRow.find('.custom-combo-emoji').val(emoji);
                         $comboRow.find('.custom-combo-multiplier').val(multiplier);
@@ -1695,7 +1708,7 @@ include __DIR__ . '/../includes/navbar.php';
                     
                     if (comboSymbols.length === numReels && 
                         comboSymbols.length > 0 && 
-                        comboSymbols.every(s => s === comboSymbols[0] && s === emoji && s !== '')) {
+                        comboSymbols.every(s => s === comboSymbols[0] && s === emoji && s !== '' && s.toLowerCase() !== 'any')) {
                         $comboRow.find('.custom-combo-multiplier').val(multiplier);
                         return false; // break
                     }
@@ -1716,19 +1729,20 @@ include __DIR__ . '/../includes/navbar.php';
                 });
                 $('#slots_symbols_json').val(JSON.stringify(symbols));
                 
-                // Serialize custom combinations (ordered array, empty allowed)
+                // Serialize custom combinations (ordered array, "any" allowed)
                 const customCombinations = [];
                 const numReels = parseInt($('#slots_num_reels').val()) || 3;
                 $('#slotsCustomCombinationsBody tr').each(function() {
                     const symbols = [];
-                    // Get symbols in order (one per reel, empty strings allowed)
+                    // Get symbols in order (one per reel, "any" allowed for wildcard)
                     $(this).find('.custom-combo-emoji').each(function() {
                         const emoji = $(this).val().trim();
-                        symbols.push(emoji || ''); // Allow empty strings
+                        // Convert empty strings to "any" for consistency
+                        symbols.push(emoji || 'any');
                     });
                     const multiplier = parseFloat($(this).find('.custom-combo-multiplier').val()) || 0;
-                    // Only add if we have the right number of symbols and at least one is non-empty
-                    if (symbols.length === numReels && symbols.some(s => s.trim() !== '')) {
+                    // Only add if we have the right number of symbols and at least one is not "any"
+                    if (symbols.length === numReels && symbols.some(s => s.trim() !== '' && s.trim().toLowerCase() !== 'any')) {
                         customCombinations.push({symbols: symbols, multiplier: multiplier});
                     }
                 });
@@ -1760,7 +1774,7 @@ include __DIR__ . '/../includes/navbar.php';
             const row = document.createElement('tr');
             row.setAttribute('data-index', index);
             
-            const symbolOptions = buildSymbolSelectOptionsHTML(true, '');
+            const symbolOptions = buildSymbolSelectOptionsHTML('any');
             
             let symbolsHtml = '<div class="custom-combination-symbols" style="display: flex; flex-wrap: nowrap; gap: 10px; align-items: center;">';
             for (let i = 0; i < numReels; i++) {
@@ -1808,7 +1822,7 @@ include __DIR__ . '/../includes/navbar.php';
             const row = document.createElement('tr');
             row.setAttribute('data-index', index);
             
-            const symbolOptions = buildSymbolSelectOptionsHTML(false, 'any');
+            const symbolOptions = buildSymbolSelectOptionsHTML('any');
             
             row.innerHTML = `
                 <td>
@@ -1839,8 +1853,8 @@ include __DIR__ . '/../includes/navbar.php';
                 const $select = $(this).find('.n-of-kind-symbol');
                 const currentValue = $select.val();
                 
-                // Rebuild options
-                const options = buildSymbolSelectOptionsHTML(false, currentValue);
+                    // Rebuild options
+                    const options = buildSymbolSelectOptionsHTML(currentValue);
                 $select.html(options);
                 
                 // Try to restore the previous value if it still exists
@@ -1868,18 +1882,22 @@ include __DIR__ . '/../includes/navbar.php';
                 const $row = $(this);
                 $row.find('.custom-combo-emoji').each(function() {
                     const $select = $(this);
-                    const currentValue = $select.val();
+                    let currentValue = $select.val();
+                    // Convert empty string to "any" for consistency
+                    if (currentValue === '' || !currentValue) {
+                        currentValue = 'any';
+                    }
                     
                     // Rebuild options
-                    const options = buildSymbolSelectOptionsHTML(true, currentValue);
+                    const options = buildSymbolSelectOptionsHTML(currentValue);
                     $select.html(options);
                     
                     // Try to restore the previous value if it still exists
-                    if (currentValue && (currentValue === '' || availableSymbols.indexOf(currentValue) !== -1)) {
+                    if (currentValue === 'any' || availableSymbols.indexOf(currentValue) !== -1) {
                         $select.val(currentValue);
                     } else {
-                        // If the symbol was removed, default to empty
-                        $select.val('');
+                        // If the symbol was removed, default to "any"
+                        $select.val('any');
                     }
                 });
             });
@@ -1906,8 +1924,8 @@ include __DIR__ . '/../includes/navbar.php';
                 $symbolsContainer.empty();
                 $symbolsContainer.css({'flex-wrap': 'nowrap'});
                 for (let i = 0; i < numReels; i++) {
-                    const value = i < currentValues.length ? currentValues[i] : '';
-                    const symbolOptions = buildSymbolSelectOptionsHTML(true, value);
+                    const value = i < currentValues.length ? (currentValues[i] || 'any') : 'any';
+                    const symbolOptions = buildSymbolSelectOptionsHTML(value);
                     let selectHtml = '<select class="custom-combo-emoji" data-position="' + i + '" style="width: 80px; padding: 5px; font-size: 16px;">';
                     selectHtml += symbolOptions;
                     selectHtml += '</select>';

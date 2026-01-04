@@ -347,18 +347,22 @@ $(document).ready(function() {
         }
         resultSymbols = resultSymbols.map(function(s) { return (s || '').trim(); });
         
-        // Check custom combinations first (exact order matching, empty = any symbol)
+        // Check custom combinations first (exact order matching, "any" = any symbol)
         for (let i = 0; i < customCombinations.length; i++) {
             const combination = customCombinations[i];
             if (combination.symbols && Array.isArray(combination.symbols)) {
-                // Check for exact order match (empty string matches any symbol)
+                // Check for exact order match ("any" or empty string matches any symbol)
                 if (combination.symbols.length === resultSymbols.length) {
                     let matches = true;
                     for (let j = 0; j < combination.symbols.length; j++) {
-                        const comboSymbol = (combination.symbols[j] || '').trim();
+                        let comboSymbol = (combination.symbols[j] || '').trim();
                         const resultSymbol = (resultSymbols[j] || '').trim();
-                        // If combo symbol is empty, it matches any symbol; otherwise must match exactly
-                        if (comboSymbol !== '' && comboSymbol !== resultSymbol) {
+                        // Convert empty strings to "any" for backward compatibility
+                        if (comboSymbol === '') {
+                            comboSymbol = 'any';
+                        }
+                        // If combo symbol is "any", it matches any symbol; otherwise must match exactly
+                        if (comboSymbol.toLowerCase() !== 'any' && comboSymbol !== resultSymbol) {
                             matches = false;
                             break;
                         }
