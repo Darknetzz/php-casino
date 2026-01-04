@@ -166,8 +166,12 @@ $(document).ready(function() {
         } else {
             let html = '<div class="bets-list">';
             numberBets.forEach(function(bet, index) {
+                const colors = getRouletteNumberColors(bet.number);
                 html += `<div class="bet-item" data-index="${index}">
-                    <span>Number ${bet.number}: $${bet.amount.toFixed(2)}</span>
+                    <span style="display: flex; align-items: center; gap: 8px;">
+                        <div style="width: 24px; height: 24px; border-radius: 50%; background-color: ${colors.bg}; color: ${colors.text}; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.2);">${bet.number}</div>
+                        <span>Number ${bet.number}: $${bet.amount.toFixed(2)}</span>
+                    </span>
                     <button class="btn-remove-bet" data-index="${index}" data-type="number">×</button>
                 </div>`;
             });
@@ -249,8 +253,13 @@ $(document).ready(function() {
             
             if (bet.bet_type === 'number') {
                 hasNumberBets = true;
+                const number = parseInt(bet.bet_value);
+                const colors = getRouletteNumberColors(number);
                 numberBetsHtml += `<div class="bet-item">
-                    <span>Number ${bet.bet_value}: $${parseFloat(bet.amount).toFixed(2)}</span>
+                    <span style="display: flex; align-items: center; gap: 8px;">
+                        <div style="width: 24px; height: 24px; border-radius: 50%; background-color: ${colors.bg}; color: ${colors.text}; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.2);">${number}</div>
+                        <span>Number ${bet.bet_value}: $${parseFloat(bet.amount).toFixed(2)}</span>
+                    </span>
                 </div>`;
             } else if (bet.bet_type === 'color' || bet.bet_type === 'range') {
                 hasColorBets = true;

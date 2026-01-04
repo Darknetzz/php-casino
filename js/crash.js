@@ -200,8 +200,8 @@ $(document).ready(function() {
                 if (round.status === 'betting') {
                     const timeLeft = round.time_until_betting_ends || 0;
                     $('#multiplierDisplay').text(`Round #${round.round_number} - Betting ends in ${Math.ceil(timeLeft)}s`);
-                    // Hide place bet button in central mode, show countdown
-                    $('#placeBetBtn').hide();
+                    // Show place bet button and countdown when betting is open
+                    $('#placeBetBtn').show();
                     $('#roundCountdown').show();
                     $('#crashControls').hide();
                     
@@ -232,7 +232,15 @@ $(document).ready(function() {
                     // Check if user has a bet for this round
                     if (round.user_bets && round.user_bets.length > 0) {
                         userBet = round.user_bets[0];
-                        betAmount = userBet.bet_amount;
+                        betAmount = parseFloat(userBet.bet_amount || userBet.amount || 0);
+                        // Update button text to show bet is placed
+                        $('#placeBetBtn').prop('disabled', true).text('Bet Placed: $' + betAmount.toFixed(2)).show();
+                    } else {
+                        // No bet - show confirm button if betting is still open
+                        const bettingEndsIn = round.time_until_betting_ends || 0;
+                        if (bettingEndsIn > 0) {
+                            $('#placeBetBtn').prop('disabled', false).text('Confirm Bet').show();
+                        }
                     }
                 } else if (round.status === 'running') {
                     // Round is running
@@ -426,7 +434,7 @@ $(document).ready(function() {
         
         // Reset UI after delay
         setTimeout(function() {
-            $('#placeBetBtn').prop('disabled', false).text('Place Bet').removeClass('game-disabled');
+            $('#placeBetBtn').prop('disabled', false).text('Confirm Bet').removeClass('game-disabled').show();
             $('#betAmount').prop('disabled', false);
             $('#crashControls').hide();
             $('#cashOutBtn').prop('disabled', false);
@@ -568,12 +576,19 @@ $(document).ready(function() {
                 bet_amount: betAmount
             }, function(data) {
                 if (data.success) {
-                    $('#placeBetBtn').prop('disabled', true).text('Bet Placed: $' + betAmount.toFixed(2));
+                    // Fetch updated round data to get the server-side bet
+                    $.get('../api/api.php?action=getCrashRound', function(roundData) {
+                        if (roundData.success && roundData.round && roundData.round.user_bets && roundData.round.user_bets.length > 0) {
+                            userBet = roundData.round.user_bets[0];
+                            betAmount = parseFloat(userBet.bet_amount || userBet.amount || betAmount);
+                        } else {
+                            // Fallback to local data
+                            userBet = {bet_amount: betAmount};
+                        }
+                        $('#placeBetBtn').prop('disabled', true).text('Bet Placed: $' + betAmount.toFixed(2)).show();
+                    }, 'json');
                     $('#result').html('<div class="alert alert-success">Bet placed!</div>');
                     updateBalance();
-                    
-                    // Store user bet
-                    userBet = {bet_amount: betAmount};
                 } else {
                     $('#result').html('<div class="alert alert-error">' + (data.message || 'Failed to place bet') + '</div>');
                 }

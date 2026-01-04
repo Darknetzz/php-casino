@@ -17,7 +17,7 @@ include __DIR__ . '/../includes/navbar.php';
                     <label>Bet Amount: $</label>
                     <input type="number" id="betAmount" min="1" value="10" step="1" class="bet-input-with-adjust">
                     <small>Max: $<span id="maxBet">100</span></small>
-                    <button id="placeBetBtn" class="btn btn-primary">Place Bet</button>
+                    <button id="placeBetBtn" class="btn btn-primary">Confirm Bet</button>
                 </div>
                 
                 <div class="crash-display-container">
@@ -157,7 +157,7 @@ include __DIR__ . '/../includes/navbar.php';
             <h3>How to Play:</h3>
             <table class="slots-info-table">
                 <tr>
-                    <td>1. Set your bet amount and click "Place Bet"</td>
+                    <td>1. Set your bet amount and click "Confirm Bet"</td>
                 </tr>
                 <tr>
                     <td>2. Watch the multiplier rise from 1.00x</td>
