@@ -197,25 +197,29 @@ $(document).ready(function() {
                     $('#crashControls').hide();
                     updateBettingCountdown(timeLeft);
                     
-                    // Reset game state
-                    isGameActive = false;
-                    hasCashedOut = false;
-                    currentMultiplier = 1.00;
-                    cashOutMultiplier = 0;
-                    graphData = [];
-                    userBet = null;
+                    // Reset game state when entering betting phase
+                    if (roundChanged) {
+                        isGameActive = false;
+                        hasCashedOut = false;
+                        currentMultiplier = 1.00;
+                        cashOutMultiplier = 0;
+                        graphData = [];
+                        userBet = null;
+                    }
                     
                     // Check if user has a bet for this round
                     if (round.user_bets && round.user_bets.length > 0) {
                         userBet = round.user_bets[0];
                         betAmount = userBet.bet_amount;
-                        $('#placeBetBtn').prop('disabled', true).text('Bet Placed: $' + betAmount.toFixed(2));
                     }
                 } else if (round.status === 'running') {
                     // Round is running
                     if (round.crash_point) {
                         crashPoint = parseFloat(round.crash_point);
                     }
+                    $('#placeBetBtn').hide();
+                    $('#roundCountdown').show();
+                    $('#countdownText').html('Round in progress...');
                     if (!isGameActive && userBet) {
                         // Start the game animation
                         startGameAnimation(round);
@@ -229,8 +233,11 @@ $(document).ready(function() {
                     // Round finished
                     if (round.crash_point) {
                         crashPoint = parseFloat(round.crash_point);
-                        finishRound(round);
                     }
+                    $('#placeBetBtn').hide();
+                    $('#roundCountdown').show();
+                    $('#countdownText').html('Round finished. Waiting for next round...');
+                    finishRound(round);
                 }
                 
                 // Load history
@@ -248,10 +255,16 @@ $(document).ready(function() {
         
         let timeLeft = Math.ceil(seconds);
         const updateCountdown = function() {
-            if (timeLeft > 0 && currentRound && currentRound.status === 'betting') {
-                $('#multiplierDisplay').text(`Round #${currentRound.round_number} - Betting ends in ${timeLeft}s`);
-                $('#countdownText').html(`Next round in: <span style="font-size: 1.5em; color: #667eea;">${timeLeft}s</span>`);
-                timeLeft--;
+            if (currentRound && currentRound.status === 'betting') {
+                if (timeLeft > 0) {
+                    $('#multiplierDisplay').text(`Round #${currentRound.round_number} - Betting ends in ${timeLeft}s`);
+                    $('#countdownText').html(`Next round in: <span style="font-size: 1.5em; color: #667eea;">${timeLeft}s</span>`);
+                    timeLeft--;
+                } else {
+                    clearInterval(bettingCountdownInterval);
+                    bettingCountdownInterval = null;
+                    // Poll will update when status changes
+                }
             } else {
                 clearInterval(bettingCountdownInterval);
                 bettingCountdownInterval = null;

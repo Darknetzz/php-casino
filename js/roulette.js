@@ -238,7 +238,12 @@ $(document).ready(function() {
                 } else if (round.status === 'spinning') {
                     $('#spinBtn').hide();
                     $('#roundCountdown').show();
-                    $('#countdownText').html('Spinning...');
+                    const timeLeft = round.time_until_finish || 0;
+                    if (timeLeft > 0) {
+                        $('#countdownText').html(`Spinning... Result in: <span style="font-size: 1.5em; color: #ffc107;">${Math.ceil(timeLeft)}s</span>`);
+                    } else {
+                        $('#countdownText').html('Spinning...');
+                    }
                     // Start spinning animation when entering spinning state
                     if (roundChanged || !isSpinning) {
                         startSpinningAnimation(round);
@@ -255,8 +260,7 @@ $(document).ready(function() {
                         // Reset if no result yet
                         isSpinning = false;
                     }
-                    // Wait for next round
-                    setTimeout(pollRoundState, 1000);
+                    // Wait for next round - continue polling
                 }
                 
                 // Load history
@@ -275,10 +279,16 @@ $(document).ready(function() {
         
         let timeLeft = Math.ceil(seconds);
         const updateCountdown = function() {
-            if (timeLeft > 0 && currentRound && currentRound.status === 'betting') {
-                $('#rouletteResult').html(`Round #${currentRound.round_number} - Betting ends in ${timeLeft}s`);
-                $('#countdownText').html(`Next spin in: <span style="font-size: 1.5em; color: #667eea;">${timeLeft}s</span>`);
-                timeLeft--;
+            if (currentRound && currentRound.status === 'betting') {
+                if (timeLeft > 0) {
+                    $('#rouletteResult').html(`Round #${currentRound.round_number} - Betting ends in ${timeLeft}s`);
+                    $('#countdownText').html(`Next spin in: <span style="font-size: 1.5em; color: #667eea;">${timeLeft}s</span>`);
+                    timeLeft--;
+                } else {
+                    clearInterval(bettingCountdownInterval);
+                    bettingCountdownInterval = null;
+                    // Poll will update when status changes
+                }
             } else {
                 clearInterval(bettingCountdownInterval);
                 bettingCountdownInterval = null;
