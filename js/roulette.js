@@ -588,6 +588,11 @@ $(document).ready(function() {
         });
     }
     
+    function updateBettingCountdown(bettingEndsIn, resultIn) {
+        if (bettingCountdownInterval) {
+            clearInterval(bettingCountdownInterval);
+        }
+        
         // Only update timestamps if round changed or we're starting fresh
         const currentRoundId = currentRound ? currentRound.id : null;
         if (countdownRoundId !== currentRoundId || bettingEndsTimestamp === null) {
