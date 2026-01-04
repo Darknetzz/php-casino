@@ -301,7 +301,7 @@ $(document).ready(function() {
             
             isSpinning = true;
             $('#spinBtn').prop('disabled', true).text('SPINNING...').addClass('game-disabled');
-            $('button, .btn').addClass('game-disabled');
+            $('.game-container button, .game-container .btn').addClass('game-disabled');
             $('#result').html('');
             
             // Add beforeunload warning to prevent navigation during game
@@ -520,7 +520,7 @@ $(document).ready(function() {
                 
                 isSpinning = false;
                 $('#spinBtn').prop('disabled', false).text('SPIN').removeClass('game-disabled');
-                $('button, .btn').removeClass('game-disabled');
+                $('.game-container button, .game-container .btn').removeClass('game-disabled');
                 
                 // Remove beforeunload warning
                 $(window).off('beforeunload');

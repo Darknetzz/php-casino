@@ -13,8 +13,8 @@ $(document).ready(function() {
         6: 20  // 6 of a kind
     };
     
-    // Number of dice (will be set from settings)
-    let numDice = 6;
+    // Number of dice (will be set from settings, fallback to counting dice on page)
+    let numDice = $('.dice').length || 6;
     
     // Load max bet, default bet, multipliers, and number of dice from settings
     $.get('../api/api.php?action=getSettings', function(data) {
@@ -38,6 +38,9 @@ $(document).ready(function() {
             }
             if (data.settings.dice_num_dice) {
                 numDice = parseInt(data.settings.dice_num_dice) || 6;
+            } else {
+                // Fallback: count dice elements on page
+                numDice = $('.dice').length || 6;
             }
         }
     }, 'json');
@@ -190,7 +193,7 @@ $(document).ready(function() {
                     
                     isRolling = false;
                     $('#rollBtn').prop('disabled', false).text('ROLL DICE').removeClass('game-disabled');
-                    $('button, .btn').removeClass('game-disabled');
+                    $('.game-container button, .game-container .btn').removeClass('game-disabled');
                     
                     // Remove beforeunload warning
                     $(window).off('beforeunload');

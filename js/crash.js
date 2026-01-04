@@ -216,7 +216,7 @@ $(document).ready(function() {
                 // Update UI
                 $('#placeBetBtn').prop('disabled', true).text('Game In Progress...').addClass('game-disabled');
                 $('#betAmount').prop('disabled', true);
-                $('button, .btn').addClass('game-disabled');
+                $('.game-container button, .game-container .btn').addClass('game-disabled');
                 $('#crashControls').show();
                 $('#result').html('');
                 
@@ -349,7 +349,7 @@ $(document).ready(function() {
             $('#betAmount').prop('disabled', false);
             $('#crashControls').hide();
             $('#cashOutBtn').prop('disabled', false);
-            $('button, .btn').removeClass('game-disabled');
+            $('.game-container button, .game-container .btn').removeClass('game-disabled');
             $('#cashOutInfo').html('');
             currentMultiplier = 1.00;
             graphData = [];
