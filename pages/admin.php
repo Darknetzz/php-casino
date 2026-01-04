@@ -42,9 +42,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (isset($_POST['update_game_modes'])) {
             $errors = [];
             // Get values and trim whitespace
-            // Use the select value if provided, otherwise fall back to the hidden current value
-            $rouletteMode = trim($_POST['roulette_mode'] ?? $_POST['roulette_mode_current'] ?? 'local');
-            $crashMode = trim($_POST['crash_mode'] ?? $_POST['crash_mode_current'] ?? 'local');
+            // Always use the select value - it should always be present since the selects are required
+            $rouletteMode = trim($_POST['roulette_mode'] ?? 'local');
+            $crashMode = trim($_POST['crash_mode'] ?? 'local');
             
             // Debug: Log what we received
             error_log('Game modes update - Received: roulette=' . $rouletteMode . ', crash=' . $crashMode);
@@ -1330,9 +1330,6 @@ include __DIR__ . '/../includes/navbar.php';
                 <form method="POST" action="admin.php" class="admin-form game-modes-form" style="margin-bottom: 30px;">
                     <input type="hidden" name="tab" value="rounds">
                     <input type="hidden" name="update_game_modes" value="1">
-                    <!-- Hidden inputs to ensure current values are always sent, even if selects aren't changed -->
-                    <input type="hidden" name="roulette_mode_current" value="<?php echo htmlspecialchars($rouletteMode); ?>">
-                    <input type="hidden" name="crash_mode_current" value="<?php echo htmlspecialchars($crashMode); ?>">
                     <table class="game-modes-table">
                         <thead>
                             <tr>
@@ -2369,7 +2366,7 @@ include __DIR__ . '/../includes/navbar.php';
                             const colors = getRouletteNumberColors(number);
                             html += '<div style="display: flex; align-items: center; gap: 8px; padding: 6px; background: white; border-radius: 4px;">';
                             html += '<div style="width: 24px; height: 24px; border-radius: 50%; background-color: ' + colors.bg + '; color: ' + colors.text + '; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.2);">' + number + '</div>';
-                            html += '<span>Number ' + bet.bet_value + ': $' + bet.amount.toFixed(2) + countText + sparkleIcon + '</span>';
+                            html += '<span>Number ' + bet.bet_value + ': $' + formatNumber(bet.amount) + countText + sparkleIcon + '</span>';
                             html += '</div>';
                         } else if (bet.bet_type === 'color' || bet.bet_type === 'range') {
                             const betValue = bet.bet_value || '';
@@ -2383,7 +2380,7 @@ include __DIR__ . '/../includes/navbar.php';
                                 colorClass = 'bet-item-green';
                             }
                             html += '<div class="bet-item ' + colorClass + '" style="display: flex; align-items: center; padding: 6px; background: white; border-radius: 4px;">';
-                            html += '<span>' + betName + ': $' + bet.amount.toFixed(2) + ' (' + parseInt(bet.multiplier) + 'x)' + countText + sparkleIcon + '</span>';
+                            html += '<span>' + betName + ': $' + formatNumber(bet.amount) + ' (' + parseInt(bet.multiplier) + 'x)' + countText + sparkleIcon + '</span>';
                             html += '</div>';
                         }
                     });
@@ -2433,7 +2430,7 @@ include __DIR__ . '/../includes/navbar.php';
                     // Show total bet amount
                     const countText = userData.bets.length > 1 ? ` (${userData.bets.length} bet${userData.bets.length > 1 ? 's' : ''})` : '';
                     html += '<div style="display: flex; align-items: center; padding: 6px; background: white; border-radius: 4px;">';
-                    html += '<span><strong>Total Bet:</strong> $' + userData.totalBet.toFixed(2) + countText + '</span>';
+                    html += '<span><strong>Total Bet:</strong> $' + formatNumber(userData.totalBet) + countText + '</span>';
                     html += '</div>';
                     
                     // Show individual bet details if there are multiple bets or if they cashed out
@@ -2460,11 +2457,11 @@ include __DIR__ . '/../includes/navbar.php';
                             }
                             
                             html += '<div style="display: flex; align-items: center; padding: 6px; background: white; border-radius: 4px; font-size: 0.9em; margin-left: 10px;">';
-                            html += '<span>Bet: $' + betAmount.toFixed(2);
+                            html += '<span>Bet: $' + formatNumber(betAmount);
                             if (cashOut) {
                                 html += ' | Cashed out at: <strong>' + cashOut.toFixed(2) + 'x</strong>';
                                 if (won || wouldWin) {
-                                    html += ' | Payout: <strong style="color: #28a745;">$' + payout.toFixed(2) + '</strong>';
+                                    html += ' | Payout: <strong style="color: #28a745;">$' + formatNumber(payout) + '</strong>';
                                 }
                                 html += sparkleIcon;
                             } else if (crashPoint && parseFloat(crashPoint) > 1.0) {
@@ -2493,7 +2490,7 @@ include __DIR__ . '/../includes/navbar.php';
                             html += '<div style="display: flex; align-items: center; padding: 6px; background: white; border-radius: 4px; font-size: 0.9em; margin-left: 10px;">';
                             html += '<span>Cashed out at: <strong>' + cashOut.toFixed(2) + 'x</strong>';
                             if (won || wouldWin) {
-                                html += ' | Payout: <strong style="color: #28a745;">$' + payout.toFixed(2) + '</strong>';
+                                html += ' | Payout: <strong style="color: #28a745;">$' + formatNumber(payout) + '</strong>';
                             }
                             html += sparkleIcon;
                             html += '</span>';

@@ -362,7 +362,7 @@ $(document).ready(function() {
                         const totalBet = newBets.reduce((sum, bet) => sum + parseFloat(bet.amount || 0), 0);
                         addNotification(
                             'Roulette Bet Placed',
-                            `You placed a bet of $${totalBet.toFixed(2)} on round #${round.round_number}`,
+                            `You placed a bet of $${formatNumber(totalBet)} on round #${round.round_number}`,
                             'bet',
                             'roulette'
                         );
@@ -404,14 +404,14 @@ $(document).ready(function() {
                             if (totalWin > 0) {
                                 addNotification(
                                     'Roulette Win! 🎉',
-                                    `Round #${round.round_number} result: ${resultNum}. You won $${netResult.toFixed(2)}!`,
+                                    `Round #${round.round_number} result: ${resultNum}. You won $${formatNumber(netResult)}!`,
                                     'success',
                                     'roulette'
                                 );
                             } else if (totalLoss > 0) {
                                 addNotification(
                                     'Roulette Result',
-                                    `Round #${round.round_number} result: ${resultNum}. You lost $${totalLoss.toFixed(2)}.`,
+                                    `Round #${round.round_number} result: ${resultNum}. You lost $${formatNumber(totalLoss)}.`,
                                     'error',
                                     'roulette'
                                 );
@@ -451,7 +451,7 @@ $(document).ready(function() {
                         const totalBet = newBets.reduce((sum, bet) => sum + parseFloat(bet.bet_amount || bet.amount || 0), 0);
                         addNotification(
                             'Crash Bet Placed',
-                            `You placed a bet of $${totalBet.toFixed(2)} on round #${round.round_number}`,
+                            `You placed a bet of $${formatNumber(totalBet)} on round #${round.round_number}`,
                             'bet',
                             'crash'
                         );
@@ -481,7 +481,7 @@ $(document).ready(function() {
                                 const cashOutMult = bet.cash_out_multiplier || 0;
                                 addNotification(
                                     'Crash Win! 🎉',
-                                    `Round #${round.round_number} crashed at ${crashPoint.toFixed(2)}x. You cashed out at ${cashOutMult.toFixed(2)}x and won $${payout.toFixed(2)}!`,
+                                    `Round #${round.round_number} crashed at ${crashPoint.toFixed(2)}x. You cashed out at ${cashOutMult.toFixed(2)}x and won $${formatNumber(payout)}!`,
                                     'success',
                                     'crash'
                                 );
@@ -489,7 +489,7 @@ $(document).ready(function() {
                                 const betAmount = parseFloat(bet.bet_amount || bet.amount || 0);
                                 addNotification(
                                     'Crash Result',
-                                    `Round #${round.round_number} crashed at ${crashPoint.toFixed(2)}x. You lost $${betAmount.toFixed(2)}.`,
+                                    `Round #${round.round_number} crashed at ${crashPoint.toFixed(2)}x. You lost $${formatNumber(betAmount)}.`,
                                     'error',
                                     'crash'
                                 );

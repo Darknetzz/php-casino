@@ -186,7 +186,7 @@ $(document).ready(function() {
                 html += `<div class="bet-item" data-index="${index}" data-bet-type="number">
                     <span style="display: flex; align-items: center; gap: 8px;">
                         <div style="width: 24px; height: 24px; border-radius: 50%; background-color: ${colors.bg}; color: ${colors.text}; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.2);">${bet.number}</div>
-                        <span>Number ${bet.number}: $${bet.amount.toFixed(2)}</span>
+                        <span>Number ${bet.number}: $${formatNumber(bet.amount)}</span>
                     </span>
                     <button class="btn-remove-bet" data-index="${index}" data-type="number">×</button>
                 </div>`;
@@ -204,7 +204,7 @@ $(document).ready(function() {
                     colorClass = 'bet-item-green';
                 }
                 html += `<div class="bet-item ${colorClass}" data-index="${index}" data-bet-type="color">
-                    <span>${betName}: $${bet.amount.toFixed(2)} (${bet.multiplier}x)</span>
+                    <span>${betName}: $${formatNumber(bet.amount)} (${bet.multiplier}x)</span>
                     <button class="btn-remove-bet" data-index="${index}" data-type="color">×</button>
                 </div>`;
             });
@@ -219,7 +219,7 @@ $(document).ready(function() {
         colorBets.forEach(bet => totalBet += bet.amount);
 
         if (totalBet > 0) {
-            $('#totalBetValue').text(totalBet.toFixed(2));
+            $('#totalBetValue').text(formatNumber(totalBet));
             $('#totalBetAmount').show();
         } else {
             $('#totalBetAmount').hide();
@@ -292,7 +292,7 @@ $(document).ready(function() {
             html += `<div class="bet-item">
                 <span style="display: flex; align-items: center; gap: 8px;">
                     <div style="width: 24px; height: 24px; border-radius: 50%; background-color: ${colors.bg}; color: ${colors.text}; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.2);">${number}</div>
-                    <span>Number ${bet.bet_value}: $${bet.amount.toFixed(2)}${countText}</span>
+                    <span>Number ${bet.bet_value}: $${formatNumber(bet.amount)}${countText}</span>
                 </span>
             </div>`;
         });
@@ -311,7 +311,7 @@ $(document).ready(function() {
             }
             const countText = bet.count > 1 ? ` (${bet.count}x)` : '';
             html += `<div class="bet-item ${colorClass}">
-                <span>${betName}: $${bet.amount.toFixed(2)} (${parseInt(bet.multiplier)}x)${countText}</span>
+                <span>${betName}: $${formatNumber(bet.amount)} (${parseInt(bet.multiplier)}x)${countText}</span>
             </div>`;
         });
         
@@ -319,7 +319,7 @@ $(document).ready(function() {
         allBetsList.html(html);
         
         if (totalBet > 0) {
-            $('#totalBetValue').text(totalBet.toFixed(2));
+            $('#totalBetValue').text(formatNumber(totalBet));
             $('#totalBetAmount').show();
         } else {
             $('#totalBetAmount').hide();
@@ -397,7 +397,7 @@ $(document).ready(function() {
                     const colors = getRouletteNumberColors(number);
                     html += '<div class="bet-item" style="display: flex; align-items: center; gap: 8px; padding: 6px; background: white; border-radius: 4px;">';
                     html += '<div style="width: 24px; height: 24px; border-radius: 50%; background-color: ' + colors.bg + '; color: ' + colors.text + '; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.2);">' + number + '</div>';
-                    html += '<span>Number ' + bet.bet_value + ': $' + bet.amount.toFixed(2) + countText + sparkleIcon + '</span>';
+                    html += '<span>Number ' + bet.bet_value + ': $' + formatNumber(bet.amount) + countText + sparkleIcon + '</span>';
                     html += '</div>';
                 } else if (bet.bet_type === 'color' || bet.bet_type === 'range') {
                     const betValue = bet.bet_value || '';
@@ -411,7 +411,7 @@ $(document).ready(function() {
                         colorClass = 'bet-item-green';
                     }
                     html += '<div class="bet-item ' + colorClass + '" style="display: flex; align-items: center; padding: 6px; background: white; border-radius: 4px;">';
-                    html += '<span>' + betName + ': $' + bet.amount.toFixed(2) + ' (' + parseInt(bet.multiplier) + 'x)' + countText + sparkleIcon + '</span>';
+                    html += '<span>' + betName + ': $' + formatNumber(bet.amount) + ' (' + parseInt(bet.multiplier) + 'x)' + countText + sparkleIcon + '</span>';
                     html += '</div>';
                 }
             });
@@ -845,18 +845,18 @@ $(document).ready(function() {
         const netResult = totalWin - totalLoss;
         
         if (totalWin > 0) {
-            let message = `<div class="alert alert-success">🎉 You won $${netResult.toFixed(2)}!<br>`;
+            let message = `<div class="alert alert-success">🎉 You won $${formatNumber(netResult)}!<br>`;
             if (winningBets.length > 0) {
                 message += `Winning bets: ${winningBets.length}<br>`;
             }
             if (losingBets.length > 0) {
-                message += `Lost: $${totalLoss.toFixed(2)} on ${losingBets.length} bet(s)`;
+                message += `Lost: $${formatNumber(totalLoss)} on ${losingBets.length} bet(s)`;
             }
             message += '</div>';
             $('#result').html(message);
             updateWinRateStats('roulette');
         } else if (totalLoss > 0) {
-            $('#result').html(`<div class="alert alert-error">Lost $${totalLoss.toFixed(2)} on ${losingBets.length} bet(s)</div>`);
+            $('#result').html(`<div class="alert alert-error">Lost $${formatNumber(totalLoss)} on ${losingBets.length} bet(s)</div>`);
             updateWinRateStats('roulette');
         }
         
@@ -1070,7 +1070,7 @@ $(document).ready(function() {
                               colorBets.reduce((sum, bet) => sum + bet.amount, 0);
         
         if (maxBetEnabled && totalBetAmount > maxBet) {
-            $('#bettingResult').html('<div class="alert alert-error">Total bet amount ($' + totalBetAmount.toFixed(2) + ') exceeds maximum of $' + formatNumber(maxBet) + '</div>');
+            $('#bettingResult').html('<div class="alert alert-error">Total bet amount ($' + formatNumber(totalBetAmount) + ') exceeds maximum of $' + formatNumber(maxBet) + '</div>');
             $('#result').html('');
             return;
         }
