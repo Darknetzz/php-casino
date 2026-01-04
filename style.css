@@ -1513,7 +1513,7 @@ body {
 
 .refill-section {
     margin-top: 40px;
-    padding-top: 40px;
+    padding: 40px 30px 30px 30px;
     border-top: 2px solid #eee;
 }
 
