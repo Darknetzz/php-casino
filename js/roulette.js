@@ -1,5 +1,5 @@
 $(document).ready(function() {
-    let selectedBet = null;
+    let numberBets = []; // Array of {number: int, amount: float}
     let isSpinning = false;
     let currentRotation = 0;
     let maxBet = 100;
@@ -10,10 +10,10 @@ $(document).ready(function() {
             if (data.settings.max_bet) {
                 maxBet = data.settings.max_bet;
                 $('#maxBet').text(maxBet);
-                $('#betAmount').attr('max', maxBet);
+                $('#numberBetAmount').attr('max', maxBet);
             }
             if (data.settings.default_bet) {
-                $('#betAmount').val(data.settings.default_bet);
+                $('#numberBetAmount').val(data.settings.default_bet);
             }
         }
     }, 'json');
@@ -97,77 +97,91 @@ $(document).ready(function() {
         return rouletteNumbers[targetIndex].num;
     }
     
-    function checkWin(betType, resultNum) {
-        const resultColor = getNumberColor(resultNum);
-        const isEven = resultNum !== 0 && resultNum % 2 === 0;
-        const isOdd = resultNum !== 0 && resultNum % 2 === 1;
-        
-        switch(betType) {
-            case 'red':
-                return resultColor === 'red';
-            case 'black':
-                return resultColor === 'black';
-            case 'green':
-                return resultNum === 0;
-            case 'even':
-                return isEven;
-            case 'odd':
-                return isOdd;
-            case 'low':
-                return resultNum >= 1 && resultNum <= 18;
-            case 'high':
-                return resultNum >= 19 && resultNum <= 36;
-            case 'number':
-                const betNum = parseInt($('#numberBet').val());
-                return resultNum === betNum;
-            default:
-                return false;
+    function updateActiveBetsDisplay() {
+        const betsList = $('#activeBets');
+        if (numberBets.length === 0) {
+            betsList.html('<p style="color: #666; font-style: italic;">No bets placed yet</p>');
+            $('#totalBetAmount').hide();
+            return;
         }
+        
+        let html = '<div class="bets-list">';
+        let totalBet = 0;
+        numberBets.forEach(function(bet, index) {
+            totalBet += bet.amount;
+            html += `<div class="bet-item" data-index="${index}">
+                <span>Number ${bet.number}: $${bet.amount.toFixed(2)}</span>
+                <button class="btn-remove-bet" data-index="${index}">×</button>
+            </div>`;
+        });
+        html += '</div>';
+        betsList.html(html);
+        
+        $('#totalBetValue').text(totalBet.toFixed(2));
+        $('#totalBetAmount').show();
+        
+        // Add click handlers for remove buttons
+        $('.btn-remove-bet').click(function() {
+            if (isSpinning) return;
+            const index = parseInt($(this).data('index'));
+            numberBets.splice(index, 1);
+            updateActiveBetsDisplay();
+        });
     }
     
-    function getMultiplier(betType) {
-        if (betType === 'green') return 14;
-        if (betType === 'number') return 36;
-        return 2;
-    }
-    
-    $('.bet-btn').click(function() {
+    $('#addNumberBetBtn').click(function() {
         if (isSpinning) return;
-        $('.bet-btn').removeClass('active');
-        $(this).addClass('active');
-        selectedBet = $(this).data('bet');
+        
+        const number = parseInt($('#numberBet').val());
+        const amount = parseFloat($('#numberBetAmount').val());
+        
+        if (isNaN(number) || number < 0 || number > 36) {
+            $('#result').html('<div class="alert alert-error">Please enter a valid number (0-36)</div>');
+            return;
+        }
+        
+        if (isNaN(amount) || amount < 1 || amount > maxBet) {
+            $('#result').html('<div class="alert alert-error">Bet amount must be between $1 and $' + maxBet + '</div>');
+            return;
+        }
+        
+        // Check if number already has a bet
+        const existingIndex = numberBets.findIndex(b => b.number === number);
+        if (existingIndex !== -1) {
+            // Update existing bet
+            numberBets[existingIndex].amount = amount;
+        } else {
+            // Add new bet
+            numberBets.push({number: number, amount: amount});
+        }
+        
+        updateActiveBetsDisplay();
         $('#numberBet').val('');
+        $('#result').html('');
     });
     
-    $('#numberBet').on('input', function() {
-        if (isSpinning) return;
-        $('.bet-btn').removeClass('active');
-        const val = $(this).val();
-        if (val !== '' && val >= 0 && val <= 36) {
-            selectedBet = 'number';
-        } else {
-            selectedBet = null;
+    // Allow Enter key to add bet
+    $('#numberBet, #numberBetAmount').keypress(function(e) {
+        if (e.which === 13) {
+            $('#addNumberBetBtn').click();
         }
     });
     
     $('#spinBtn').click(function() {
-        if (isSpinning || !selectedBet) {
-            if (!selectedBet) {
-                $('#result').html('<div class="alert alert-error">Please select a bet first</div>');
-            }
+        if (isSpinning) return;
+        
+        if (numberBets.length === 0) {
+            $('#result').html('<div class="alert alert-error">Please add at least one bet before spinning</div>');
             return;
         }
         
-        const betAmount = parseFloat($('#betAmount').val());
-        if (betAmount < 1 || betAmount > maxBet) {
-            $('#result').html('<div class="alert alert-error">Bet must be between $1 and $' + maxBet + '</div>');
-            return;
-        }
+        // Calculate total bet amount
+        const totalBetAmount = numberBets.reduce((sum, bet) => sum + bet.amount, 0);
         
         // Check if user has enough balance
         $.get('../api/api.php?action=getBalance', function(data) {
-            if (!data.success || parseFloat(data.balance) < betAmount) {
-                $('#result').html('<div class="alert alert-error">Insufficient funds. Your balance is $' + (data.success ? parseFloat(data.balance).toFixed(2) : '0.00') + '</div>');
+            if (!data.success || parseFloat(data.balance) < totalBetAmount) {
+                $('#result').html('<div class="alert alert-error">Insufficient funds. Your balance is $' + (data.success ? parseFloat(data.balance).toFixed(2) : '0.00') + ', but you need $' + totalBetAmount.toFixed(2) + '</div>');
                 return;
             }
             
@@ -226,42 +240,77 @@ $(document).ready(function() {
                 // Show final result
                 $('#rouletteResult').html(`<span class="roulette-number roulette-${resultColor}">${resultNum}</span>`);
                 
-                const won = checkWin(selectedBet, resultNum);
+                // Calculate wins and losses for all bets
+                let totalWin = 0;
+                let totalLoss = 0;
+                const winningBets = [];
+                const losingBets = [];
                 
-                if (won) {
-                    const multiplier = getMultiplier(selectedBet);
-                    const winAmount = betAmount * multiplier;
-                    
+                numberBets.forEach(function(bet) {
+                    if (bet.number === resultNum) {
+                        // Win! 36x multiplier
+                        const winAmount = bet.amount * 36;
+                        totalWin += winAmount;
+                        winningBets.push({number: bet.number, amount: bet.amount, win: winAmount});
+                    } else {
+                        // Loss
+                        totalLoss += bet.amount;
+                        losingBets.push({number: bet.number, amount: bet.amount});
+                    }
+                });
+                
+                // Calculate net result
+                const netResult = totalWin - totalLoss;
+                
+                if (netResult > 0) {
+                    // Overall win
                     $.post('../api/api.php?action=updateBalance', {
-                        amount: winAmount,
+                        amount: netResult,
                         type: 'win',
-                        description: `Roulette win: ${selectedBet} on ${resultNum} (${multiplier}x)`
+                        description: `Roulette win: ${winningBets.length} winning bet(s) on ${resultNum}`
                     }, function(data) {
                         if (data.success) {
                             $('#balance').text(parseFloat(data.balance).toFixed(2));
-                            $('#result').html(`<div class="alert alert-success">🎉 You won $${winAmount.toFixed(2)}! (${multiplier}x multiplier)</div>`);
+                            let message = `<div class="alert alert-success">🎉 You won $${netResult.toFixed(2)}!<br>`;
+                            if (winningBets.length > 0) {
+                                message += `Winning bets: `;
+                                winningBets.forEach(b => message += `#${b.number} ($${b.amount.toFixed(2)} → $${b.win.toFixed(2)}), `);
+                                message = message.slice(0, -2) + '<br>';
+                            }
+                            if (losingBets.length > 0) {
+                                message += `Lost: $${totalLoss.toFixed(2)} on ${losingBets.length} bet(s)`;
+                            }
+                            message += '</div>';
+                            $('#result').html(message);
                         }
                     }, 'json');
-                } else {
+                } else if (netResult < 0) {
+                    // Overall loss
                     $.post('../api/api.php?action=updateBalance', {
-                        amount: -betAmount,
+                        amount: netResult, // This is negative
                         type: 'bet',
-                        description: 'Roulette bet'
+                        description: `Roulette bet: ${numberBets.length} bet(s)`
                     }, function(data) {
                         if (data.success) {
                             $('#balance').text(parseFloat(data.balance).toFixed(2));
-                            $('#result').html(`<div class="alert alert-error">Better luck next time! Lost $${betAmount.toFixed(2)}</div>`);
+                            let message = `<div class="alert alert-error">Lost $${Math.abs(netResult).toFixed(2)}<br>`;
+                            if (winningBets.length > 0) {
+                                message += `Won: $${totalWin.toFixed(2)} on ${winningBets.length} bet(s)<br>`;
+                            }
+                            message += `Lost: $${totalLoss.toFixed(2)} on ${losingBets.length} bet(s)</div>`;
+                            $('#result').html(message);
                         } else {
                             $('#result').html(`<div class="alert alert-error">${data.message}</div>`);
                         }
                     }, 'json');
+                } else {
+                    // Break even (shouldn't happen, but handle it)
+                    $('#result').html('<div class="alert">Break even!</div>');
                 }
                 
                 isSpinning = false;
                 $('#spinBtn').prop('disabled', false);
-                selectedBet = null;
-                $('.bet-btn').removeClass('active');
-                $('#numberBet').val('');
+                // Don't clear bets - they persist
             }
         }, 100);
         }, 'json');

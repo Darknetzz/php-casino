@@ -21,25 +21,24 @@ $user = getCurrentUser();
             
             <div class="roulette-game">
                 <div class="bet-controls">
-                    <label>Bet Amount: $</label>
-                    <input type="number" id="betAmount" min="1" value="10" step="1">
-                    <small>Max: $<span id="maxBet">100</span></small>
+                    <small>Max bet per number: $<span id="maxBet">100</span></small>
                 </div>
                 
                 <div class="bet-options">
-                    <h3>Place Your Bet:</h3>
-                    <div class="bet-buttons">
-                        <button class="bet-btn" data-bet="red">Red (2x)</button>
-                        <button class="bet-btn" data-bet="black">Black (2x)</button>
-                        <button class="bet-btn" data-bet="green">Green (14x)</button>
-                        <button class="bet-btn" data-bet="even">Even (2x)</button>
-                        <button class="bet-btn" data-bet="odd">Odd (2x)</button>
-                        <button class="bet-btn" data-bet="low">1-18 (2x)</button>
-                        <button class="bet-btn" data-bet="high">19-36 (2x)</button>
-                    </div>
-                    <div class="number-bets">
-                        <h4>Or bet on a specific number (36x):</h4>
-                        <input type="number" id="numberBet" min="0" max="36" placeholder="0-36">
+                    <h3>Place Your Bets:</h3>
+                    <div class="number-bets-section">
+                        <h4>Bet on specific numbers (36x payout):</h4>
+                        <div class="add-number-bet">
+                            <input type="number" id="numberBet" min="0" max="36" placeholder="Number (0-36)">
+                            <input type="number" id="numberBetAmount" min="1" step="1" placeholder="Amount $" value="10">
+                            <button id="addNumberBetBtn" class="btn btn-secondary">Add Bet</button>
+                        </div>
+                        <div id="activeBets" class="active-bets-list">
+                            <p style="color: #666; font-style: italic;">No bets placed yet</p>
+                        </div>
+                        <div id="totalBetAmount" class="total-bet-display" style="display: none;">
+                            <strong>Total Bet: $<span id="totalBetValue">0</span></strong>
+                        </div>
                     </div>
                 </div>
                 

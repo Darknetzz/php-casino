@@ -695,6 +695,88 @@ body {
     font-size: 18px;
 }
 
+/* Roulette multiple bets */
+.number-bets-section {
+    margin-top: 20px;
+}
+
+.add-number-bet {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.add-number-bet input {
+    padding: 8px 12px;
+    border: 2px solid #667eea;
+    border-radius: 5px;
+    font-size: 14px;
+}
+
+.add-number-bet input[type="number"] {
+    width: 120px;
+}
+
+.active-bets-list {
+    background: white;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 15px;
+    min-height: 50px;
+}
+
+.bets-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.bet-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 15px;
+    background: #f8f9fa;
+    border-radius: 5px;
+    border-left: 4px solid #667eea;
+}
+
+.bet-item span {
+    font-weight: 500;
+    color: #333;
+}
+
+.btn-remove-bet {
+    background: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    cursor: pointer;
+    font-size: 18px;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+}
+
+.btn-remove-bet:hover {
+    background: #c82333;
+}
+
+.total-bet-display {
+    padding: 12px 15px;
+    background: #667eea;
+    color: white;
+    border-radius: 5px;
+    text-align: center;
+    font-size: 16px;
+}
+
 /* Roulette */
 .roulette-game {
     margin-bottom: 30px;
