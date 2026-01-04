@@ -4,7 +4,7 @@ $(document).ready(function() {
     let maxBet = 100;
     let settings = {};
     let multipliers = {};
-    let twoOfKindMultiplier = 1.0;
+    let nOfKindRules = [];
     let customCombinations = [];
     let numReels = 3;
     let slotsDuration = 2500; // Default spin duration in milliseconds
@@ -51,7 +51,7 @@ $(document).ready(function() {
                     symbols.push(symbol.emoji);
                     multipliers[symbol.emoji] = parseFloat(symbol.multiplier) || 0;
                 });
-                twoOfKindMultiplier = data.settings.slots_multipliers.two_of_kind || 1.0;
+                nOfKindRules = data.settings.slots_multipliers.n_of_kind_rules || [];
                 customCombinations = data.settings.slots_multipliers.custom_combinations || [];
                 
                 // Generate reel containers if needed
@@ -135,14 +135,25 @@ $(document).ready(function() {
             );
         });
         
-        // Add 2-of-a-kind payout
-        tbody.append(
-            $('<tr>').append(
-                $('<td>').text('Any 2 matching symbols')
-            ).append(
-                $('<td>').text(twoOfKindMultiplier + 'x bet')
-            )
-        );
+        // Add N-of-a-kind payouts
+        nOfKindRules.forEach(function(rule) {
+            const count = parseInt(rule.count) || 2;
+            const symbol = (rule.symbol || '').trim();
+            const multiplier = parseFloat(rule.multiplier) || 0;
+            let displayText = count + ' of a kind';
+            if (symbol && symbol.toLowerCase() !== 'any' && symbol !== '') {
+                displayText += ' (' + symbol + ')';
+            } else {
+                displayText += ' (any symbol)';
+            }
+            tbody.append(
+                $('<tr>').append(
+                    $('<td>').text(displayText)
+                ).append(
+                    $('<td>').text(multiplier + 'x bet')
+                )
+            );
+        });
     }
     
     function spinReel(reelId, duration, finalSymbol) {
@@ -278,8 +289,23 @@ $(document).ready(function() {
             }
         }
         
-        // Check for 2 of a kind (exactly 2 matching, not all)
-        // Count occurrences
+        // Check N-of-a-kind rules (ordered by specificity - specific symbols first, then "any")
+        // Sort rules: specific symbols first, then "any", then by count (higher first)
+        const sortedRules = nOfKindRules.slice().sort(function(a, b) {
+            const aSymbol = (a.symbol || '').trim().toLowerCase();
+            const bSymbol = (b.symbol || '').trim().toLowerCase();
+            const aIsAny = !aSymbol || aSymbol === 'any';
+            const bIsAny = !bSymbol || bSymbol === 'any';
+            
+            // Specific symbols come before "any"
+            if (aIsAny && !bIsAny) return 1;
+            if (!aIsAny && bIsAny) return -1;
+            
+            // Within same type, higher count first
+            return (b.count || 0) - (a.count || 0);
+        });
+        
+        // Count occurrences of each symbol
         const symbolCounts = {};
         resultSymbols.forEach(function(symbol) {
             if (symbol) {
@@ -287,10 +313,26 @@ $(document).ready(function() {
             }
         });
         
-        // Check if we have exactly 2 of any symbol
-        for (const symbol in symbolCounts) {
-            if (symbolCounts[symbol] === 2 && resultSymbols.length > 2) {
-                return twoOfKindMultiplier;
+        // Check each rule
+        for (let i = 0; i < sortedRules.length; i++) {
+            const rule = sortedRules[i];
+            const count = parseInt(rule.count) || 2;
+            const ruleSymbol = (rule.symbol || '').trim();
+            const isAnySymbol = !ruleSymbol || ruleSymbol.toLowerCase() === 'any';
+            
+            if (isAnySymbol) {
+                // Check if any symbol appears exactly N times (and not all symbols)
+                for (const symbol in symbolCounts) {
+                    if (symbolCounts[symbol] === count && resultSymbols.length > count) {
+                        return parseFloat(rule.multiplier) || 0;
+                    }
+                }
+            } else {
+                // Check if the specific symbol appears exactly N times
+                const actualCount = symbolCounts[ruleSymbol] || 0;
+                if (actualCount === count && resultSymbols.length > count) {
+                    return parseFloat(rule.multiplier) || 0;
+                }
             }
         }
         

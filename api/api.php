@@ -76,9 +76,24 @@ switch ($action) {
             $slotsCustomCombinations = [];
         }
         
+        // Get N-of-a-kind rules
+        $slotsNOfKindRulesJson = getSetting('slots_n_of_kind_rules', '[]');
+        $slotsNOfKindRules = json_decode($slotsNOfKindRulesJson, true);
+        // Migrate old setting if rules are empty
+        if (empty($slotsNOfKindRules) || !is_array($slotsNOfKindRules)) {
+            $oldTwoOfKind = floatval(getSetting('slots_two_of_kind_multiplier', 0));
+            if ($oldTwoOfKind > 0) {
+                $slotsNOfKindRules = [
+                    ['count' => 2, 'symbol' => 'any', 'multiplier' => $oldTwoOfKind]
+                ];
+            } else {
+                $slotsNOfKindRules = [];
+            }
+        }
+        
         $slotsMultipliers = [
             'symbols' => $slotsSymbols,
-            'two_of_kind' => floatval(getSetting('slots_two_of_kind_multiplier', 1.0)),
+            'n_of_kind_rules' => $slotsNOfKindRules,
             'custom_combinations' => $slotsCustomCombinations
         ];
         

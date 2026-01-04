@@ -39,9 +39,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (isset($_POST['slots_symbols'])) {
                 $slotsSymbolsJson = $_POST['slots_symbols'];
                 $slotsSymbols = json_decode($slotsSymbolsJson, true);
-                $slotsTwoOfKind = floatval($_POST['slots_two_of_kind_multiplier'] ?? 0);
+                // Handle N-of-a-kind rules
+                $slotsNOfKindRulesJson = isset($_POST['slots_n_of_kind_rules']) ? $_POST['slots_n_of_kind_rules'] : '[]';
+                $slotsNOfKindRules = json_decode($slotsNOfKindRulesJson, true);
                 $slotsWinRow = isset($_POST['slots_win_row']) ? intval($_POST['slots_win_row']) : 1;
-                $slotsBetRows = isset($_POST['slots_bet_rows']) ? intval($_POST['slots_bet_rows']) : 1;
                 
                 if (!is_array($slotsSymbols) || empty($slotsSymbols)) {
                     $errors[] = 'At least one slot symbol must be defined';
@@ -56,7 +57,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     }
                 }
                 
-                if ($slotsTwoOfKind < 0) $errors[] = 'Slots Two of Kind multiplier must be greater than or equal to 0';
+                // Validate N-of-a-kind rules
+                if (!is_array($slotsNOfKindRules)) {
+                    $slotsNOfKindRules = [];
+                } else {
+                    foreach ($slotsNOfKindRules as $index => $rule) {
+                        $count = intval($rule['count'] ?? 0);
+                        $symbol = isset($rule['symbol']) ? trim($rule['symbol']) : '';
+                        $multiplier = floatval($rule['multiplier'] ?? 0);
+                        
+                        if ($count < 2 || $count > 10) {
+                            $errors[] = "N-of-a-kind rule #" . ($index + 1) . " count must be between 2 and 10";
+                        }
+                        if ($multiplier < 0) {
+                            $errors[] = "N-of-a-kind rule #" . ($index + 1) . " multiplier must be greater than or equal to 0";
+                        }
+                        // Symbol can be empty (meaning "any") or a specific emoji
+                    }
+                }
                 
                 // Handle custom combinations (ordered array)
                 $slotsCustomCombinationsJson = isset($_POST['slots_custom_combinations']) ? $_POST['slots_custom_combinations'] : '[]';
@@ -106,11 +124,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 
                 if (empty($errors)) {
                     $db->setSetting('slots_symbols', json_encode($slotsSymbols));
-                    $db->setSetting('slots_two_of_kind_multiplier', $slotsTwoOfKind);
+                    $db->setSetting('slots_n_of_kind_rules', json_encode($slotsNOfKindRules));
                     $db->setSetting('slots_custom_combinations', json_encode($slotsCustomCombinations));
                     $db->setSetting('slots_num_reels', $slotsNumReels);
                     $db->setSetting('slots_win_row', $slotsWinRow);
-                    $db->setSetting('slots_bet_rows', $slotsBetRows);
                     $db->setSetting('slots_duration', $slotsDuration);
                 }
             }
@@ -388,12 +405,62 @@ include __DIR__ . '/../includes/navbar.php';
                         <input type="hidden" id="slots_symbols_json" name="slots_symbols" value="">
                     </div>
                     
-                    <h4 style="margin-top: 30px; margin-bottom: 15px; color: #667eea;">2 of a Kind Multiplier</h4>
-                    <div class="form-group">
-                        <label for="slots_two_of_kind_multiplier">Multiplier for any 2 matching symbols:</label>
-                        <input type="number" id="slots_two_of_kind_multiplier" name="slots_two_of_kind_multiplier" 
-                               min="0" step="0.1" value="<?php echo htmlspecialchars($settings['slots_two_of_kind_multiplier'] ?? '0.5'); ?>" 
-                               required style="width: 100px; padding: 8px;">
+                    <h4 style="margin-top: 30px; margin-bottom: 15px; color: #667eea;">N-of-a-Kind Rules</h4>
+                    <p style="margin-bottom: 15px; color: #666;">Define multipliers for N matching symbols. Leave symbol empty or set to "any" to match any symbol.</p>
+                    <div id="slotsNOfKindContainer">
+                        <table class="multiplier-table" id="slotsNOfKindTable" style="max-width: 100%;">
+                            <thead>
+                                <tr>
+                                    <th style="width: 25%;">Count (N)</th>
+                                    <th style="width: 35%;">Symbol</th>
+                                    <th style="width: 25%;">Multiplier</th>
+                                    <th style="width: 15%;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="slotsNOfKindBody">
+                                <?php
+                                $slotsNOfKindRulesJson = $settings['slots_n_of_kind_rules'] ?? '[]';
+                                $slotsNOfKindRules = json_decode($slotsNOfKindRulesJson, true);
+                                // If empty and old setting exists, migrate it
+                                if (empty($slotsNOfKindRules) || !is_array($slotsNOfKindRules)) {
+                                    $oldTwoOfKind = floatval($settings['slots_two_of_kind_multiplier'] ?? 0);
+                                    if ($oldTwoOfKind > 0) {
+                                        $slotsNOfKindRules = [
+                                            ['count' => 2, 'symbol' => 'any', 'multiplier' => $oldTwoOfKind]
+                                        ];
+                                    } else {
+                                        $slotsNOfKindRules = [];
+                                    }
+                                }
+                                foreach ($slotsNOfKindRules as $index => $rule):
+                                ?>
+                                <tr data-index="<?php echo $index; ?>">
+                                    <td>
+                                        <input type="number" class="n-of-kind-count" 
+                                               value="<?php echo htmlspecialchars($rule['count'] ?? '2'); ?>" 
+                                               min="2" max="10" style="width: 80px; padding: 8px;" required>
+                                    </td>
+                                    <td>
+                                        <input type="text" class="n-of-kind-symbol" 
+                                               value="<?php echo htmlspecialchars($rule['symbol'] ?? 'any'); ?>" 
+                                               maxlength="2" style="width: 100px; padding: 8px; font-size: 18px; text-align: center;" 
+                                               placeholder="any">
+                                        <small style="display: block; margin-top: 5px; color: #666;">Leave empty or "any" for any symbol</small>
+                                    </td>
+                                    <td>
+                                        <input type="number" class="n-of-kind-multiplier" 
+                                               value="<?php echo htmlspecialchars($rule['multiplier'] ?? '1'); ?>" 
+                                               min="0" step="0.1" style="width: 100px; padding: 8px;" required>
+                                    </td>
+                                    <td>
+                                        <button type="button" class="btn btn-secondary" onclick="removeNOfKindRule(this)" style="padding: 5px 10px; font-size: 12px;">Remove</button>
+                                    </td>
+                                </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                        <button type="button" class="btn btn-secondary" onclick="addNOfKindRule()" style="margin-top: 10px;">+ Add N-of-a-Kind Rule</button>
+                        <input type="hidden" id="slots_n_of_kind_rules_json" name="slots_n_of_kind_rules" value="">
                     </div>
                     
                     <hr style="border: none; border-top: 2px solid #e0e0e0; margin: 30px 0 20px 0;">
@@ -481,14 +548,6 @@ include __DIR__ . '/../includes/navbar.php';
                                required style="width: 100px; padding: 8px;">
                         <small style="display: block; margin-top: 5px; color: #666;">Number of reels/columns in the slot machine (3-10)</small>
                     </div>
-                    <div class="form-group">
-                        <label for="slots_bet_rows">Bet Rows:</label>
-                        <select id="slots_bet_rows" name="slots_bet_rows" required style="width: 200px; padding: 8px;">
-                            <option value="1" <?php echo (($settings['slots_bet_rows'] ?? '1') == '1') ? 'selected' : ''; ?>>Middle Row Only (1)</option>
-                            <option value="3" <?php echo (($settings['slots_bet_rows'] ?? '1') == '3') ? 'selected' : ''; ?>>All Rows (3)</option>
-                        </select>
-                        <small style="display: block; margin-top: 5px; color: #666;">Which rows to check for winning combinations</small>
-                    </div>
                     <div class="form-group" style="margin-top: 15px;">
                         <label for="slots_win_row">Winning Row (when Bet Rows = 1):</label>
                         <select id="slots_win_row" name="slots_win_row" required style="width: 200px; padding: 8px;">
@@ -496,7 +555,7 @@ include __DIR__ . '/../includes/navbar.php';
                             <option value="1" <?php echo (($settings['slots_win_row'] ?? '1') == '1') ? 'selected' : ''; ?>>Middle Row (1) - Default</option>
                             <option value="2" <?php echo (($settings['slots_win_row'] ?? '1') == '2') ? 'selected' : ''; ?>>Bottom Row (2)</option>
                         </select>
-                        <small style="display: block; margin-top: 5px; color: #666;">Which single row to check when Bet Rows is set to 1</small>
+                        <small style="display: block; margin-top: 5px; color: #666;">Which single row to check when betting on 1 row (for reference only - users choose bet rows in-game)</small>
                     </div>
                     
                     <h4 style="margin-top: 30px; margin-bottom: 15px; color: #667eea;">Animation Settings</h4>
@@ -983,6 +1042,21 @@ include __DIR__ . '/../includes/navbar.php';
                     }
                 });
                 $('#slots_custom_combinations_json').val(JSON.stringify(customCombinations));
+                
+                // Serialize N-of-a-kind rules
+                const nOfKindRules = [];
+                $('#slotsNOfKindBody tr').each(function() {
+                    const count = parseInt($(this).find('.n-of-kind-count').val()) || 2;
+                    let symbol = $(this).find('.n-of-kind-symbol').val().trim();
+                    if (symbol === '' || symbol.toLowerCase() === 'any') {
+                        symbol = 'any';
+                    }
+                    const multiplier = parseFloat($(this).find('.n-of-kind-multiplier').val()) || 0;
+                    if (count >= 2 && count <= 10 && multiplier >= 0) {
+                        nOfKindRules.push({count: count, symbol: symbol, multiplier: multiplier});
+                    }
+                });
+                $('#slots_n_of_kind_rules_json').val(JSON.stringify(nOfKindRules));
             }
         });
         
@@ -1026,6 +1100,44 @@ include __DIR__ . '/../includes/navbar.php';
         
         function updateCustomCombinationsIndices() {
             const tbody = document.getElementById('slotsCustomCombinationsBody');
+            Array.from(tbody.children).forEach((row, index) => {
+                row.setAttribute('data-index', index);
+            });
+        }
+        
+        // N-of-a-kind rules management
+        function addNOfKindRule() {
+            const tbody = document.getElementById('slotsNOfKindBody');
+            const index = tbody.children.length;
+            const row = document.createElement('tr');
+            row.setAttribute('data-index', index);
+            row.innerHTML = `
+                <td>
+                    <input type="number" class="n-of-kind-count" value="2" min="2" max="10" style="width: 80px; padding: 8px;" required>
+                </td>
+                <td>
+                    <input type="text" class="n-of-kind-symbol" value="any" maxlength="2" style="width: 100px; padding: 8px; font-size: 18px; text-align: center;" placeholder="any">
+                    <small style="display: block; margin-top: 5px; color: #666;">Leave empty or "any" for any symbol</small>
+                </td>
+                <td>
+                    <input type="number" class="n-of-kind-multiplier" value="1" min="0" step="0.1" style="width: 100px; padding: 8px;" required>
+                </td>
+                <td>
+                    <button type="button" class="btn btn-secondary" onclick="removeNOfKindRule(this)" style="padding: 5px 10px; font-size: 12px;">Remove</button>
+                </td>
+            `;
+            tbody.appendChild(row);
+            updateNOfKindIndices();
+        }
+        
+        function removeNOfKindRule(button) {
+            const row = button.closest('tr');
+            row.remove();
+            updateNOfKindIndices();
+        }
+        
+        function updateNOfKindIndices() {
+            const tbody = document.getElementById('slotsNOfKindBody');
             Array.from(tbody.children).forEach((row, index) => {
                 row.setAttribute('data-index', index);
             });
