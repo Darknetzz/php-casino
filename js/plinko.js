@@ -32,18 +32,18 @@ $(document).ready(function() {
         const board = $('#plinkoBoard');
         board.empty();
         
-        // Create pegs - properly centered
+        // Create pegs - properly centered with wider spacing
         for (let row = 0; row < rows; row++) {
             const pegsInRow = row + 1;
-            const rowWidth = pegsInRow * 8; // Approximate width per peg
+            const rowWidth = pegsInRow * 10; // Wider spacing per peg (increased from 8)
             const startOffset = (100 - rowWidth) / 2; // Center the row
             
             for (let col = 0; col <= row; col++) {
                 const peg = $('<div class="plinko-peg"></div>');
-                const leftPercent = startOffset + (col * (rowWidth / pegsInRow)) + 4; // 4% for peg width
+                const leftPercent = startOffset + (col * (rowWidth / pegsInRow)) + 5; // Adjusted for wider spacing
                 peg.css({
                     left: leftPercent + '%',
-                    top: (row * 12 + 10) + '%'
+                    top: (row * 14 + 10) + '%' // Increased vertical spacing (from 12 to 14)
                 });
                 board.append(peg);
             }
@@ -53,11 +53,11 @@ $(document).ready(function() {
         const slotsContainer = $('#plinkoSlots');
         slotsContainer.empty();
         
-        // Calculate bottom row peg positions to align slots
-        const bottomRow = rows - 1; // Last row index (row 7)
-        const bottomPegsInRow = bottomRow + 1; // 8 pegs
-        const bottomRowWidth = bottomPegsInRow * 8; // Width of bottom row
-        const bottomStartOffset = (100 - bottomRowWidth) / 2; // Center offset
+            // Calculate bottom row peg positions to align slots
+            const bottomRow = rows - 1; // Last row index (row 7)
+            const bottomPegsInRow = bottomRow + 1; // 8 pegs
+            const bottomRowWidth = bottomPegsInRow * 10; // Width of bottom row (matches wider spacing)
+            const bottomStartOffset = (100 - bottomRowWidth) / 2; // Center offset
         
         // Calculate where slots should be positioned
         // Slots should align with the spaces between and around the bottom pegs
@@ -265,7 +265,7 @@ $(document).ready(function() {
             // Use the same calculation as slot positioning for alignment
             const lastPegRow = rows - 1;
             const bottomPegsInRow = lastPegRow + 1;
-            const bottomRowWidth = bottomPegsInRow * 8;
+            const bottomRowWidth = bottomPegsInRow * 10; // Matches wider spacing
             const bottomStartOffset = (100 - bottomRowWidth) / 2;
             const slotAreaStart = bottomStartOffset - 2;
             const slotAreaEnd = bottomStartOffset + bottomRowWidth + 2;
@@ -283,13 +283,13 @@ $(document).ready(function() {
         } else {
             // Calculate position based on triangle structure
             const pegsInRow = currentRow + 1;
-            const rowWidth = pegsInRow * 8; // Approximate width per peg
+            const rowWidth = pegsInRow * 10; // Wider spacing per peg (matches peg creation)
             const startOffset = (100 - rowWidth) / 2; // Center the row
-            const leftPercent = startOffset + (currentCol * (rowWidth / pegsInRow)) + 4; // 4% for peg width
-            // Position ball slightly above the peg so it appears to hit the top of the peg
-            // Pegs are at (row * 12 + 10)%, so we position ball about 1.5% higher
-            const pegTopPercent = (currentRow * 12 + 10);
-            const topPercent = pegTopPercent - 1.5; // Position above the peg
+            const leftPercent = startOffset + (currentCol * (rowWidth / pegsInRow)) + 5; // Adjusted for wider spacing
+            // Position ball clearly above the peg so it appears to hit the top of the peg
+            // Pegs are at (row * 14 + 10)%, so we position ball about 3% higher to be clearly above
+            const pegTopPercent = (currentRow * 14 + 10);
+            const topPercent = pegTopPercent - 3; // Position clearly above the peg (increased from 1.5%)
             
             ball.element.css({
                 left: leftPercent + '%',
