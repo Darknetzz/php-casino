@@ -33,6 +33,7 @@ class Database {
     }
     
     private function initializeDatabase() {
+        // Add admin column to users table if it doesn't exist
         $this->db->exec("
             CREATE TABLE IF NOT EXISTS users (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -40,9 +41,17 @@ class Database {
                 email TEXT UNIQUE NOT NULL,
                 password TEXT NOT NULL,
                 balance REAL DEFAULT 1000.00,
+                is_admin INTEGER DEFAULT 0,
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP
             )
         ");
+        
+        // Try to add admin column if table already exists
+        try {
+            $this->db->exec("ALTER TABLE users ADD COLUMN is_admin INTEGER DEFAULT 0");
+        } catch (PDOException $e) {
+            // Column already exists, ignore
+        }
         
         $this->db->exec("
             CREATE TABLE IF NOT EXISTS transactions (
@@ -55,6 +64,32 @@ class Database {
                 FOREIGN KEY (user_id) REFERENCES users(id)
             )
         ");
+        
+        // Settings table
+        $this->db->exec("
+            CREATE TABLE IF NOT EXISTS settings (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                setting_key TEXT UNIQUE NOT NULL,
+                setting_value TEXT NOT NULL,
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            )
+        ");
+        
+        // Initialize default settings
+        $this->initializeSettings();
+    }
+    
+    private function initializeSettings() {
+        $defaultSettings = [
+            'max_deposit' => '10000',
+            'max_bet' => '100',
+            'starting_balance' => '1000'
+        ];
+        
+        foreach ($defaultSettings as $key => $value) {
+            $stmt = $this->db->prepare("INSERT OR IGNORE INTO settings (setting_key, setting_value) VALUES (?, ?)");
+            $stmt->execute([$key, $value]);
+        }
     }
     
     public function getConnection() {
@@ -62,8 +97,17 @@ class Database {
     }
     
     public function createUser($username, $email, $password) {
-        $stmt = $this->db->prepare("INSERT INTO users (username, email, password) VALUES (?, ?, ?)");
-        return $stmt->execute([$username, $email, password_hash($password, PASSWORD_DEFAULT)]);
+        $startingBalance = floatval($this->getSetting('starting_balance', 1000));
+        
+        // Check if this is the first user (make them admin)
+        $stmt = $this->db->query("SELECT COUNT(*) as count FROM users");
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        $isFirstUser = ($result['count'] == 0);
+        
+        $isAdmin = $isFirstUser ? 1 : 0;
+        
+        $stmt = $this->db->prepare("INSERT INTO users (username, email, password, balance, is_admin) VALUES (?, ?, ?, ?, ?)");
+        return $stmt->execute([$username, $email, password_hash($password, PASSWORD_DEFAULT), $startingBalance, $isAdmin]);
     }
     
     public function getUserByUsername($username) {
@@ -92,6 +136,56 @@ class Database {
         $stmt = $this->db->prepare("SELECT * FROM transactions WHERE user_id = ? ORDER BY created_at DESC LIMIT ?");
         $stmt->execute([$userId, $limit]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+    
+    // Admin functions
+    public function getAllUsers() {
+        $stmt = $this->db->prepare("SELECT id, username, email, balance, is_admin, created_at FROM users ORDER BY created_at DESC");
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+    
+    public function setAdmin($userId, $isAdmin) {
+        $stmt = $this->db->prepare("UPDATE users SET is_admin = ? WHERE id = ?");
+        return $stmt->execute([$isAdmin ? 1 : 0, $userId]);
+    }
+    
+    public function setUserBalance($userId, $balance) {
+        $stmt = $this->db->prepare("UPDATE users SET balance = ? WHERE id = ?");
+        return $stmt->execute([$balance, $userId]);
+    }
+    
+    public function deleteUser($userId) {
+        // Delete transactions first
+        $stmt = $this->db->prepare("DELETE FROM transactions WHERE user_id = ?");
+        $stmt->execute([$userId]);
+        // Delete user
+        $stmt = $this->db->prepare("DELETE FROM users WHERE id = ?");
+        return $stmt->execute([$userId]);
+    }
+    
+    // Settings functions
+    public function getSetting($key, $default = null) {
+        $stmt = $this->db->prepare("SELECT setting_value FROM settings WHERE setting_key = ?");
+        $stmt->execute([$key]);
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $result ? $result['setting_value'] : $default;
+    }
+    
+    public function setSetting($key, $value) {
+        $stmt = $this->db->prepare("INSERT OR REPLACE INTO settings (setting_key, setting_value, updated_at) VALUES (?, ?, CURRENT_TIMESTAMP)");
+        return $stmt->execute([$key, $value]);
+    }
+    
+    public function getAllSettings() {
+        $stmt = $this->db->prepare("SELECT setting_key, setting_value FROM settings");
+        $stmt->execute();
+        $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $settings = [];
+        foreach ($results as $row) {
+            $settings[$row['setting_key']] = $row['setting_value'];
+        }
+        return $settings;
     }
 }
 ?>

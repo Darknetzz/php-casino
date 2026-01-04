@@ -20,6 +20,9 @@ $user = getCurrentUser();
                 <span class="balance">Balance: $<span id="balance"><?php echo number_format($user['balance'], 2); ?></span></span>
                 <a href="../index.php" class="btn btn-secondary">Home</a>
                 <a href="../pages/profile.php" class="btn btn-secondary">Profile</a>
+                <?php if (isAdmin()): ?>
+                <a href="../pages/admin.php" class="btn btn-secondary">Admin</a>
+                <?php endif; ?>
                 <a href="../pages/logout.php" class="btn btn-secondary">Logout</a>
             </div>
         </div>
@@ -31,15 +34,34 @@ $user = getCurrentUser();
             
             <div class="slots-machine">
                 <div class="slots-reels">
-                    <div class="reel" id="reel1">🍒</div>
-                    <div class="reel" id="reel2">🍒</div>
-                    <div class="reel" id="reel3">🍒</div>
+                    <div class="reel-container">
+                        <div class="reel" id="reel1">
+                            <div class="symbol">🍋</div>
+                            <div class="symbol">🍒</div>
+                            <div class="symbol">🍊</div>
+                        </div>
+                    </div>
+                    <div class="reel-container">
+                        <div class="reel" id="reel2">
+                            <div class="symbol">🍇</div>
+                            <div class="symbol">🍋</div>
+                            <div class="symbol">🎰</div>
+                        </div>
+                    </div>
+                    <div class="reel-container">
+                        <div class="reel" id="reel3">
+                            <div class="symbol">🍊</div>
+                            <div class="symbol">🍇</div>
+                            <div class="symbol">🍒</div>
+                        </div>
+                    </div>
                 </div>
                 
                 <div class="slots-controls">
                     <div class="bet-controls">
                         <label>Bet Amount: $</label>
-                        <input type="number" id="betAmount" min="1" max="100" value="10" step="1">
+                        <input type="number" id="betAmount" min="1" value="10" step="1">
+                        <small>Max: $<span id="maxBet">100</span></small>
                     </div>
                     <button id="spinBtn" class="btn btn-primary btn-large">SPIN</button>
                 </div>

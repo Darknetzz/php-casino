@@ -4,6 +4,16 @@ $(document).ready(function() {
     let dealerHand = [];
     let gameActive = false;
     let betAmount = 0;
+    let maxBet = 100;
+    
+    // Load max bet from settings
+    $.get('../api/api.php?action=getSettings', function(data) {
+        if (data.success && data.settings.max_bet) {
+            maxBet = data.settings.max_bet;
+            $('#maxBet').text(maxBet);
+            $('#betAmount').attr('max', maxBet);
+        }
+    }, 'json');
     
     const suits = ['♠', '♥', '♦', '♣'];
     const ranks = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
@@ -86,8 +96,8 @@ $(document).ready(function() {
     
     function startGame() {
         const bet = parseFloat($('#betAmount').val());
-        if (bet < 1 || bet > 100) {
-            $('#result').html('<div class="alert alert-error">Bet must be between $1 and $100</div>');
+        if (bet < 1 || bet > maxBet) {
+            $('#result').html('<div class="alert alert-error">Bet must be between $1 and $' + maxBet + '</div>');
             return;
         }
         

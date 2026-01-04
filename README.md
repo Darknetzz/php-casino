@@ -15,10 +15,17 @@ A fun, fake-money casino web application built with PHP, JavaScript/jQuery, and 
   - **Roulette**: Bet on colors, numbers, or ranges
 
 - 💰 **Balance Management**
-  - Starting balance: $1,000 (fake money)
+  - Starting balance: $1,000 (fake money, configurable)
   - Real-time balance updates
   - Transaction history tracking
   - Automatic balance updates during gameplay
+  - Profile page to refill balance (with max deposit limit)
+
+- ⚙️ **Admin Panel**
+  - Manage casino settings (max deposit, max bet, starting balance)
+  - User administration (view all users, edit balances, toggle admin status)
+  - Delete users
+  - Accessible only to admin users
 
 - 🎨 **Modern UI**
   - Responsive design
@@ -97,9 +104,12 @@ php-casino/
 ├── pages/
 │   ├── login.php           # Sign in page
 │   ├── signup.php          # Sign up page
-│   └── logout.php          # Logout handler
+│   ├── logout.php          # Logout handler
+│   ├── profile.php         # User profile and balance refill
+│   └── admin.php           # Admin panel
 ├── index.php               # Main dashboard
 ├── setup.php               # Setup script for permissions
+├── make_admin.php          # Utility to make a user admin
 ├── style.css               # Main stylesheet
 └── README.md               # This file
 ```
@@ -142,14 +152,23 @@ php-casino/
 - `username` - Unique username
 - `email` - Unique email
 - `password` - Hashed password
-- `balance` - Current balance (default: 1000.00)
+- `balance` - Current balance (default: 1000.00, configurable)
+- `is_admin` - Admin flag (0 = regular user, 1 = admin)
 - `created_at` - Account creation timestamp
 
 ### Transactions Table
 - `id` - Primary key
 - `user_id` - Foreign key to users
-- `type` - Transaction type (bet, win, deposit)
+- `type` - Transaction type (bet, win, deposit, admin)
 - `amount` - Transaction amount
+- `description` - Transaction description
+- `created_at` - Transaction timestamp
+
+### Settings Table
+- `id` - Primary key
+- `setting_key` - Setting name (e.g., 'max_deposit', 'max_bet', 'starting_balance')
+- `setting_value` - Setting value
+- `updated_at` - Last update timestamp
 - `description` - Transaction description
 - `created_at` - Transaction timestamp
 

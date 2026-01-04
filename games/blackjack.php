@@ -20,6 +20,9 @@ $user = getCurrentUser();
                 <span class="balance">Balance: $<span id="balance"><?php echo number_format($user['balance'], 2); ?></span></span>
                 <a href="../index.php" class="btn btn-secondary">Home</a>
                 <a href="../pages/profile.php" class="btn btn-secondary">Profile</a>
+                <?php if (isAdmin()): ?>
+                <a href="../pages/admin.php" class="btn btn-secondary">Admin</a>
+                <?php endif; ?>
                 <a href="../pages/logout.php" class="btn btn-secondary">Logout</a>
             </div>
         </div>
@@ -32,7 +35,8 @@ $user = getCurrentUser();
             <div class="blackjack-game">
                 <div class="bet-controls">
                     <label>Bet Amount: $</label>
-                    <input type="number" id="betAmount" min="1" max="100" value="10" step="1">
+                    <input type="number" id="betAmount" min="1" value="10" step="1">
+                    <small>Max: $<span id="maxBet">100</span></small>
                     <button id="newGameBtn" class="btn btn-primary">New Game</button>
                 </div>
                 

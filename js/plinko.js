@@ -4,6 +4,16 @@ $(document).ready(function() {
     let isDropping = false;
     let ballPosition = {row: 0, col: 4.5}; // Start in the middle
     let ballElement = null;
+    let maxBet = 100;
+    
+    // Load max bet from settings
+    $.get('../api/api.php?action=getSettings', function(data) {
+        if (data.success && data.settings.max_bet) {
+            maxBet = data.settings.max_bet;
+            $('#maxBet').text(maxBet);
+            $('#betAmount').attr('max', maxBet);
+        }
+    }, 'json');
     
     // Multipliers for each slot (0-8, left to right)
     const multipliers = [0.2, 0.5, 0.8, 1.0, 2.0, 1.0, 0.8, 0.5, 0.2];
@@ -13,12 +23,17 @@ $(document).ready(function() {
         const board = $('#plinkoBoard');
         board.empty();
         
-        // Create pegs
+        // Create pegs - properly centered
         for (let row = 0; row < rows; row++) {
+            const pegsInRow = row + 1;
+            const rowWidth = pegsInRow * 8; // Approximate width per peg
+            const startOffset = (100 - rowWidth) / 2; // Center the row
+            
             for (let col = 0; col <= row; col++) {
                 const peg = $('<div class="plinko-peg"></div>');
+                const leftPercent = startOffset + (col * (rowWidth / pegsInRow)) + 4; // 4% for peg width
                 peg.css({
-                    left: ((col - row / 2) * 50 + 50) + '%',
+                    left: leftPercent + '%',
                     top: (row * 12 + 10) + '%'
                 });
                 board.append(peg);
@@ -41,8 +56,8 @@ $(document).ready(function() {
         if (isDropping) return;
         
         const betAmount = parseFloat($('#betAmount').val());
-        if (betAmount < 1 || betAmount > 100) {
-            $('#result').html('<div class="alert alert-error">Bet must be between $1 and $100</div>');
+        if (betAmount < 1 || betAmount > maxBet) {
+            $('#result').html('<div class="alert alert-error">Bet must be between $1 and $' + maxBet + '</div>');
             return;
         }
         

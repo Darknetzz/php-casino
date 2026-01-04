@@ -54,8 +54,8 @@ $user = getCurrentUser();
                 <form id="refillForm">
                     <div class="form-group">
                         <label for="refill_amount">Refill Amount ($)</label>
-                        <input type="number" id="refill_amount" name="refill_amount" min="1" max="10000" step="0.01" required placeholder="Enter amount">
-                        <small>Maximum refill: $10,000</small>
+                        <input type="number" id="refill_amount" name="refill_amount" min="1" step="0.01" required placeholder="Enter amount">
+                        <small>Maximum refill: $<span id="maxDeposit"><?php echo number_format(getSetting('max_deposit', 10000), 2); ?></span></small>
                     </div>
                     <button type="submit" class="btn btn-primary">Refill Balance</button>
                 </form>
@@ -85,9 +85,10 @@ $user = getCurrentUser();
                 e.preventDefault();
                 
                 const amount = parseFloat($('#refill_amount').val());
+                const maxDeposit = parseFloat($('#maxDeposit').text().replace(/,/g, ''));
                 
-                if (amount <= 0 || amount > 10000) {
-                    $('#refillMessage').html('<div class="alert alert-error">Please enter a valid amount between $1 and $10,000</div>');
+                if (amount <= 0 || amount > maxDeposit) {
+                    $('#refillMessage').html('<div class="alert alert-error">Please enter a valid amount between $1 and $' + maxDeposit.toFixed(2) + '</div>');
                     return;
                 }
                 

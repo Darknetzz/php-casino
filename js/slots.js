@@ -1,12 +1,31 @@
 $(document).ready(function() {
     const symbols = ['🍒', '🍋', '🍊', '🍇', '🎰'];
     let isSpinning = false;
+    let maxBet = 100;
+    
+    // Load max bet from settings
+    $.get('../api/api.php?action=getSettings', function(data) {
+        if (data.success && data.settings.max_bet) {
+            maxBet = data.settings.max_bet;
+            $('#maxBet').text(maxBet);
+            $('#betAmount').attr('max', maxBet);
+        }
+    }, 'json');
     
     function spinReel(reelId, duration, finalSymbol) {
         const $reel = $(reelId);
         const startTime = Date.now();
-        let lastSymbol = '';
-        let symbolCount = 0;
+        
+        // Ensure we have exactly 3 symbols, all different
+        let $symbols = $reel.find('.symbol');
+        if ($symbols.length !== 3) {
+            $reel.empty();
+            const threeSymbols = getThreeDifferentSymbols();
+            for (let i = 0; i < 3; i++) {
+                $reel.append($('<div class="symbol">' + threeSymbols[i] + '</div>'));
+            }
+            $symbols = $reel.find('.symbol');
+        }
         
         // Add spinning animation class
         $reel.addClass('spinning');
@@ -16,31 +35,46 @@ $(document).ready(function() {
             const progress = elapsed / duration;
             
             if (progress < 1) {
-                // Fast spinning at start, slow down near end
-                const speed = 1 - Math.pow(progress, 3); // Ease out cubic
-                const interval = Math.max(50, speed * 200);
+                // Update all 3 symbols during spin - they're all visible
+                // Ensure no two consecutive symbols are the same
+                const $symbols = $reel.find('.symbol');
+                let prevSymbol = '';
                 
-                if (elapsed - (symbolCount * interval) >= interval) {
-                    let randomSymbol;
-                    // In last 20% of spin, start showing final symbol occasionally
-                    if (progress > 0.8 && Math.random() < 0.3) {
-                        randomSymbol = finalSymbol;
+                $symbols.each(function(index) {
+                    let newSymbol;
+                    // In last 20% of spin, start showing final symbol in middle occasionally
+                    if (progress > 0.8 && index === 1 && Math.random() < 0.3) {
+                        newSymbol = finalSymbol;
                     } else {
-                        randomSymbol = symbols[Math.floor(Math.random() * symbols.length)];
+                        // Get random symbol different from previous
+                        if (prevSymbol) {
+                            newSymbol = getRandomSymbolDifferentFrom(prevSymbol);
+                        } else {
+                            newSymbol = getRandomSymbol();
+                        }
                     }
-                    
-                    if (randomSymbol !== lastSymbol) {
-                        $reel.text(randomSymbol);
-                        lastSymbol = randomSymbol;
-                    }
-                    symbolCount++;
-                }
+                    $(this).text(newSymbol);
+                    prevSymbol = newSymbol;
+                });
                 
                 requestAnimationFrame(animate);
             } else {
-                // Final symbol
-                $reel.text(finalSymbol);
+                // Final symbols - all 3 remain visible, middle is winning
+                // Ensure no two consecutive symbols are the same
+                const $symbols = $reel.find('.symbol');
+                const topSymbol = getRandomSymbolDifferentFrom(finalSymbol);
+                let bottomSymbol = getRandomSymbolDifferentFrom(finalSymbol);
+                // Make sure bottom is also different from top
+                while (bottomSymbol === topSymbol) {
+                    bottomSymbol = getRandomSymbolDifferentFrom(finalSymbol);
+                }
+                
+                $symbols.eq(0).text(topSymbol); // Top (visible)
+                $symbols.eq(1).text(finalSymbol); // Middle (winning, visible)
+                $symbols.eq(2).text(bottomSymbol); // Bottom (visible)
                 $reel.removeClass('spinning');
+                // Reset position to show all 3 symbols (top at 0, middle at 120px, bottom at 240px)
+                $reel.css('transform', 'translateY(0)');
             }
         }
         animate();
@@ -48,6 +82,22 @@ $(document).ready(function() {
     
     function getRandomSymbol() {
         return symbols[Math.floor(Math.random() * symbols.length)];
+    }
+    
+    function getRandomSymbolDifferentFrom(excludeSymbol) {
+        const available = symbols.filter(s => s !== excludeSymbol);
+        return available[Math.floor(Math.random() * available.length)];
+    }
+    
+    function getThreeDifferentSymbols() {
+        const s1 = getRandomSymbol();
+        let s2 = getRandomSymbolDifferentFrom(s1);
+        let s3 = getRandomSymbolDifferentFrom(s2);
+        // Make sure s3 is also different from s1
+        while (s3 === s1) {
+            s3 = getRandomSymbolDifferentFrom(s2);
+        }
+        return [s1, s2, s3];
     }
     
     function calculateWin(s1, s2, s3) {
@@ -68,8 +118,8 @@ $(document).ready(function() {
         if (isSpinning) return;
         
         const betAmount = parseFloat($('#betAmount').val());
-        if (betAmount < 1 || betAmount > 100) {
-            $('#result').html('<div class="alert alert-error">Bet must be between $1 and $100</div>');
+        if (betAmount < 1 || betAmount > maxBet) {
+            $('#result').html('<div class="alert alert-error">Bet must be between $1 and $' + maxBet + '</div>');
             return;
         }
         
@@ -82,17 +132,27 @@ $(document).ready(function() {
         const s2 = getRandomSymbol();
         const s3 = getRandomSymbol();
         
-        // Spin animation with staggered timing for visual effect
+        // Spin animation with staggered timing for visual effect (left to right, slower stops)
         const spinDuration = 2500;
         const reel1Delay = 0;
         const reel2Delay = 200;
         const reel3Delay = 400;
         
-        setTimeout(() => spinReel('#reel1', spinDuration, s1), reel1Delay);
-        setTimeout(() => spinReel('#reel2', spinDuration, s2), reel2Delay);
-        setTimeout(() => spinReel('#reel3', spinDuration, s3), reel3Delay);
+        // Staggered stop times (left to right, each stops slower)
+        const reel1StopTime = spinDuration;
+        const reel2StopTime = spinDuration + 300;
+        const reel3StopTime = spinDuration + 600;
+        
+        setTimeout(() => spinReel('#reel1', reel1StopTime, s1), reel1Delay);
+        setTimeout(() => spinReel('#reel2', reel2StopTime, s2), reel2Delay);
+        setTimeout(() => spinReel('#reel3', reel3StopTime, s3), reel3Delay);
         
         setTimeout(function() {
+            // Get middle symbols (the winning ones) - wait for all reels to stop
+            const s1 = $('#reel1 .symbol').eq(1).text();
+            const s2 = $('#reel2 .symbol').eq(1).text();
+            const s3 = $('#reel3 .symbol').eq(1).text();
+            
             const multiplier = calculateWin(s1, s2, s3);
             
             if (multiplier > 0) {
@@ -124,7 +184,7 @@ $(document).ready(function() {
             
             isSpinning = false;
             $('#spinBtn').prop('disabled', false);
-        }, spinDuration);
+        }, reel3StopTime + 100); // Wait for all reels to stop
     });
     
     // Update balance periodically

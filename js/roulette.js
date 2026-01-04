@@ -2,6 +2,16 @@ $(document).ready(function() {
     let selectedBet = null;
     let isSpinning = false;
     let currentRotation = 0;
+    let maxBet = 100;
+    
+    // Load max bet from settings
+    $.get('../api/api.php?action=getSettings', function(data) {
+        if (data.success && data.settings.max_bet) {
+            maxBet = data.settings.max_bet;
+            $('#maxBet').text(maxBet);
+            $('#betAmount').attr('max', maxBet);
+        }
+    }, 'json');
     
     // Roulette numbers with colors (0 is green) - European roulette order
     const rouletteNumbers = [
@@ -20,33 +30,46 @@ $(document).ready(function() {
         {num: 26, color: 'black'}
     ];
     
-    // Create the roulette wheel
+    // Create the roulette wheel with pockets in outer ring
     function createWheel() {
         const wheel = $('#rouletteWheel');
         wheel.empty();
         
         const totalNumbers = rouletteNumbers.length;
         const anglePerNumber = 360 / totalNumbers;
+        const radius = 42; // Distance from center to pocket (percentage)
         
         rouletteNumbers.forEach((item, index) => {
             const angle = index * anglePerNumber;
-            const numberDiv = $('<div class="roulette-number-slot"></div>');
-            numberDiv.css({
-                transform: `rotate(${angle}deg)`
-            });
-            numberDiv.addClass(`roulette-${item.color}`);
+            const angleRad = (angle - 90) * Math.PI / 180; // Convert to radians, adjust for top start (0 at top)
             
-            // Create number text with better positioning
+            // Calculate position for pocket on the outer ring
+            const x = 50 + radius * Math.cos(angleRad);
+            const y = 50 + radius * Math.sin(angleRad);
+            
+            const pocketDiv = $('<div class="roulette-pocket"></div>');
+            pocketDiv.css({
+                left: x + '%',
+                top: y + '%',
+                transform: `translate(-50%, -50%) rotate(${angle}deg)`
+            });
+            pocketDiv.addClass(`roulette-${item.color}`);
+            
+            // Create number text, counter-rotated to stay upright
             const numberText = $('<span></span>');
             numberText.text(item.num);
             numberText.css({
                 transform: `rotate(${-angle}deg)`,
-                display: 'inline-block'
+                display: 'inline-block',
+                fontSize: '14px',
+                lineHeight: '1',
+                fontWeight: 'bold'
             });
-            numberDiv.append(numberText);
+            pocketDiv.append(numberText);
             
-            numberDiv.attr('data-number', item.num);
-            wheel.append(numberDiv);
+            pocketDiv.attr('data-number', item.num);
+            pocketDiv.attr('data-angle', angle); // Store the angle for calculation
+            wheel.append(pocketDiv);
         });
     }
     
@@ -119,8 +142,8 @@ $(document).ready(function() {
         }
         
         const betAmount = parseFloat($('#betAmount').val());
-        if (betAmount < 1 || betAmount > 100) {
-            $('#result').html('<div class="alert alert-error">Bet must be between $1 and $100</div>');
+        if (betAmount < 1 || betAmount > maxBet) {
+            $('#result').html('<div class="alert alert-error">Bet must be between $1 and $' + maxBet + '</div>');
             return;
         }
         
@@ -133,13 +156,21 @@ $(document).ready(function() {
         const resultColor = getNumberColor(resultNum);
         
         // Calculate rotation needed to land on winning number
+        // Pockets are positioned starting from top (angle 0 = top position)
+        // The pointer is fixed at top (0 degrees)
+        // When wheel container rotates, all pockets rotate with it
         const winningIndex = rouletteNumbers.findIndex(n => n.num === resultNum);
         const anglePerNumber = 360 / rouletteNumbers.length;
-        const targetAngle = winningIndex * anglePerNumber;
+        const pocketStartAngle = winningIndex * anglePerNumber;
         
-        // Add multiple full rotations (5-8 full spins) plus position to winning number
+        // After rotating wheel by totalRotation, a pocket that started at pocketStartAngle
+        // will be at position: (pocketStartAngle + totalRotation) % 360
+        // We want this to equal 0 (where pointer is at top)
+        // So: (pocketStartAngle + totalRotation) % 360 = 0
+        // Therefore: totalRotation = (360 - pocketStartAngle) % 360 (plus full spins)
         const fullSpins = 5 + Math.random() * 3; // 5-8 full spins
-        const totalRotation = currentRotation + (fullSpins * 360) + (360 - targetAngle);
+        const rotationToTop = (360 - pocketStartAngle) % 360;
+        const totalRotation = currentRotation + (fullSpins * 360) + rotationToTop;
         currentRotation = totalRotation % 360;
         
         // Animate wheel spin

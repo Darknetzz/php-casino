@@ -23,4 +23,25 @@ function getCurrentUser() {
     }
     return null;
 }
+
+function isAdmin() {
+    $user = getCurrentUser();
+    return $user && isset($user['is_admin']) && $user['is_admin'] == 1;
+}
+
+function requireAdmin() {
+    if (!isLoggedIn()) {
+        header('Location: ../pages/login.php');
+        exit;
+    }
+    if (!isAdmin()) {
+        header('Location: ../index.php');
+        exit;
+    }
+}
+
+function getSetting($key, $default = null) {
+    global $db;
+    return $db->getSetting($key, $default);
+}
 ?>
