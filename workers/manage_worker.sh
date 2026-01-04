@@ -47,10 +47,33 @@ start_worker() {
         return 1
     fi
     
+    # Ensure we can write to the directory
+    if [ ! -w "$SCRIPT_DIR" ]; then
+        echo "Error: Cannot write to $SCRIPT_DIR. Please fix permissions."
+        echo "Run: sudo chmod 775 $SCRIPT_DIR && sudo chgrp www-data $SCRIPT_DIR"
+        return 1
+    fi
+    
     echo "Starting worker..."
-    nohup "$PHP_BIN" "$WORKER_SCRIPT" > "$LOG_FILE" 2>&1 &
+    
+    # Try to create/write to log file first to check permissions
+    if ! touch "$LOG_FILE" 2>/dev/null; then
+        echo "Error: Cannot create log file $LOG_FILE. Please fix permissions."
+        echo "Run: sudo touch $LOG_FILE && sudo chmod 664 $LOG_FILE && sudo chown www-data:www-data $LOG_FILE"
+        return 1
+    fi
+    
+    nohup "$PHP_BIN" "$WORKER_SCRIPT" >> "$LOG_FILE" 2>&1 &
     NEW_PID=$!
-    echo $NEW_PID > "$PID_FILE"
+    
+    # Try to write PID file
+    if echo $NEW_PID > "$PID_FILE" 2>/dev/null; then
+        # Success
+        :
+    else
+        echo "Warning: Could not write PID file, but worker may have started (PID: $NEW_PID)"
+        echo "To fix: sudo touch $PID_FILE && sudo chmod 664 $PID_FILE && sudo chown www-data:www-data $PID_FILE"
+    fi
     
     # Wait a moment to check if it started successfully
     sleep 1
@@ -59,7 +82,7 @@ start_worker() {
         return 0
     else
         echo "Failed to start worker. Check $LOG_FILE for errors."
-        rm -f "$PID_FILE"
+        rm -f "$PID_FILE" 2>/dev/null
         return 1
     fi
 }

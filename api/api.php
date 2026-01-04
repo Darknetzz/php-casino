@@ -691,6 +691,95 @@ switch ($action) {
         
         echo json_encode(['success' => true, 'logs' => $logContent, 'fileExists' => true]);
         break;
+    
+    // Notification endpoints
+    case 'getNotifications':
+        $user = getCurrentUser();
+        $limit = intval($_GET['limit'] ?? 200);
+        $offset = intval($_GET['offset'] ?? 0);
+        $notifications = $db->getUserNotifications($user['id'], $limit, $offset);
+        echo json_encode(['success' => true, 'notifications' => $notifications]);
+        break;
+    
+    case 'getUnreadNotificationCount':
+        $user = getCurrentUser();
+        $count = $db->getUnreadNotificationCount($user['id']);
+        echo json_encode(['success' => true, 'count' => $count]);
+        break;
+    
+    case 'createNotification':
+        $user = getCurrentUser();
+        $title = $_POST['title'] ?? '';
+        $message = $_POST['message'] ?? '';
+        $type = $_POST['type'] ?? 'info';
+        $game = $_POST['game'] ?? null;
+        
+        if (empty($title) || empty($message)) {
+            echo json_encode(['success' => false, 'message' => 'Title and message are required']);
+            break;
+        }
+        
+        $result = $db->createNotification($user['id'], $title, $message, $type, $game);
+        if ($result) {
+            echo json_encode(['success' => true]);
+        } else {
+            echo json_encode(['success' => false, 'message' => 'Failed to create notification']);
+        }
+        break;
+    
+    case 'markNotificationAsRead':
+        $user = getCurrentUser();
+        $notificationId = intval($_POST['notification_id'] ?? 0);
+        
+        if ($notificationId <= 0) {
+            echo json_encode(['success' => false, 'message' => 'Invalid notification ID']);
+            break;
+        }
+        
+        $result = $db->markNotificationAsRead($notificationId, $user['id']);
+        if ($result) {
+            echo json_encode(['success' => true]);
+        } else {
+            echo json_encode(['success' => false, 'message' => 'Failed to mark notification as read']);
+        }
+        break;
+    
+    case 'markAllNotificationsAsRead':
+        $user = getCurrentUser();
+        $result = $db->markAllNotificationsAsRead($user['id']);
+        if ($result) {
+            echo json_encode(['success' => true]);
+        } else {
+            echo json_encode(['success' => false, 'message' => 'Failed to mark all notifications as read']);
+        }
+        break;
+    
+    case 'deleteNotification':
+        $user = getCurrentUser();
+        $notificationId = intval($_POST['notification_id'] ?? 0);
+        
+        if ($notificationId <= 0) {
+            echo json_encode(['success' => false, 'message' => 'Invalid notification ID']);
+            break;
+        }
+        
+        $result = $db->deleteNotification($notificationId, $user['id']);
+        if ($result) {
+            echo json_encode(['success' => true]);
+        } else {
+            echo json_encode(['success' => false, 'message' => 'Failed to delete notification']);
+        }
+        break;
+    
+    case 'deleteAllNotifications':
+        $user = getCurrentUser();
+        $result = $db->deleteAllNotifications($user['id']);
+        if ($result) {
+            echo json_encode(['success' => true]);
+        } else {
+            echo json_encode(['success' => false, 'message' => 'Failed to delete all notifications']);
+        }
+        break;
         
     default:
         echo json_encode(['success' => false, 'message' => 'Invalid action']);

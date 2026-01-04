@@ -175,6 +175,21 @@ class Database {
             )
         ");
         
+        // Notifications table
+        $this->db->exec("
+            CREATE TABLE IF NOT EXISTS notifications (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL,
+                title TEXT NOT NULL,
+                message TEXT NOT NULL,
+                type TEXT NOT NULL DEFAULT 'info',
+                game TEXT,
+                read INTEGER DEFAULT 0,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES users(id)
+            )
+        ");
+        
         // Create indexes for performance
         try {
             $this->db->exec("CREATE INDEX IF NOT EXISTS idx_roulette_rounds_status ON roulette_rounds(status)");
@@ -185,6 +200,9 @@ class Database {
             $this->db->exec("CREATE INDEX IF NOT EXISTS idx_roulette_bets_user ON roulette_bets(user_id)");
             $this->db->exec("CREATE INDEX IF NOT EXISTS idx_crash_bets_round ON crash_bets(round_id)");
             $this->db->exec("CREATE INDEX IF NOT EXISTS idx_crash_bets_user ON crash_bets(user_id)");
+            $this->db->exec("CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications(user_id)");
+            $this->db->exec("CREATE INDEX IF NOT EXISTS idx_notifications_read ON notifications(read)");
+            $this->db->exec("CREATE INDEX IF NOT EXISTS idx_notifications_created ON notifications(created_at)");
         } catch (PDOException $e) {
             // Indexes might already exist, ignore
         }
@@ -695,6 +713,71 @@ class Database {
     public function updateCrashBetResult($betId, $won, $payout) {
         $stmt = $this->db->prepare("UPDATE crash_bets SET won = ?, payout = ? WHERE id = ?");
         return $stmt->execute([$won ? 1 : 0, $payout, $betId]);
+    }
+    
+    // Notifications functions
+    public function createNotification($userId, $title, $message, $type = 'info', $game = null) {
+        $stmt = $this->db->prepare("
+            INSERT INTO notifications (user_id, title, message, type, game) 
+            VALUES (?, ?, ?, ?, ?)
+        ");
+        return $stmt->execute([$userId, $title, $message, $type, $game]);
+    }
+    
+    public function getUserNotifications($userId, $limit = 200, $offset = 0) {
+        $stmt = $this->db->prepare("
+            SELECT * FROM notifications 
+            WHERE user_id = ? 
+            ORDER BY created_at DESC 
+            LIMIT ? OFFSET ?
+        ");
+        $stmt->execute([$userId, $limit, $offset]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+    
+    public function getUnreadNotificationCount($userId) {
+        $stmt = $this->db->prepare("
+            SELECT COUNT(*) as count 
+            FROM notifications 
+            WHERE user_id = ? AND read = 0
+        ");
+        $stmt->execute([$userId]);
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        return intval($result['count'] ?? 0);
+    }
+    
+    public function markNotificationAsRead($notificationId, $userId) {
+        $stmt = $this->db->prepare("
+            UPDATE notifications 
+            SET read = 1 
+            WHERE id = ? AND user_id = ?
+        ");
+        return $stmt->execute([$notificationId, $userId]);
+    }
+    
+    public function markAllNotificationsAsRead($userId) {
+        $stmt = $this->db->prepare("
+            UPDATE notifications 
+            SET read = 1 
+            WHERE user_id = ? AND read = 0
+        ");
+        return $stmt->execute([$userId]);
+    }
+    
+    public function deleteNotification($notificationId, $userId) {
+        $stmt = $this->db->prepare("
+            DELETE FROM notifications 
+            WHERE id = ? AND user_id = ?
+        ");
+        return $stmt->execute([$notificationId, $userId]);
+    }
+    
+    public function deleteAllNotifications($userId) {
+        $stmt = $this->db->prepare("
+            DELETE FROM notifications 
+            WHERE user_id = ?
+        ");
+        return $stmt->execute([$userId]);
     }
 }
 ?>
