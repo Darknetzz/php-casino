@@ -113,6 +113,11 @@ include __DIR__ . '/../includes/navbar.php';
                             <div class="win-rate-value" id="plinkoRate">-</div>
                             <div class="win-rate-games" id="plinkoGames">- games</div>
                         </div>
+                        <div class="win-rate-card">
+                            <h4>🚀 Crash</h4>
+                            <div class="win-rate-value" id="crashRate">-</div>
+                            <div class="win-rate-games" id="crashGames">- games</div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -328,6 +333,15 @@ include __DIR__ . '/../includes/navbar.php';
                     } else {
                         $('#plinkoRate').text('0%');
                         $('#plinkoGames').text('0 games (0 wins)');
+                    }
+                    
+                    // Crash
+                    if (rates.crash) {
+                        $('#crashRate').text(rates.crash.rate + '%');
+                        $('#crashGames').text(rates.crash.total + ' games (' + rates.crash.wins + ' wins)');
+                    } else {
+                        $('#crashRate').text('0%');
+                        $('#crashGames').text('0 games (0 wins)');
                     }
                 } else {
                     console.error('Failed to load stats:', data);

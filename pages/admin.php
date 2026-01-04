@@ -34,7 +34,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         
         // Check if this is multipliers update
-        if (isset($_POST['slots_symbols']) || isset($_POST['plinko_multiplier_0']) || isset($_POST['dice_3_of_kind'])) {
+        if (isset($_POST['slots_symbols']) || isset($_POST['plinko_multiplier_0']) || isset($_POST['dice_3_of_kind']) || isset($_POST['crash_speed'])) {
             // Slots multipliers (dynamic symbols)
             if (isset($_POST['slots_symbols'])) {
                 $slotsSymbolsJson = $_POST['slots_symbols'];
@@ -164,6 +164,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             }
             
+            // Crash settings
+            if (isset($_POST['crash_speed'])) {
+                $crashSpeed = floatval($_POST['crash_speed'] ?? 0.02);
+                $crashMaxMultiplier = floatval($_POST['crash_max_multiplier'] ?? 0);
+                
+                if ($crashSpeed <= 0 || $crashSpeed > 1) {
+                    $errors[] = 'Crash speed must be between 0 and 1';
+                }
+                if ($crashMaxMultiplier < 0) {
+                    $errors[] = 'Crash max multiplier must be greater than or equal to 0 (0 = unlimited)';
+                }
+                
+                if (empty($errors)) {
+                    $db->setSetting('crash_speed', $crashSpeed);
+                    $db->setSetting('crash_max_multiplier', $crashMaxMultiplier);
+                }
+            }
+            
             if (empty($errors)) {
                 // Determine which game was updated
                 $gameParam = 'slots'; // default
@@ -173,6 +191,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $gameParam = 'plinko';
                 } elseif (isset($_POST['dice_3_of_kind'])) {
                     $gameParam = 'dice';
+                } elseif (isset($_POST['crash_speed'])) {
+                    $gameParam = 'crash';
                 }
                 header('Location: admin.php?tab=multipliers&game=' . $gameParam . '&success=1');
                 exit;
@@ -309,6 +329,9 @@ include __DIR__ . '/../includes/navbar.php';
                     <a href="admin.php?tab=multipliers&game=dice" class="admin-subtab <?php echo $currentGame === 'dice' ? 'active' : ''; ?>">
                         <span>🎲</span> Dice Roll
                     </a>
+                    <a href="admin.php?tab=multipliers&game=crash" class="admin-subtab <?php echo $currentGame === 'crash' ? 'active' : ''; ?>">
+                        <span>🚀</span> Crash
+                    </a>
                 </div>
                 
                 <!-- Slots Multipliers -->
@@ -376,7 +399,7 @@ include __DIR__ . '/../includes/navbar.php';
                     <hr style="border: none; border-top: 2px solid #e0e0e0; margin: 30px 0 20px 0;">
                     
                     <h4 style="margin-top: 20px; margin-bottom: 15px; color: #667eea;">Custom Combinations</h4>
-                    <p style="margin-bottom: 15px; color: #666;">Define custom winning combinations with exact order (e.g., 🔥🔥❤️). Symbols are matched in order from left to right.</p>
+                    <p style="margin-bottom: 15px; color: #666;">Define custom winning combinations with exact order (e.g., 🔥🔥❤️). Symbols are matched in order from left to right. Empty positions (leave blank) match any symbol. <strong>Adding a symbol above will automatically suggest an all-of-a-kind combination here.</strong></p>
                     <div id="slotsCustomCombinationsContainer">
                         <table class="multiplier-table" id="slotsCustomCombinationsTable" style="max-width: 100%;">
                             <thead>
@@ -606,6 +629,46 @@ include __DIR__ . '/../includes/navbar.php';
                     <button type="submit" name="update_settings" class="btn btn-primary" style="margin-top: 20px;">Update Dice Multipliers</button>
                 </form>
                 <?php endif; ?>
+                
+                <!-- Crash Settings -->
+                <?php if ($currentGame === 'crash'): ?>
+                <form method="POST" action="admin.php?tab=multipliers&game=crash" class="admin-form">
+                    <h3 style="margin-top: 20px; margin-bottom: 15px; color: #667eea;">Crash Game Settings</h3>
+                    <p style="margin-bottom: 15px; color: #666;">Configure the crash game mechanics:</p>
+                    <table class="multiplier-table">
+                        <thead>
+                            <tr>
+                                <th>Setting</th>
+                                <th>Value</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Crash Speed</td>
+                                <td>
+                                    <input type="number" id="crash_speed" name="crash_speed"
+                                           min="0.001" max="1" step="0.001" 
+                                           value="<?php echo htmlspecialchars($settings['crash_speed'] ?? '0.02'); ?>"
+                                           required style="width: 100px; padding: 8px;">
+                                </td>
+                                <td>How fast the multiplier increases (0.001 = slow, 1 = very fast). Default: 0.02</td>
+                            </tr>
+                            <tr>
+                                <td>Max Multiplier</td>
+                                <td>
+                                    <input type="number" id="crash_max_multiplier" name="crash_max_multiplier"
+                                           min="0" step="0.1" 
+                                           value="<?php echo htmlspecialchars($settings['crash_max_multiplier'] ?? '0'); ?>"
+                                           required style="width: 100px; padding: 8px;">
+                                </td>
+                                <td>Maximum multiplier before auto-crash (0 = unlimited). Default: 0 (unlimited)</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <button type="submit" name="update_settings" class="btn btn-primary" style="margin-top: 20px;">Update Crash Settings</button>
+                </form>
+                <?php endif; ?>
             </div>
             <?php endif; ?>
             
@@ -752,11 +815,7 @@ include __DIR__ . '/../includes/navbar.php';
                 </td>
             `;
             tbody.appendChild(row);
-            
-            // Auto-suggest a combination when symbol is added
-            const emoji = '🎰';
-            const multiplier = 1;
-            suggestCombinationFromSymbol(emoji, multiplier);
+            // Don't auto-suggest immediately - wait for user to enter emoji/multiplier
         }
         
         function removeSlotsSymbol(button) {
@@ -832,9 +891,66 @@ include __DIR__ . '/../includes/navbar.php';
             });
         }
         
-        // Update combination display when emoji changes
-        $(document).on('input', '.slots-emoji-input', function() {
-            updateSlotsCombination(this);
+        // When a symbol emoji changes, update suggested combination if it exists
+        $(document).on('blur', '.slots-emoji-input', function() {
+            const $row = $(this).closest('tr');
+            const emoji = $(this).val().trim();
+            const multiplier = parseFloat($row.find('.slots-multiplier-input').val()) || 0;
+            
+            if (emoji) {
+                // Try to find and update the corresponding all-of-a-kind combination
+                const numReels = parseInt($('#slots_num_reels').val()) || 3;
+                let updated = false;
+                
+                $('#slotsCustomCombinationsBody tr').each(function() {
+                    const $comboRow = $(this);
+                    const comboSymbols = [];
+                    $comboRow.find('.custom-combo-emoji').each(function() {
+                        comboSymbols.push($(this).val().trim());
+                    });
+                    
+                    // Check if this is an all-of-a-kind combination (all symbols the same)
+                    if (comboSymbols.length === numReels && 
+                        comboSymbols.length > 0 && 
+                        comboSymbols.every(s => s === comboSymbols[0] && s !== '')) {
+                        // Update it to the new emoji
+                        $comboRow.find('.custom-combo-emoji').val(emoji);
+                        $comboRow.find('.custom-combo-multiplier').val(multiplier);
+                        updated = true;
+                        return false; // break
+                    }
+                });
+                
+                // If not found, suggest a combination for this symbol
+                if (!updated && multiplier > 0) {
+                    suggestCombinationFromSymbol(emoji, multiplier);
+                }
+            }
+        });
+        
+        // When multiplier changes, update corresponding combination
+        $(document).on('blur', '.slots-multiplier-input', function() {
+            const $row = $(this).closest('tr');
+            const emoji = $row.find('.slots-emoji-input').val().trim();
+            const multiplier = parseFloat($(this).val()) || 0;
+            
+            if (emoji) {
+                const numReels = parseInt($('#slots_num_reels').val()) || 3;
+                $('#slotsCustomCombinationsBody tr').each(function() {
+                    const $comboRow = $(this);
+                    const comboSymbols = [];
+                    $comboRow.find('.custom-combo-emoji').each(function() {
+                        comboSymbols.push($(this).val().trim());
+                    });
+                    
+                    if (comboSymbols.length === numReels && 
+                        comboSymbols.length > 0 && 
+                        comboSymbols.every(s => s === comboSymbols[0] && s === emoji && s !== '')) {
+                        $comboRow.find('.custom-combo-multiplier').val(multiplier);
+                        return false; // break
+                    }
+                });
+            }
         });
         
         // Serialize slots symbols to JSON before form submission

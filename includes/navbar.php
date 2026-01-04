@@ -35,6 +35,9 @@ if (strpos($_SERVER['PHP_SELF'], '/games/') !== false) {
                     <a href="<?php echo $basePath; ?>games/dice.php" class="dropdown-item">
                         <span>🎲</span> Dice Roll
                     </a>
+                    <a href="<?php echo $basePath; ?>games/crash.php" class="dropdown-item">
+                        <span>🚀</span> Crash
+                    </a>
                 </div>
             </div>
         </div>

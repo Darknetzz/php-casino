@@ -9,6 +9,8 @@ $(document).ready(function() {
     let hasCashedOut = false;
     let crashHistory = [];
     const maxHistoryItems = 10;
+    let crashSpeed = 0.02; // Default speed
+    let crashMaxMultiplier = 0; // 0 = unlimited
     
     const canvas = document.getElementById('crashCanvas');
     const ctx = canvas.getContext('2d');
@@ -26,7 +28,7 @@ $(document).ready(function() {
     resizeCanvas();
     $(window).resize(resizeCanvas);
     
-    // Load max bet and default bet from settings
+    // Load max bet, default bet, and crash settings from settings
     $.get(getApiPath('getSettings'), function(data) {
         if (data.success) {
             if (data.settings.max_bet) {
@@ -36,6 +38,12 @@ $(document).ready(function() {
             }
             if (data.settings.default_bet) {
                 $('#betAmount').val(data.settings.default_bet);
+            }
+            if (data.settings.crash_speed !== undefined) {
+                crashSpeed = parseFloat(data.settings.crash_speed) || 0.02;
+            }
+            if (data.settings.crash_max_multiplier !== undefined) {
+                crashMaxMultiplier = parseFloat(data.settings.crash_max_multiplier) || 0;
             }
         }
     }, 'json');
@@ -198,10 +206,16 @@ $(document).ready(function() {
         const deltaTime = (now - lastGraphUpdate) / 1000; // Convert to seconds
         
         // Increase multiplier (exponential growth for excitement)
-        // Speed increases slightly as multiplier goes up
-        const speed = 0.02 + (currentMultiplier - 1) * 0.001;
+        // Speed increases slightly as multiplier goes up, using configured crash speed
+        const speed = crashSpeed + (currentMultiplier - 1) * (crashSpeed * 0.05);
         currentMultiplier += speed * deltaTime;
         currentMultiplier = Math.round(currentMultiplier * 100) / 100;
+        
+        // Check max multiplier limit if set
+        if (crashMaxMultiplier > 0 && currentMultiplier >= crashMaxMultiplier) {
+            crash();
+            return;
+        }
         
         // Update graph data
         if (now - lastGraphUpdate >= graphUpdateInterval) {
