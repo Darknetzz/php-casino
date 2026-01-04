@@ -78,9 +78,9 @@ include __DIR__ . '/../includes/navbar.php';
                 </div>
                 
                 <?php if ($rouletteMode === 'central'): ?>
-                <div class="round-info-section section" style="margin-top: 30px; background: #f8f9fa; border-radius: 8px; padding: 20px;">
+                <div class="round-info-section section" style="margin-top: 30px; border-radius: 8px; padding: 20px;">
                     <h3 style="margin-top: 0; color: #667eea; margin-bottom: 15px;">⏱️ Round Status</h3>
-                    <div id="roundStatusDisplay" style="font-size: 1.1em; color: #333;">
+                    <div id="roundStatusDisplay" style="font-size: 1.1em;">
                         <div><strong>Current Round:</strong> <span id="currentRoundNumber">-</span></div>
                         <div style="margin-top: 10px;"><strong>Status:</strong> <span id="roundStatusText">Waiting...</span></div>
                         <div id="countdownDisplay" style="margin-top: 15px; font-size: 1.3em; color: #667eea; font-weight: bold;">
@@ -89,10 +89,10 @@ include __DIR__ . '/../includes/navbar.php';
                     </div>
                 </div>
                 
-                <div class="round-history-section section" style="margin-top: 20px; background: #f8f9fa; border-radius: 8px; padding: 20px;">
+                <div class="round-history-section section" style="margin-top: 20px; border-radius: 8px; padding: 20px;">
                     <h3 style="margin-top: 0; color: #667eea; margin-bottom: 15px;">📋 Recent Rounds</h3>
                     <div id="roundHistoryList" style="max-height: 300px; overflow-y: auto;">
-                        <p style="color: #999; text-align: center;">Loading history...</p>
+                        <p class="loading-text" style="text-align: center;">Loading history...</p>
                     </div>
                 </div>
                 <?php endif; ?>

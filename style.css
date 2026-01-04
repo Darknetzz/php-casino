@@ -1371,6 +1371,25 @@ button.game-disabled,
     display: flex;
     align-items: center;
     justify-content: center;
+    color: #333;
+}
+
+body.dark-mode .roulette-result {
+    color: #e0e0e0 !important;
+}
+
+body.dark-mode .roulette-result small {
+    color: #aaa !important;
+}
+
+#roundCountdown,
+#countdownText {
+    color: #667eea;
+}
+
+body.dark-mode #roundCountdown,
+body.dark-mode #countdownText {
+    color: #667eea !important;
 }
 
 .roulette-number {
@@ -3078,52 +3097,115 @@ body.dark-mode .rounds-card h4 {
 
 /* Round Info and History Sections Dark Mode */
 .round-info-section,
-.round-history-section {
+.round-history-section,
+.crash-history,
+.crash-probability-section {
     background: #f8f9fa;
     color: #333;
 }
 
 body.dark-mode .round-info-section,
-body.dark-mode .round-history-section {
-    background: rgba(40, 40, 60, 0.9);
-    color: #e0e0e0;
+body.dark-mode .round-history-section,
+body.dark-mode .crash-history,
+body.dark-mode .crash-probability-section {
+    background: rgba(40, 40, 60, 0.9) !important;
+    color: #e0e0e0 !important;
     border: 1px solid rgba(102, 126, 234, 0.3);
 }
 
 body.dark-mode .round-info-section h3,
-body.dark-mode .round-history-section h3 {
-    color: #667eea;
+body.dark-mode .round-history-section h3,
+body.dark-mode .crash-history h3,
+body.dark-mode .crash-probability-section h4 {
+    color: #667eea !important;
 }
 
 body.dark-mode .round-info-section #roundStatusDisplay,
-body.dark-mode .round-history-section #roundHistoryList {
-    color: #e0e0e0;
+body.dark-mode .round-history-section #roundHistoryList,
+body.dark-mode .crash-history #historyList {
+    color: #e0e0e0 !important;
 }
 
-body.dark-mode .round-info-section #roundStatusDisplay strong {
-    color: #fff;
+body.dark-mode .round-info-section #roundStatusDisplay strong,
+body.dark-mode .crash-history strong {
+    color: #fff !important;
 }
 
 body.dark-mode .round-info-section #countdownValue {
-    color: #667eea;
+    color: #667eea !important;
 }
 
-body.dark-mode .round-history-section table {
-    color: #e0e0e0;
+body.dark-mode .round-history-section table,
+body.dark-mode .crash-history table {
+    color: #e0e0e0 !important;
 }
 
-body.dark-mode .round-history-section table thead tr {
+body.dark-mode .round-history-section table thead tr,
+body.dark-mode .crash-history table thead tr {
     border-bottom-color: rgba(102, 126, 234, 0.5);
 }
 
-body.dark-mode .round-history-section table tbody tr {
+body.dark-mode .round-history-section table tbody tr,
+body.dark-mode .crash-history table tbody tr {
     border-bottom-color: rgba(102, 126, 234, 0.2);
 }
 
-body.dark-mode .round-history-section table th {
-    color: #667eea;
+body.dark-mode .round-history-section table th,
+body.dark-mode .crash-history table th {
+    color: #667eea !important;
 }
 
-body.dark-mode .round-history-section table td {
-    color: #e0e0e0;
+body.dark-mode .round-history-section table td,
+body.dark-mode .crash-history table td {
+    color: #e0e0e0 !important;
+}
+
+body.dark-mode .loading-text {
+    color: #aaa !important;
+}
+
+body.dark-mode .crash-probability-section .prob-stat-card {
+    background: rgba(30, 30, 50, 0.8) !important;
+    color: #e0e0e0 !important;
+    border: 1px solid rgba(102, 126, 234, 0.3) !important;
+}
+
+body.dark-mode .crash-probability-section .prob-label {
+    color: #aaa !important;
+}
+
+body.dark-mode .crash-probability-section .prob-value {
+    color: #667eea !important;
+}
+
+body.dark-mode .crash-probability-section p {
+    color: #aaa !important;
+}
+
+/* Ensure win-rate-section has proper dark mode */
+body.dark-mode .win-rate-section h4 {
+    color: #667eea !important;
+}
+
+body.dark-mode .win-rate-section #winRateDisplay {
+    color: #e0e0e0 !important;
+}
+
+body.dark-mode .win-rate-section #winRateDisplay strong {
+    color: #fff !important;
+}
+
+/* Override inline styles in JavaScript-generated content for dark mode */
+body.dark-mode small {
+    color: #aaa !important;
+}
+
+body.dark-mode .round-history-section p,
+body.dark-mode .crash-history p {
+    color: #aaa !important;
+}
+
+body.dark-mode .round-history-section table td,
+body.dark-mode .crash-history table td {
+    color: #e0e0e0 !important;
 }
