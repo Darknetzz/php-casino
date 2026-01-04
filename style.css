@@ -542,6 +542,27 @@ body {
     font-size: 16px;
 }
 
+/* Bet input wrapper for inputs inside bet-controls */
+.bet-input-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: flex-start;
+    flex-shrink: 0; /* Don't shrink in flex container */
+}
+
+.bet-controls .bet-input-wrapper {
+    margin: 0; /* Remove any margins */
+}
+
+.bet-adjust-buttons-inline {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-top: 5px;
+    width: 100%;
+}
+
 /* Form Group - Semantic structure for bet inputs with adjustment buttons */
 .bet-controls .form-group {
     display: flex;

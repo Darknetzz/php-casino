@@ -110,7 +110,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             
             if (empty($errors)) {
-                header('Location: admin.php?tab=multipliers&success=1');
+                // Determine which game was updated
+                $gameParam = 'slots'; // default
+                if (isset($_POST['slots_symbols'])) {
+                    $gameParam = 'slots';
+                } elseif (isset($_POST['plinko_multiplier_0'])) {
+                    $gameParam = 'plinko';
+                } elseif (isset($_POST['dice_3_of_kind'])) {
+                    $gameParam = 'dice';
+                }
+                header('Location: admin.php?tab=multipliers&game=' . $gameParam . '&success=1');
                 exit;
             }
         }
@@ -156,6 +165,7 @@ $users = $db->getAllUsers();
 
 // Get current tab from URL
 $currentTab = $_GET['tab'] ?? 'settings';
+$currentGame = $_GET['game'] ?? 'slots'; // Default to slots for multipliers subnav
 
 // Check for success message
 if (isset($_GET['success'])) {
@@ -232,7 +242,23 @@ include __DIR__ . '/../includes/navbar.php';
             <?php if ($currentTab === 'multipliers'): ?>
             <div class="admin-section section">
                 <h2>🎰 Game Multipliers</h2>
-                <form method="POST" action="admin.php?tab=multipliers" class="admin-form">
+                
+                <!-- Game Subnav -->
+                <div class="admin-subnav-tabs">
+                    <a href="admin.php?tab=multipliers&game=slots" class="admin-subtab <?php echo $currentGame === 'slots' ? 'active' : ''; ?>">
+                        <span>🎰</span> Slots
+                    </a>
+                    <a href="admin.php?tab=multipliers&game=plinko" class="admin-subtab <?php echo $currentGame === 'plinko' ? 'active' : ''; ?>">
+                        <span>⚪</span> Plinko
+                    </a>
+                    <a href="admin.php?tab=multipliers&game=dice" class="admin-subtab <?php echo $currentGame === 'dice' ? 'active' : ''; ?>">
+                        <span>🎲</span> Dice Roll
+                    </a>
+                </div>
+                
+                <!-- Slots Multipliers -->
+                <?php if ($currentGame === 'slots'): ?>
+                <form method="POST" action="admin.php?tab=multipliers&game=slots" class="admin-form">
                     <h3 style="margin-top: 20px; margin-bottom: 15px; color: #667eea;">Slot Machine Symbols</h3>
                     <p style="margin-bottom: 15px; color: #666;">Add, edit, or remove slot symbols. Each symbol needs an emoji and a multiplier for 3-of-a-kind wins.</p>
                     <div id="slotsSymbolsContainer">

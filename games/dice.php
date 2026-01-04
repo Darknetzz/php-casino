@@ -105,7 +105,9 @@ include __DIR__ . '/../includes/navbar.php';
     <script>
         $(document).ready(function() {
             // Load win rate for dice
-            $.get(getApiPath('getWinRates') + '&game=dice', function(data) {
+            const apiUrl = getApiPath('getWinRates') + '&game=dice';
+            $.get(apiUrl, function(data) {
+                console.log('Dice stats response:', data);
                 if (data.success && data.winRate) {
                     $('#winRate').text(data.winRate.rate || 0);
                     $('#gamesPlayed').text(data.winRate.total || 0);
@@ -117,7 +119,7 @@ include __DIR__ . '/../includes/navbar.php';
                     $('#wins').text('0');
                 }
             }, 'json').fail(function(xhr, status, error) {
-                console.error('Error loading stats:', status, error);
+                console.error('Error loading stats:', status, error, xhr);
                 $('#winRate').text('0');
                 $('#gamesPlayed').text('0');
                 $('#wins').text('0');
