@@ -51,13 +51,36 @@ $user = getCurrentUser();
             
             <div class="game-info">
                 <h3>How to Play:</h3>
-                <ul>
-                    <li>Get as close to 21 as possible without going over</li>
-                    <li>Face cards (J, Q, K) are worth 10</li>
-                    <li>Aces are worth 1 or 11 (whichever is better)</li>
-                    <li>Beat the dealer's hand to win 2x your bet</li>
-                    <li>Blackjack (21 with first 2 cards) pays 2.5x</li>
-                </ul>
+                <table class="slots-info-table">
+                    <tr>
+                        <td>Get as close to 21 as possible without going over</td>
+                    </tr>
+                    <tr>
+                        <td>Face cards (J, Q, K) are worth 10</td>
+                    </tr>
+                    <tr>
+                        <td>Aces are worth 1 or 11 (whichever is better)</td>
+                    </tr>
+                </table>
+                <h4 style="margin-top: 20px; margin-bottom: 10px;">Payouts:</h4>
+                <table class="slots-payout-table">
+                    <thead>
+                        <tr>
+                            <th>Result</th>
+                            <th>Payout</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Beat the dealer</td>
+                            <td>2x bet</td>
+                        </tr>
+                        <tr>
+                            <td>Blackjack (21 with first 2 cards)</td>
+                            <td>2.5x bet</td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>

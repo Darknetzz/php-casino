@@ -640,6 +640,61 @@ body {
     margin-bottom: 8px;
 }
 
+.slots-info-table {
+    width: 100%;
+    margin-bottom: 20px;
+    border-collapse: collapse;
+}
+
+.slots-info-table td {
+    padding: 8px 0;
+    color: #666;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.slots-info-table tr:last-child td {
+    border-bottom: none;
+}
+
+.slots-payout-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.slots-payout-table thead {
+    background: #667eea;
+    color: white;
+}
+
+.slots-payout-table th {
+    padding: 12px;
+    text-align: left;
+    font-weight: 600;
+}
+
+.slots-payout-table td {
+    padding: 12px;
+    border-bottom: 1px solid #e0e0e0;
+    color: #333;
+}
+
+.slots-payout-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.slots-payout-table tbody tr:hover {
+    background: #f8f9fa;
+}
+
+.game-info h4 {
+    color: #667eea;
+    font-size: 18px;
+}
+
 /* Roulette */
 .roulette-game {
     margin-bottom: 30px;
@@ -708,10 +763,12 @@ body {
     font-weight: bold;
     color: white;
     text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 3px;
+    border: none;
+    border-radius: 0;
+    margin: 0;
+    padding: 0;
     z-index: 2;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    box-shadow: none;
 }
 
 .roulette-pocket span {

@@ -180,28 +180,19 @@ $(document).ready(function() {
             const resultColor = getNumberColor(resultNum);
             
             // Calculate rotation needed to land on winning number
-            // Find the pocket element for the winning number
-            const winningPocket = $(`.roulette-pocket[data-number="${resultNum}"]`);
-            if (winningPocket.length === 0) {
-                console.error('Winning pocket not found');
-                return;
-            }
+            // The key insight: when we rotate the wheel container clockwise by R degrees,
+            // a pocket that started at angle A will visually appear at angle (A - R) % 360
+            // (because the wheel rotates, but the pointer stays fixed)
+            // We want the winning pocket to appear at 0 (top, where pointer is)
+            // So: (A - R) % 360 = 0, which means R = A (plus full spins)
+            const winningIndex = rouletteNumbers.findIndex(n => n.num === resultNum);
+            const anglePerNumber = 360 / rouletteNumbers.length;
+            const pocketStartAngle = winningIndex * anglePerNumber;
             
-            // Get the starting angle of the winning pocket
-            const pocketStartAngle = parseFloat(winningPocket.attr('data-angle'));
-            
-            // When wheel rotates clockwise by R degrees, a pocket at angle A moves to (A + R) % 360
-            // We want the winning pocket to end up at 0 (top, where pointer is)
-            // So: (pocketStartAngle + totalRotation) % 360 = 0
-            // Therefore: totalRotation = (360 - pocketStartAngle) % 360 (plus full spins)
+            // To get pocket at angle A to appear at 0: rotate by A degrees clockwise
+            // (plus full spins for animation effect)
             const fullSpins = 5 + Math.random() * 3; // 5-8 full spins
-            let baseRotation = (360 - pocketStartAngle) % 360;
-            // If exactly 0, use 360 to ensure rotation
-            if (baseRotation === 0) {
-                baseRotation = 360;
-            }
-            
-            const totalRotation = (fullSpins * 360) + baseRotation;
+            const totalRotation = (fullSpins * 360) + pocketStartAngle;
             currentRotation = totalRotation % 360;
             
             // Reset wheel to 0 first to ensure we start from a known position
@@ -219,37 +210,6 @@ $(document).ready(function() {
                 transform: `rotate(${totalRotation}deg)`
             });
             
-            // After animation completes, verify the number at top
-            setTimeout(function() {
-                // Check which pocket is closest to the top (y position closest to 0)
-                let closestPocket = null;
-                let closestDistance = Infinity;
-                $('.roulette-pocket').each(function() {
-                    const rect = this.getBoundingClientRect();
-                    const wheelRect = $('#rouletteWheel')[0].getBoundingClientRect();
-                    const centerX = wheelRect.left + wheelRect.width / 2;
-                    const centerY = wheelRect.top + wheelRect.height / 2;
-                    const pocketX = rect.left + rect.width / 2;
-                    const pocketY = rect.top + rect.height / 2;
-                    const distance = Math.sqrt(Math.pow(pocketX - centerX, 2) + Math.pow(pocketY - centerY, 2));
-                    const angle = Math.atan2(pocketY - centerY, pocketX - centerX) * 180 / Math.PI;
-                    // Check if pocket is near top (angle between -10 and 10 degrees, or 170-190)
-                    const normalizedAngle = (angle + 90 + 360) % 360;
-                    if (normalizedAngle < 20 || normalizedAngle > 340) {
-                        if (distance < closestDistance) {
-                            closestDistance = distance;
-                            closestPocket = $(this);
-                        }
-                    }
-                });
-                
-                if (closestPocket) {
-                    const actualNum = parseInt(closestPocket.attr('data-number'));
-                    if (actualNum !== resultNum) {
-                        console.log(`Mismatch detected: Expected ${resultNum} at top, but ${actualNum} is closest`);
-                    }
-                }
-            }, 4100); // After animation completes
         
         // Show spinning result text
         let spinCount = 0;

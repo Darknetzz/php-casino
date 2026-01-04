@@ -41,13 +41,47 @@ $user = getCurrentUser();
             
             <div class="game-info">
                 <h3>How to Play:</h3>
-                <ul>
-                    <li>Set your bet amount</li>
-                    <li>Click "DROP BALL" to release a ball</li>
-                    <li>Watch the ball bounce down through the pegs</li>
-                    <li>Win based on which slot the ball lands in!</li>
-                    <li>Multipliers: Left/Right edges = 0.2x, Near edges = 0.5x, Middle = 1x, Center = 2x</li>
-                </ul>
+                <table class="slots-info-table">
+                    <tr>
+                        <td>1. Set your bet amount</td>
+                    </tr>
+                    <tr>
+                        <td>2. Click "DROP BALL" to release a ball</td>
+                    </tr>
+                    <tr>
+                        <td>3. Watch the ball bounce down through the pegs</td>
+                    </tr>
+                    <tr>
+                        <td>4. Win based on which slot the ball lands in!</td>
+                    </tr>
+                </table>
+                <h4 style="margin-top: 20px; margin-bottom: 10px;">Multipliers:</h4>
+                <table class="slots-payout-table">
+                    <thead>
+                        <tr>
+                            <th>Slot Position</th>
+                            <th>Multiplier</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Left/Right edges</td>
+                            <td>0.2x</td>
+                        </tr>
+                        <tr>
+                            <td>Near edges</td>
+                            <td>0.5x</td>
+                        </tr>
+                        <tr>
+                            <td>Middle</td>
+                            <td>1x</td>
+                        </tr>
+                        <tr>
+                            <td>Center</td>
+                            <td>2x</td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>

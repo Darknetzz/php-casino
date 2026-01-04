@@ -58,12 +58,48 @@ $user = getCurrentUser();
             
             <div class="game-info">
                 <h3>How to Play:</h3>
-                <ul>
-                    <li>Set your bet amount</li>
-                    <li>Click SPIN to play</li>
-                    <li>Match 3 symbols to win!</li>
-                    <li>🍒🍒🍒 = 2x bet | 🍋🍋🍋 = 3x bet | 🍊🍊🍊 = 4x bet | 🍇🍇🍇 = 5x bet | 🎰🎰🎰 = 10x bet</li>
-                </ul>
+                <table class="slots-info-table">
+                    <tr>
+                        <td>1. Set your bet amount</td>
+                    </tr>
+                    <tr>
+                        <td>2. Click SPIN to play</td>
+                    </tr>
+                    <tr>
+                        <td>3. Match 3 symbols to win!</td>
+                    </tr>
+                </table>
+                <h4 style="margin-top: 20px; margin-bottom: 10px;">Payouts:</h4>
+                <table class="slots-payout-table">
+                    <thead>
+                        <tr>
+                            <th>Symbols</th>
+                            <th>Payout</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>🍒🍒🍒</td>
+                            <td>2x bet</td>
+                        </tr>
+                        <tr>
+                            <td>🍋🍋🍋</td>
+                            <td>3x bet</td>
+                        </tr>
+                        <tr>
+                            <td>🍊🍊🍊</td>
+                            <td>4x bet</td>
+                        </tr>
+                        <tr>
+                            <td>🍇🍇🍇</td>
+                            <td>5x bet</td>
+                        </tr>
+                        <tr>
+                            <td>🎰🎰🎰</td>
+                            <td>10x bet</td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>

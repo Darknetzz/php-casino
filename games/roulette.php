@@ -59,13 +59,37 @@ $user = getCurrentUser();
             
             <div class="game-info">
                 <h3>How to Play:</h3>
-                <ul>
-                    <li>Choose your bet type and amount</li>
-                    <li>Click SPIN to play</li>
-                    <li>Red/Black/Even/Odd/Low/High pay 2x</li>
-                    <li>Green (0) pays 14x</li>
-                    <li>Specific number pays 36x</li>
-                </ul>
+                <table class="slots-info-table">
+                    <tr>
+                        <td>1. Choose your bet type and amount</td>
+                    </tr>
+                    <tr>
+                        <td>2. Click SPIN to play</td>
+                    </tr>
+                </table>
+                <h4 style="margin-top: 20px; margin-bottom: 10px;">Payouts:</h4>
+                <table class="slots-payout-table">
+                    <thead>
+                        <tr>
+                            <th>Bet Type</th>
+                            <th>Payout</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Red / Black / Even / Odd / Low (1-18) / High (19-36)</td>
+                            <td>2x bet</td>
+                        </tr>
+                        <tr>
+                            <td>Green (0)</td>
+                            <td>14x bet</td>
+                        </tr>
+                        <tr>
+                            <td>Specific number (0-36)</td>
+                            <td>36x bet</td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
