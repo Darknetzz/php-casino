@@ -92,11 +92,13 @@ $(document).ready(function() {
     function getNumberAtTop(rotation) {
         const anglePerNumber = 360 / rouletteNumbers.length;
         // When the wheel rotates clockwise by R degrees, a pocket that started at angle A
-        // will appear at angle (A - R) mod 360 relative to the fixed pointer
+        // will be at absolute angle (A + R) mod 360
+        // Relative to the fixed pointer at top (0°), it appears at (A + R) mod 360
         // We want to find which pocket is at 0 (top) after rotation R
-        // So we need: (A - R) mod 360 = 0, which means A = R mod 360
-        const targetAngle = (rotation % 360 + 360) % 360; // Ensure positive
-        const targetIndex = Math.round(targetAngle / anglePerNumber) % rouletteNumbers.length;
+        // So we need: (A + R) mod 360 = 0, which means A = (360 - R) mod 360
+        const normalizedRotation = ((rotation % 360) + 360) % 360; // Ensure 0-360
+        const targetAngle = (360 - normalizedRotation) % 360;
+        const targetIndex = Math.floor(targetAngle / anglePerNumber) % rouletteNumbers.length;
         return rouletteNumbers[targetIndex].num;
     }
     
@@ -292,15 +294,21 @@ $(document).ready(function() {
             const resultColor = getNumberColor(resultNum);
             
             // Calculate rotation needed to land on winning number
-            // When wheel rotates clockwise by R, a pocket at angle A moves to (A - R) mod 360
-            // To get pocket at angle A to top (0): (A - R) mod 360 = 0, so R = A mod 360
+            // When the wheel rotates clockwise by R, a pocket at angle A moves to (A + R) mod 360 in absolute coordinates
+            // Relative to the fixed pointer at top (0°), it appears at (A + R) mod 360
+            // To get pocket at angle A to appear at top (0°): (A + R) mod 360 = 0
+            // This means R = (360 - A) mod 360
             const anglePerNumber = 360 / rouletteNumbers.length;
             const winningIndex = rouletteNumbers.findIndex(n => n.num === resultNum);
             const pocketStartAngle = winningIndex * anglePerNumber;
             
+            // Calculate rotation to align winning pocket with top pointer
+            // We need to rotate by (360 - pocketStartAngle) to bring it to 0°
+            const rotationToTop = (360 - pocketStartAngle) % 360;
+            
             // Add full spins for animation effect
             const fullSpins = 5 + Math.random() * 3; // 5-8 full spins
-            const totalRotation = (fullSpins * 360) + pocketStartAngle;
+            const totalRotation = (fullSpins * 360) + rotationToTop;
             currentRotation = totalRotation % 360;
             
             // Reset wheel to 0 first to ensure we start from a known position
