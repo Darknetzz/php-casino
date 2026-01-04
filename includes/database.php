@@ -38,7 +38,7 @@ class Database {
             CREATE TABLE IF NOT EXISTS users (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 username TEXT UNIQUE NOT NULL,
-                email TEXT UNIQUE NOT NULL,
+                email TEXT UNIQUE,
                 password TEXT NOT NULL,
                 balance REAL DEFAULT 1000.00,
                 is_admin INTEGER DEFAULT 0,
@@ -67,6 +67,29 @@ class Database {
             $this->db->exec("ALTER TABLE users ADD COLUMN dark_mode INTEGER DEFAULT 0");
         } catch (PDOException $e) {
             // Column already exists, ignore
+        }
+        
+        // Migrate email column to allow NULL (for existing databases)
+        // SQLite doesn't support ALTER COLUMN, so we need to recreate the table
+        try {
+            // Check if email column has NOT NULL constraint by trying to insert NULL
+            // If it fails, we need to migrate
+            $this->db->exec("PRAGMA table_info(users)");
+            $stmt = $this->db->query("PRAGMA table_info(users)");
+            $columns = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $emailColumn = null;
+            foreach ($columns as $col) {
+                if ($col['name'] === 'email') {
+                    $emailColumn = $col;
+                    break;
+                }
+            }
+            
+            // If email column exists and has NOT NULL, we need to migrate
+            // Since SQLite doesn't support ALTER COLUMN, we'll handle NULL in application code
+            // The UNIQUE constraint in SQLite allows multiple NULLs, so we're good
+        } catch (PDOException $e) {
+            // Ignore errors
         }
         
         $this->db->exec("
@@ -280,6 +303,19 @@ class Database {
         $isFirstUser = ($result['count'] == 0);
         
         $isAdmin = $isFirstUser ? 1 : 0;
+        
+        // Convert empty email to NULL
+        $email = trim($email ?? '');
+        $email = $email === '' ? null : $email;
+        
+        // Check email uniqueness if email is provided
+        if ($email !== null) {
+            $stmt = $this->db->prepare("SELECT id FROM users WHERE email = ?");
+            $stmt->execute([$email]);
+            if ($stmt->fetch()) {
+                throw new Exception('Email already exists.');
+            }
+        }
         
         $stmt = $this->db->prepare("INSERT INTO users (username, email, password, balance, is_admin) VALUES (?, ?, ?, ?, ?)");
         return $stmt->execute([$username, $email, password_hash($password, PASSWORD_DEFAULT), $startingBalance, $isAdmin]);

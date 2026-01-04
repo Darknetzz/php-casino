@@ -1279,6 +1279,8 @@ include __DIR__ . '/../includes/navbar.php';
                 require_once __DIR__ . '/../includes/functions.php';
                 $rouletteRound = $db->getCurrentRouletteRound();
                 $crashRound = $db->getCurrentCrashRound();
+                // Reload settings to ensure we have the latest values
+                $settings = $db->getAllSettings();
                 $rouletteMode = getSetting('roulette_mode', 'local');
                 $crashMode = getSetting('crash_mode', 'local');
             ?>
@@ -1290,7 +1292,8 @@ include __DIR__ . '/../includes/navbar.php';
                 <h3 style="margin-top: 0; margin-bottom: 15px; color: #667eea;">Game Modes</h3>
                 <p class="admin-description" style="margin-bottom: 20px;">Choose whether games run locally (client-side) or centrally (synchronized for all users).</p>
                 
-                <form method="POST" action="admin.php?tab=rounds" class="admin-form game-modes-form" style="margin-bottom: 30px;">
+                <form method="POST" action="admin.php" class="admin-form game-modes-form" style="margin-bottom: 30px;">
+                    <input type="hidden" name="tab" value="rounds">
                     <table class="game-modes-table">
                         <thead>
                             <tr>
@@ -1356,7 +1359,8 @@ include __DIR__ . '/../includes/navbar.php';
                 <p class="admin-description" style="margin-bottom: 15px;">Manage the game rounds worker process. Required for central mode roulette and crash games.</p>
                 
                 <!-- Worker Interval Setting -->
-                <form method="POST" action="admin.php?tab=rounds" class="admin-form worker-settings-form">
+                <form method="POST" action="admin.php" class="admin-form worker-settings-form">
+                    <input type="hidden" name="tab" value="rounds">
                     <div class="form-group" style="margin-bottom: 0;">
                         <label for="worker_interval">Worker Check Interval (seconds)</label>
                         <input type="number" id="worker_interval" name="worker_interval" min="1" max="60" step="1" 

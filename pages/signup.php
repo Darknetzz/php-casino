@@ -10,8 +10,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $password = $_POST['password'] ?? '';
     $confirm_password = $_POST['confirm_password'] ?? '';
     
-    if (empty($username) || empty($email) || empty($password)) {
-        $error = 'All fields are required.';
+    if (empty($username) || empty($password)) {
+        $error = 'Username and password are required.';
     } elseif ($password !== $confirm_password) {
         $error = 'Passwords do not match.';
     } elseif (strlen($password) < 6) {
@@ -28,7 +28,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             }
         } catch (Exception $e) {
-            $error = 'An error occurred. Please try again.';
+            $error = $e->getMessage() ?: 'An error occurred. Please try again.';
         }
     }
 }
@@ -52,8 +52,8 @@ include __DIR__ . '/../includes/header.php';
                     <input type="text" id="username" name="username" required value="<?php echo htmlspecialchars($_POST['username'] ?? ''); ?>">
                 </div>
                 <div class="form-group">
-                    <label for="email">Email</label>
-                    <input type="email" id="email" name="email" required value="<?php echo htmlspecialchars($_POST['email'] ?? ''); ?>">
+                    <label for="email">Email <span style="color: #999; font-weight: normal;">(optional)</span></label>
+                    <input type="email" id="email" name="email" value="<?php echo htmlspecialchars($_POST['email'] ?? ''); ?>">
                 </div>
                 <div class="form-group">
                     <label for="password">Password</label>
