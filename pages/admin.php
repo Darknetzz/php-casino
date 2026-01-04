@@ -343,7 +343,14 @@ include __DIR__ . '/../includes/navbar.php';
                         <small style="display: block; margin-top: 5px; color: #666;">Which single row to check when Bet Rows is set to 1</small>
                     </div>
                     
-                    <h3 style="margin-top: 30px; margin-bottom: 15px; color: #667eea;">Plinko Multipliers</h3>
+                    <button type="submit" name="update_settings" class="btn btn-primary" style="margin-top: 20px;">Update Slots Multipliers</button>
+                </form>
+                <?php endif; ?>
+                
+                <!-- Plinko Multipliers -->
+                <?php if ($currentGame === 'plinko'): ?>
+                <form method="POST" action="admin.php?tab=multipliers&game=plinko" class="admin-form">
+                    <h3 style="margin-top: 20px; margin-bottom: 15px; color: #667eea;">Plinko Multipliers</h3>
                     <p style="margin-bottom: 15px; color: #666;">Configure multipliers for each slot (symmetric pairs):</p>
                     <table class="multiplier-table">
                         <thead>
@@ -393,8 +400,14 @@ include __DIR__ . '/../includes/navbar.php';
                             </tr>
                         </tbody>
                     </table>
-                    
-                    <h3 style="margin-top: 30px; margin-bottom: 15px; color: #667eea;">Dice Roll Multipliers</h3>
+                    <button type="submit" name="update_settings" class="btn btn-primary" style="margin-top: 20px;">Update Plinko Multipliers</button>
+                </form>
+                <?php endif; ?>
+                
+                <!-- Dice Multipliers -->
+                <?php if ($currentGame === 'dice'): ?>
+                <form method="POST" action="admin.php?tab=multipliers&game=dice" class="admin-form">
+                    <h3 style="margin-top: 20px; margin-bottom: 15px; color: #667eea;">Dice Roll Multipliers</h3>
                     <p style="margin-bottom: 15px; color: #666;">Configure multipliers for matching dice combinations:</p>
                     <table class="multiplier-table">
                         <thead>
@@ -438,9 +451,9 @@ include __DIR__ . '/../includes/navbar.php';
                             </tr>
                         </tbody>
                     </table>
-                    
-                    <button type="submit" name="update_settings" class="btn btn-primary" style="margin-top: 20px;">Update Multipliers</button>
+                    <button type="submit" name="update_settings" class="btn btn-primary" style="margin-top: 20px;">Update Dice Multipliers</button>
                 </form>
+                <?php endif; ?>
             </div>
             <?php endif; ?>
             
