@@ -1239,28 +1239,65 @@ include __DIR__ . '/../includes/navbar.php';
                 
                 <!-- Game Modes Section -->
                 <h3 style="margin-top: 0; margin-bottom: 15px; color: #667eea;">Game Modes</h3>
-                <p style="margin-bottom: 15px; color: #666;">Choose whether games run locally (client-side) or centrally (synchronized for all users).</p>
+                <p class="admin-description" style="margin-bottom: 20px;">Choose whether games run locally (client-side) or centrally (synchronized for all users).</p>
                 
                 <form method="POST" action="admin.php?tab=rounds" class="admin-form" style="margin-bottom: 30px;">
-                    <div class="form-group">
-                        <label for="roulette_mode">Roulette Mode</label>
-                        <select id="roulette_mode" name="roulette_mode" required>
-                            <option value="local" <?php echo ($rouletteMode ?? 'local') === 'local' ? 'selected' : ''; ?>>Local (Client-side)</option>
-                            <option value="central" <?php echo ($rouletteMode ?? 'local') === 'central' ? 'selected' : ''; ?>>Central (Synchronized)</option>
-                        </select>
-                        <small>Local: Users spin individually. Central: All users see the same synchronized rounds (requires worker).</small>
-                    </div>
+                    <table class="game-modes-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 120px;">Game</th>
+                                <th style="width: 200px;">Current Mode</th>
+                                <th style="width: 250px;">Change Mode</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td style="font-weight: 600; font-size: 16px;">🛞 Roulette</td>
+                                <td>
+                                    <?php if (($rouletteMode ?? 'local') === 'central'): ?>
+                                        <span class="mode-badge mode-badge-central">Central (Synchronized)</span>
+                                    <?php else: ?>
+                                        <span class="mode-badge mode-badge-local">Local (Client-side)</span>
+                                    <?php endif; ?>
+                                </td>
+                                <td>
+                                    <select id="roulette_mode" name="roulette_mode" required class="mode-select">
+                                        <option value="local" <?php echo ($rouletteMode ?? 'local') === 'local' ? 'selected' : ''; ?>>Local (Client-side)</option>
+                                        <option value="central" <?php echo ($rouletteMode ?? 'local') === 'central' ? 'selected' : ''; ?>>Central (Synchronized)</option>
+                                    </select>
+                                </td>
+                                <td class="mode-description">
+                                    <strong>Local:</strong> Users spin individually.<br>
+                                    <strong>Central:</strong> All users see the same synchronized rounds (requires worker).
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="font-weight: 600; font-size: 16px;">🚀 Crash</td>
+                                <td>
+                                    <?php if (($crashMode ?? 'local') === 'central'): ?>
+                                        <span class="mode-badge mode-badge-central">Central (Synchronized)</span>
+                                    <?php else: ?>
+                                        <span class="mode-badge mode-badge-local">Local (Client-side)</span>
+                                    <?php endif; ?>
+                                </td>
+                                <td>
+                                    <select id="crash_mode" name="crash_mode" required class="mode-select">
+                                        <option value="local" <?php echo ($crashMode ?? 'local') === 'local' ? 'selected' : ''; ?>>Local (Client-side)</option>
+                                        <option value="central" <?php echo ($crashMode ?? 'local') === 'central' ? 'selected' : ''; ?>>Central (Synchronized)</option>
+                                    </select>
+                                </td>
+                                <td class="mode-description">
+                                    <strong>Local:</strong> Users start games individually.<br>
+                                    <strong>Central:</strong> All users see the same synchronized rounds (requires worker).
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
                     
-                    <div class="form-group">
-                        <label for="crash_mode">Crash Mode</label>
-                        <select id="crash_mode" name="crash_mode" required>
-                            <option value="local" <?php echo ($crashMode ?? 'local') === 'local' ? 'selected' : ''; ?>>Local (Client-side)</option>
-                            <option value="central" <?php echo ($crashMode ?? 'local') === 'central' ? 'selected' : ''; ?>>Central (Synchronized)</option>
-                        </select>
-                        <small>Local: Users start games individually. Central: All users see the same synchronized rounds (requires worker).</small>
+                    <div style="margin-top: 20px; text-align: right;">
+                        <button type="submit" name="update_game_modes" class="btn btn-primary">Update Game Modes</button>
                     </div>
-                    
-                    <button type="submit" name="update_game_modes" class="btn btn-primary">Update Game Modes</button>
                 </form>
                 
                 <hr style="border: none; border-top: 2px solid #e0e0e0; margin: 30px 0;">
