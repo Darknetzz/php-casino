@@ -49,7 +49,7 @@ include __DIR__ . '/../includes/navbar.php';
                     </div>
                     <div class="color-bets-section">
                         <h4>Color & Range Bets (2x payout):</h4>
-                        <div class="bet-buttons">
+                        <div class="bet-buttons" style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center;">
                             <button class="bet-btn" data-bet="red" data-multiplier="2">Red (2x)</button>
                             <button class="bet-btn" data-bet="black" data-multiplier="2">Black (2x)</button>
                             <button class="bet-btn" data-bet="green" data-multiplier="36">Green (36x)</button>
@@ -57,19 +57,13 @@ include __DIR__ . '/../includes/navbar.php';
                             <button class="bet-btn" data-bet="odd" data-multiplier="2">Odd (2x)</button>
                             <button class="bet-btn" data-bet="low" data-multiplier="2">1-18 (2x)</button>
                             <button class="bet-btn" data-bet="high" data-multiplier="2">19-36 (2x)</button>
+                            <div class="add-number-bet" style="margin-left: 10px; display: flex; align-items: center; gap: 5px;">
+                                <input type="number" id="numberBet" min="0" max="36" placeholder="Number (0-36)" style="width: 100px; padding: 8px;">
+                                <button id="addNumberBetBtn" class="btn btn-secondary" style="padding: 8px 12px;">Add Bet</button>
+                            </div>
                         </div>
-                        <div id="activeColorBets" class="active-bets-list" style="margin-top: 15px;">
-                            <p>No color/range bets placed yet</p>
-                        </div>
-                    </div>
-                    <div class="number-bets-section" style="margin-top: 30px;">
-                        <h4>Bet on specific numbers (36x payout):</h4>
-                        <div class="add-number-bet">
-                            <input type="number" id="numberBet" min="0" max="36" placeholder="Number (0-36)" style="width: 120px; padding: 8px;">
-                            <button id="addNumberBetBtn" class="btn btn-secondary">Add Bet</button>
-                        </div>
-                        <div id="activeBets" class="active-bets-list">
-                            <p>No number bets placed yet</p>
+                        <div id="activeBets" class="active-bets-list" style="margin-top: 15px;">
+                            <p>No bets placed yet</p>
                         </div>
                     </div>
                     <div id="totalBetAmount" class="total-bet-display" style="display: none; margin-top: 20px;">

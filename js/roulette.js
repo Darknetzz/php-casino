@@ -159,15 +159,19 @@ $(document).ready(function() {
     }
     
     function updateActiveBetsDisplay() {
-        // Update number bets display
-        const numberBetsList = $('#activeBets');
-        if (numberBets.length === 0) {
-            numberBetsList.html('<p>No number bets placed yet</p>');
+        // Combine both number bets and color bets into a single list
+        const allBetsList = $('#activeBets');
+        const totalBets = numberBets.length + colorBets.length;
+        
+        if (totalBets === 0) {
+            allBetsList.html('<p>No bets placed yet</p>');
         } else {
             let html = '<div class="bets-list">';
+            
+            // Display number bets first
             numberBets.forEach(function(bet, index) {
                 const colors = getRouletteNumberColors(bet.number);
-                html += `<div class="bet-item" data-index="${index}">
+                html += `<div class="bet-item" data-index="${index}" data-bet-type="number">
                     <span style="display: flex; align-items: center; gap: 8px;">
                         <div style="width: 24px; height: 24px; border-radius: 50%; background-color: ${colors.bg}; color: ${colors.text}; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.2);">${bet.number}</div>
                         <span>Number ${bet.number}: $${bet.amount.toFixed(2)}</span>
@@ -175,16 +179,8 @@ $(document).ready(function() {
                     <button class="btn-remove-bet" data-index="${index}" data-type="number">×</button>
                 </div>`;
             });
-            html += '</div>';
-            numberBetsList.html(html);
-        }
-        
-        // Update color bets display
-        const colorBetsList = $('#activeColorBets');
-        if (colorBets.length === 0) {
-            colorBetsList.html('<p>No color/range bets placed yet</p>');
-        } else {
-            let html = '<div class="bets-list">';
+            
+            // Display color bets after number bets
             colorBets.forEach(function(bet, index) {
                 const betName = bet.type.charAt(0).toUpperCase() + bet.type.slice(1);
                 let colorClass = '';
@@ -195,20 +191,21 @@ $(document).ready(function() {
                 } else if (bet.type === 'green') {
                     colorClass = 'bet-item-green';
                 }
-                html += `<div class="bet-item ${colorClass}" data-index="${index}">
+                html += `<div class="bet-item ${colorClass}" data-index="${index}" data-bet-type="color">
                     <span>${betName}: $${bet.amount.toFixed(2)} (${bet.multiplier}x)</span>
                     <button class="btn-remove-bet" data-index="${index}" data-type="color">×</button>
                 </div>`;
             });
+            
             html += '</div>';
-            colorBetsList.html(html);
+            allBetsList.html(html);
         }
         
         // Calculate and display total
         let totalBet = 0;
         numberBets.forEach(bet => totalBet += bet.amount);
         colorBets.forEach(bet => totalBet += bet.amount);
-        
+
         if (totalBet > 0) {
             $('#totalBetValue').text(totalBet.toFixed(2));
             $('#totalBetAmount').show();
@@ -232,58 +229,61 @@ $(document).ready(function() {
     }
     
     function updateActiveBetsDisplayFromServer(userBets) {
-        // Display server-side bets (read-only, no remove buttons)
+        // Display server-side bets (read-only, no remove buttons) in a single combined list
+        const allBetsList = $('#activeBets');
+        
         if (!userBets || userBets.length === 0) {
-            $('#activeBets').html('<p>No number bets placed yet</p>');
-            $('#activeColorBets').html('<p>No color/range bets placed yet</p>');
+            allBetsList.html('<p>No bets placed yet</p>');
             $('#totalBetAmount').hide();
             return;
         }
         
-        const numberBetsList = $('#activeBets');
-        const colorBetsList = $('#activeColorBets');
-        let numberBetsHtml = '<div class="bets-list">';
-        let colorBetsHtml = '<div class="bets-list">';
+        let html = '<div class="bets-list">';
         let totalBet = 0;
-        let hasNumberBets = false;
-        let hasColorBets = false;
+        const numberBetsFromServer = [];
+        const colorBetsFromServer = [];
         
+        // Separate number bets and color bets
         userBets.forEach(function(bet) {
             totalBet += parseFloat(bet.amount || 0);
-            
             if (bet.bet_type === 'number') {
-                hasNumberBets = true;
-                const number = parseInt(bet.bet_value);
-                const colors = getRouletteNumberColors(number);
-                numberBetsHtml += `<div class="bet-item">
-                    <span style="display: flex; align-items: center; gap: 8px;">
-                        <div style="width: 24px; height: 24px; border-radius: 50%; background-color: ${colors.bg}; color: ${colors.text}; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.2);">${number}</div>
-                        <span>Number ${bet.bet_value}: $${parseFloat(bet.amount).toFixed(2)}</span>
-                    </span>
-                </div>`;
+                numberBetsFromServer.push(bet);
             } else if (bet.bet_type === 'color' || bet.bet_type === 'range') {
-                hasColorBets = true;
-                const betValue = bet.bet_value || '';
-                const betName = betValue.charAt(0).toUpperCase() + betValue.slice(1);
-                let colorClass = '';
-                if (betValue === 'red') {
-                    colorClass = 'bet-item-red';
-                } else if (betValue === 'black') {
-                    colorClass = 'bet-item-black';
-                } else if (betValue === 'green') {
-                    colorClass = 'bet-item-green';
-                }
-                colorBetsHtml += `<div class="bet-item ${colorClass}">
-                    <span>${betName}: $${parseFloat(bet.amount).toFixed(2)} (${parseInt(bet.multiplier || 2)}x)</span>
-                </div>`;
+                colorBetsFromServer.push(bet);
             }
         });
         
-        numberBetsHtml += '</div>';
-        colorBetsHtml += '</div>';
+        // Display number bets first
+        numberBetsFromServer.forEach(function(bet) {
+            const number = parseInt(bet.bet_value);
+            const colors = getRouletteNumberColors(number);
+            html += `<div class="bet-item">
+                <span style="display: flex; align-items: center; gap: 8px;">
+                    <div style="width: 24px; height: 24px; border-radius: 50%; background-color: ${colors.bg}; color: ${colors.text}; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.2);">${number}</div>
+                    <span>Number ${bet.bet_value}: $${parseFloat(bet.amount).toFixed(2)}</span>
+                </span>
+            </div>`;
+        });
         
-        numberBetsList.html(hasNumberBets ? numberBetsHtml : '<p>No number bets placed yet</p>');
-        colorBetsList.html(hasColorBets ? colorBetsHtml : '<p>No color/range bets placed yet</p>');
+        // Display color bets after number bets
+        colorBetsFromServer.forEach(function(bet) {
+            const betValue = bet.bet_value || '';
+            const betName = betValue.charAt(0).toUpperCase() + betValue.slice(1);
+            let colorClass = '';
+            if (betValue === 'red') {
+                colorClass = 'bet-item-red';
+            } else if (betValue === 'black') {
+                colorClass = 'bet-item-black';
+            } else if (betValue === 'green') {
+                colorClass = 'bet-item-green';
+            }
+            html += `<div class="bet-item ${colorClass}">
+                <span>${betName}: $${parseFloat(bet.amount).toFixed(2)} (${parseInt(bet.multiplier || 2)}x)</span>
+            </div>`;
+        });
+        
+        html += '</div>';
+        allBetsList.html(html);
         
         if (totalBet > 0) {
             $('#totalBetValue').text(totalBet.toFixed(2));

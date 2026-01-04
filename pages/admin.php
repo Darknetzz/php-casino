@@ -1524,13 +1524,23 @@ include __DIR__ . '/../includes/navbar.php';
                     const $restartBtn = $('#workerRestartBtn');
                     
                     if (status.running) {
-                        $statusText.text('Running').css({'background': '#d4edda', 'color': '#155724'});
+                        // Dark mode friendly colors
+                        if ($('body').hasClass('dark-mode')) {
+                            $statusText.text('Running').css({'background': '#1e4d2e', 'color': '#4ade80'});
+                        } else {
+                            $statusText.text('Running').css({'background': '#d4edda', 'color': '#155724'});
+                        }
                         $workerPid.text(status.pid || '-');
                         $startBtn.prop('disabled', true);
                         $stopBtn.prop('disabled', false);
                         $restartBtn.prop('disabled', false);
                     } else {
-                        $statusText.text('Stopped').css({'background': '#f8d7da', 'color': '#721c24'});
+                        // Dark mode friendly colors
+                        if ($('body').hasClass('dark-mode')) {
+                            $statusText.text('Stopped').css({'background': '#4a1e1e', 'color': '#f87171'});
+                        } else {
+                            $statusText.text('Stopped').css({'background': '#f8d7da', 'color': '#721c24'});
+                        }
                         $workerPid.text('-');
                         $startBtn.prop('disabled', false);
                         $stopBtn.prop('disabled', true);
@@ -1538,13 +1548,21 @@ include __DIR__ . '/../includes/navbar.php';
                     }
                 }
             }, 'json').fail(function() {
-                $('#workerStatusText').text('Error').css({'background': '#f8d7da', 'color': '#721c24'});
+                if ($('body').hasClass('dark-mode')) {
+                    $('#workerStatusText').text('Error').css({'background': '#4a1e1e', 'color': '#f87171'});
+                } else {
+                    $('#workerStatusText').text('Error').css({'background': '#f8d7da', 'color': '#721c24'});
+                }
             });
         }
         
         function controlWorker(action) {
             const $message = $('#workerMessage');
-            $message.html('<div class="alert" style="background: #fff3cd; color: #856404;">Processing...</div>');
+            if ($('body').hasClass('dark-mode')) {
+                $message.html('<div class="alert" style="background: #3a3418; color: #fbbf24;">Processing...</div>');
+            } else {
+                $message.html('<div class="alert" style="background: #fff3cd; color: #856404;">Processing...</div>');
+            }
             
             $.post('../api/api.php?action=controlWorker', {action: action}, function(data) {
                 if (data.success) {
