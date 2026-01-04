@@ -322,6 +322,35 @@ $(document).ready(function() {
         }, 'json');
     });
     
+    // Function to update total bet display
+    function updateTotalBetDisplay() {
+        const betAmount = parseFloat($('#betAmount').val()) || 0;
+        const betRows = parseInt($('#betRows').val()) || 1;
+        const totalBet = betRows === 3 ? betAmount * 3 : betAmount;
+        
+        $('#totalBetAmount').text(totalBet.toFixed(2));
+        
+        if (betRows === 3) {
+            $('#baseBetAmount').text(betAmount.toFixed(2));
+            $('#totalBetNote').show();
+        } else {
+            $('#totalBetNote').hide();
+        }
+    }
+    
+    // Update total bet when bet amount changes
+    $('#betAmount').on('input change', function() {
+        updateTotalBetDisplay();
+    });
+    
+    // Update total bet when row selection changes
+    $('#betRows').on('change', function() {
+        updateTotalBetDisplay();
+    });
+    
+    // Initialize total bet display
+    updateTotalBetDisplay();
+    
     // Update balance periodically
     setInterval(function() {
         $.get('../api/api.php?action=getBalance', function(data) {

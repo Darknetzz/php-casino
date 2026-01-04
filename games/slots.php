@@ -43,7 +43,10 @@ include __DIR__ . '/../includes/navbar.php';
                             <option value="1">1 Row (Middle)</option>
                             <option value="3">All 3 Rows</option>
                         </select>
-                        <small style="display: block; margin-top: 5px; color: #666;">Betting on all 3 rows costs 3x your bet amount</small>
+                        <div id="totalBetDisplay" style="margin-top: 10px; padding: 10px; background: rgba(102, 126, 234, 0.1); border-radius: 5px; border: 2px solid #667eea;">
+                            <strong style="color: #667eea;">Total Bet: $<span id="totalBetAmount">10.00</span></strong>
+                            <small id="totalBetNote" style="display: none; color: #666; margin-left: 10px;">($<span id="baseBetAmount">10.00</span> × 3 rows)</small>
+                        </div>
                     </div>
                     <button id="spinBtn" class="btn btn-primary btn-large">SPIN</button>
                 </div>
