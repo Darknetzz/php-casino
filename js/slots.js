@@ -6,6 +6,22 @@ $(document).ready(function() {
     let multipliers = {};
     let twoOfKindMultiplier = 0.5;
     
+    // Function to update total bet display (defined early so it's available everywhere)
+    function updateTotalBetDisplay() {
+        const betAmount = parseFloat($('#betAmount').val()) || 0;
+        const betRows = parseInt($('#betRows').val()) || 1;
+        const totalBet = betRows === 3 ? betAmount * 3 : betAmount;
+        
+        $('#totalBetAmount').text(totalBet.toFixed(2));
+        
+        if (betRows === 3) {
+            $('#baseBetAmount').text(betAmount.toFixed(2));
+            $('#totalBetNote').show();
+        } else {
+            $('#totalBetNote').hide();
+        }
+    }
+    
     // Load max bet, default bet, and multipliers from settings
     $.get('../api/api.php?action=getSettings', function(data) {
         if (data.success) {
@@ -16,7 +32,7 @@ $(document).ready(function() {
                 $('#betAmount').attr('max', maxBet);
             }
             if (data.settings.default_bet) {
-                $('#betAmount').val(data.settings.default_bet);
+                $('#betAmount').val(data.settings.default_bet).trigger('change');
             }
             if (data.settings.slots_multipliers && data.settings.slots_multipliers.symbols) {
                 // Build symbols array and multipliers map from dynamic configuration
@@ -33,6 +49,13 @@ $(document).ready(function() {
                 
                 // Update payouts table
                 updatePayoutsTable();
+            }
+            
+            // Update total bet display after all settings are loaded
+            if (typeof updateTotalBetDisplay === 'function') {
+                setTimeout(function() {
+                    updateTotalBetDisplay();
+                }, 100);
             }
         }
     }, 'json');
@@ -338,9 +361,17 @@ $(document).ready(function() {
         }
     }
     
-    // Update total bet when bet amount changes
-    $('#betAmount').on('input change', function() {
+    // Update total bet when bet amount changes (multiple event types for compatibility)
+    $('#betAmount').on('input change keyup paste', function() {
         updateTotalBetDisplay();
+    });
+    
+    // Also listen for clicks on bet adjustment buttons (delegated event for dynamically added buttons)
+    $(document).on('click', '.bet-adjust-btn', function() {
+        // Small delay to ensure the input value has been updated by common.js
+        setTimeout(function() {
+            updateTotalBetDisplay();
+        }, 50);
     });
     
     // Update total bet when row selection changes
@@ -348,8 +379,16 @@ $(document).ready(function() {
         updateTotalBetDisplay();
     });
     
-    // Initialize total bet display
+    // Initialize total bet display - call multiple times to catch all scenarios
+    // First call immediately
     updateTotalBetDisplay();
+    
+    // Second call after DOM is fully ready and buttons might be added
+    setTimeout(function() {
+        updateTotalBetDisplay();
+    }, 300);
+    
+    // Third call after settings are loaded (handled in settings callback above)
     
     // Update balance periodically
     setInterval(function() {
