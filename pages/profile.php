@@ -48,6 +48,22 @@ $user = getCurrentUser();
             </div>
             
             <div class="refill-section">
+                <h2>⚙️ Default Bet Amount</h2>
+                <div id="defaultBetMessage"></div>
+                
+                <form id="defaultBetForm">
+                    <div class="form-group">
+                        <label for="default_bet">Default Bet ($)</label>
+                        <input type="number" id="default_bet" name="default_bet" min="1" step="0.01" 
+                               value="<?php echo htmlspecialchars($user['default_bet'] ?? ''); ?>" 
+                               placeholder="<?php echo htmlspecialchars(getSetting('default_bet', 10)); ?>">
+                        <small>Leave empty to use global default (<?php echo htmlspecialchars(getSetting('default_bet', 10)); ?>). This will be used as the default bet amount in all games.</small>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Save Default Bet</button>
+                </form>
+            </div>
+            
+            <div class="refill-section">
                 <h2>💰 Refill Balance</h2>
                 <div id="refillMessage"></div>
                 
@@ -80,6 +96,26 @@ $user = getCurrentUser();
         }
         
         $(document).ready(function() {
+            // Handle default bet form submission
+            $('#defaultBetForm').on('submit', function(e) {
+                e.preventDefault();
+                
+                const defaultBet = $('#default_bet').val();
+                
+                $.post('../api/api.php?action=updateDefaultBet', {
+                    default_bet: defaultBet
+                }, function(data) {
+                    if (data.success) {
+                        $('#defaultBetMessage').html('<div class="alert alert-success">Default bet updated successfully!</div>');
+                        setTimeout(function() {
+                            $('#defaultBetMessage').html('');
+                        }, 3000);
+                    } else {
+                        $('#defaultBetMessage').html('<div class="alert alert-error">' + (data.message || 'Failed to update default bet') + '</div>');
+                    }
+                }, 'json');
+            });
+            
             // Handle refill form submission
             $('#refillForm').on('submit', function(e) {
                 e.preventDefault();

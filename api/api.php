@@ -49,11 +49,30 @@ switch ($action) {
         break;
         
     case 'getSettings':
+        $user = getCurrentUser();
+        $globalDefaultBet = floatval(getSetting('default_bet', 10));
+        $userDefaultBet = isset($user['default_bet']) && $user['default_bet'] !== null ? floatval($user['default_bet']) : null;
+        $defaultBet = $userDefaultBet !== null ? $userDefaultBet : $globalDefaultBet;
+        
         $settings = [
             'max_bet' => floatval(getSetting('max_bet', 100)),
-            'max_deposit' => floatval(getSetting('max_deposit', 10000))
+            'max_deposit' => floatval(getSetting('max_deposit', 10000)),
+            'default_bet' => $defaultBet
         ];
         echo json_encode(['success' => true, 'settings' => $settings]);
+        break;
+        
+    case 'updateDefaultBet':
+        $user = getCurrentUser();
+        $defaultBet = isset($_POST['default_bet']) && $_POST['default_bet'] !== '' ? floatval($_POST['default_bet']) : null;
+        
+        if ($defaultBet !== null && $defaultBet < 1) {
+            echo json_encode(['success' => false, 'message' => 'Default bet must be at least $1']);
+            break;
+        }
+        
+        $db->setUserDefaultBet($user['id'], $defaultBet);
+        echo json_encode(['success' => true]);
         break;
         
     case 'getTransactions':

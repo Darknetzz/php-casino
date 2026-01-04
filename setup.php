@@ -38,17 +38,37 @@ if (is_writable($dataDir)) {
     exit(1);
 }
 
-// Try to create database file
-echo "\nTesting database creation...\n";
+// Check if database file exists and fix permissions
+if (file_exists($dbPath)) {
+    echo "\nDatabase file exists, checking permissions...\n";
+    if (!is_writable($dbPath)) {
+        echo "⚠ Database file is not writable, attempting to fix...\n";
+        if (@chmod($dbPath, 0664)) {
+            echo "✓ Database file permissions updated\n";
+        } else {
+            echo "✗ Could not update database file permissions automatically\n";
+            echo "Please run: chmod 664 $dbPath\n";
+            echo "Or: chown www-data:www-data $dbPath\n";
+        }
+    } else {
+        echo "✓ Database file is writable\n";
+    }
+}
+
+// Try to create/test database file
+echo "\nTesting database access...\n";
 try {
     $testDb = new PDO('sqlite:' . $dbPath);
     $testDb->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     $testDb->exec("CREATE TABLE IF NOT EXISTS test (id INTEGER)");
+    $testDb->exec("DROP TABLE IF EXISTS test");
     $testDb = null; // Close connection
-    unlink($dbPath); // Delete test file
-    echo "✓ Database can be created successfully\n";
+    echo "✓ Database can be accessed successfully\n";
 } catch (Exception $e) {
-    echo "✗ Failed to create database: " . $e->getMessage() . "\n";
+    echo "✗ Failed to access database: " . $e->getMessage() . "\n";
+    echo "\nIf the database file exists but is readonly, try:\n";
+    echo "sudo chmod 664 $dbPath\n";
+    echo "sudo chown www-data:www-data $dbPath\n";
     exit(1);
 }
 

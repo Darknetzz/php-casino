@@ -12,11 +12,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $maxDeposit = floatval($_POST['max_deposit'] ?? 0);
         $maxBet = floatval($_POST['max_bet'] ?? 0);
         $startingBalance = floatval($_POST['starting_balance'] ?? 0);
+        $defaultBet = floatval($_POST['default_bet'] ?? 0);
         
-        if ($maxDeposit > 0 && $maxBet > 0 && $startingBalance > 0) {
+        if ($maxDeposit > 0 && $maxBet > 0 && $startingBalance > 0 && $defaultBet > 0) {
             $db->setSetting('max_deposit', $maxDeposit);
             $db->setSetting('max_bet', $maxBet);
             $db->setSetting('starting_balance', $startingBalance);
+            $db->setSetting('default_bet', $defaultBet);
             $message = 'Settings updated successfully!';
         } else {
             $error = 'All values must be greater than 0.';
@@ -105,6 +107,12 @@ $users = $db->getAllUsers();
                         <label for="starting_balance">Starting Balance ($)</label>
                         <input type="number" id="starting_balance" name="starting_balance" min="0" step="0.01" 
                                value="<?php echo htmlspecialchars($settings['starting_balance'] ?? '1000'); ?>" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="default_bet">Default Bet ($)</label>
+                        <input type="number" id="default_bet" name="default_bet" min="1" step="0.01" 
+                               value="<?php echo htmlspecialchars($settings['default_bet'] ?? '10'); ?>" required>
+                        <small>Default bet amount for all users (can be overridden in user profile)</small>
                     </div>
                     <button type="submit" name="update_settings" class="btn btn-primary">Update Settings</button>
                 </form>

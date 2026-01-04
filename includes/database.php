@@ -42,6 +42,7 @@ class Database {
                 password TEXT NOT NULL,
                 balance REAL DEFAULT 1000.00,
                 is_admin INTEGER DEFAULT 0,
+                default_bet REAL,
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP
             )
         ");
@@ -49,6 +50,13 @@ class Database {
         // Try to add admin column if table already exists
         try {
             $this->db->exec("ALTER TABLE users ADD COLUMN is_admin INTEGER DEFAULT 0");
+        } catch (PDOException $e) {
+            // Column already exists, ignore
+        }
+        
+        // Try to add default_bet column if table already exists
+        try {
+            $this->db->exec("ALTER TABLE users ADD COLUMN default_bet REAL");
         } catch (PDOException $e) {
             // Column already exists, ignore
         }
@@ -83,7 +91,8 @@ class Database {
         $defaultSettings = [
             'max_deposit' => '10000',
             'max_bet' => '100',
-            'starting_balance' => '1000'
+            'starting_balance' => '1000',
+            'default_bet' => '10'
         ];
         
         foreach ($defaultSettings as $key => $value) {
@@ -153,6 +162,11 @@ class Database {
     public function setUserBalance($userId, $balance) {
         $stmt = $this->db->prepare("UPDATE users SET balance = ? WHERE id = ?");
         return $stmt->execute([$balance, $userId]);
+    }
+    
+    public function setUserDefaultBet($userId, $defaultBet) {
+        $stmt = $this->db->prepare("UPDATE users SET default_bet = ? WHERE id = ?");
+        return $stmt->execute([$defaultBet, $userId]);
     }
     
     public function deleteUser($userId) {

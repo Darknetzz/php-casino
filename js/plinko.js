@@ -6,12 +6,17 @@ $(document).ready(function() {
     let ballElement = null;
     let maxBet = 100;
     
-    // Load max bet from settings
+    // Load max bet and default bet from settings
     $.get('../api/api.php?action=getSettings', function(data) {
-        if (data.success && data.settings.max_bet) {
-            maxBet = data.settings.max_bet;
-            $('#maxBet').text(maxBet);
-            $('#betAmount').attr('max', maxBet);
+        if (data.success) {
+            if (data.settings.max_bet) {
+                maxBet = data.settings.max_bet;
+                $('#maxBet').text(maxBet);
+                $('#betAmount').attr('max', maxBet);
+            }
+            if (data.settings.default_bet) {
+                $('#betAmount').val(data.settings.default_bet);
+            }
         }
     }, 'json');
     

@@ -4,12 +4,17 @@ $(document).ready(function() {
     let currentRotation = 0;
     let maxBet = 100;
     
-    // Load max bet from settings
+    // Load max bet and default bet from settings
     $.get('../api/api.php?action=getSettings', function(data) {
-        if (data.success && data.settings.max_bet) {
-            maxBet = data.settings.max_bet;
-            $('#maxBet').text(maxBet);
-            $('#betAmount').attr('max', maxBet);
+        if (data.success) {
+            if (data.settings.max_bet) {
+                maxBet = data.settings.max_bet;
+                $('#maxBet').text(maxBet);
+                $('#betAmount').attr('max', maxBet);
+            }
+            if (data.settings.default_bet) {
+                $('#betAmount').val(data.settings.default_bet);
+            }
         }
     }, 'json');
     
@@ -163,14 +168,16 @@ $(document).ready(function() {
         const anglePerNumber = 360 / rouletteNumbers.length;
         const pocketStartAngle = winningIndex * anglePerNumber;
         
-        // After rotating wheel by totalRotation, a pocket that started at pocketStartAngle
-        // will be at position: (pocketStartAngle + totalRotation) % 360
-        // We want this to equal 0 (where pointer is at top)
-        // So: (pocketStartAngle + totalRotation) % 360 = 0
-        // Therefore: totalRotation = (360 - pocketStartAngle) % 360 (plus full spins)
+        // Calculate the target rotation
+        // After rotating by totalRotation, the pocket at pocketStartAngle should be at 0 (top)
+        // Current position of winning pocket: (pocketStartAngle - currentRotation) % 360
+        // We need to rotate so it ends up at 0
+        // So: (pocketStartAngle - currentRotation + additionalRotation) % 360 = 0
+        // Therefore: additionalRotation = (360 - pocketStartAngle + currentRotation) % 360
         const fullSpins = 5 + Math.random() * 3; // 5-8 full spins
-        const rotationToTop = (360 - pocketStartAngle) % 360;
-        const totalRotation = currentRotation + (fullSpins * 360) + rotationToTop;
+        const rotationToTop = (360 - pocketStartAngle + currentRotation) % 360;
+        const additionalRotation = (fullSpins * 360) + rotationToTop;
+        const totalRotation = currentRotation + additionalRotation;
         currentRotation = totalRotation % 360;
         
         // Animate wheel spin
