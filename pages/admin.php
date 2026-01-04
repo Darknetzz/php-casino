@@ -422,7 +422,7 @@ if (isset($_GET['success'])) {
     } elseif ($currentTab === 'users') {
         $message = 'User updated successfully!';
     } elseif ($currentTab === 'rounds') {
-        $message = 'Game modes updated successfully!';
+        $message = 'Settings updated successfully!';
     }
 }
 
@@ -523,7 +523,27 @@ include __DIR__ . '/../includes/navbar.php';
             <div class="admin-section section">
                 <h2>📊 Casino Settings</h2>
                 <p style="margin-bottom: 20px; color: #666;">General casino configuration settings.</p>
-                <!-- Add other casino settings here if needed in the future -->
+                
+                <form method="POST" action="admin.php?tab=settings" class="admin-form">
+                    <div class="form-group">
+                        <label for="site_name">Site Name</label>
+                        <input type="text" id="site_name" name="site_name" 
+                               value="<?php echo htmlspecialchars($settings['site_name'] ?? 'Casino'); ?>" 
+                               placeholder="Casino">
+                        <small>The name of your casino (used in page titles and branding)</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" name="maintenance_mode" value="1" 
+                                   <?php echo (isset($settings['maintenance_mode']) && $settings['maintenance_mode'] === '1') ? 'checked' : ''; ?>>
+                            Enable Maintenance Mode
+                        </label>
+                        <small>When enabled, the site will be unavailable to non-admin users (feature to be implemented)</small>
+                    </div>
+                    
+                    <button type="submit" name="update_casino_settings" class="btn btn-primary">Update Settings</button>
+                </form>
             </div>
             <?php endif; ?>
             
@@ -1248,6 +1268,17 @@ include __DIR__ . '/../includes/navbar.php';
                 <!-- Worker Management Section -->
                 <h3 style="margin-top: 20px; margin-bottom: 15px; color: #667eea;">⚙️ Worker Management</h3>
                 <p style="margin-bottom: 15px; color: #666;">Manage the game rounds worker process. Required for central mode roulette and crash games.</p>
+                
+                <!-- Worker Interval Setting -->
+                <form method="POST" action="admin.php?tab=rounds" class="admin-form" style="margin-bottom: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px;">
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label for="worker_interval">Worker Check Interval (seconds)</label>
+                        <input type="number" id="worker_interval" name="worker_interval" min="1" max="60" step="1" 
+                               value="<?php echo htmlspecialchars($settings['worker_interval'] ?? '1'); ?>" required style="max-width: 150px;">
+                        <small>How often the worker checks for new rounds (1-60 seconds). Lower values = more frequent checks but higher CPU usage. Changes take effect after restarting the worker.</small>
+                    </div>
+                    <button type="submit" name="update_worker_settings" class="btn btn-secondary" style="margin-top: 10px;">Update Interval</button>
+                </form>
                 
                 <div id="workerStatus" style="margin-bottom: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px;">
                     <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">

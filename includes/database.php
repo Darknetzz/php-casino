@@ -235,7 +235,10 @@ class Database {
             'roulette_mode' => 'local', // 'local' or 'central'
             'crash_mode' => 'local', // 'local' or 'central'
             // Worker settings
-            'worker_interval' => '1' // seconds between worker checks
+            'worker_interval' => '1', // seconds between worker checks
+            // General casino settings
+            'site_name' => 'Casino', // Site name/title
+            'maintenance_mode' => '0' // '0' = disabled, '1' = enabled
         ];
         
         foreach ($defaultSettings as $key => $value) {
