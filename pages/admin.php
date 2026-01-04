@@ -2610,7 +2610,7 @@ include __DIR__ . '/../includes/navbar.php';
                     maxDepositInput.prop('disabled', false);
                 } else {
                     maxDepositInput.prop('required', false);
-                    maxDepositInput.prop('disabled', false);
+                    maxDepositInput.prop('disabled', true);
                 }
                 
                 if (maxBetEnabled) {
@@ -2618,7 +2618,7 @@ include __DIR__ . '/../includes/navbar.php';
                     maxBetInput.prop('disabled', false);
                 } else {
                     maxBetInput.prop('required', false);
-                    maxBetInput.prop('disabled', false);
+                    maxBetInput.prop('disabled', true);
                 }
             }
             
