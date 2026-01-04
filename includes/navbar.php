@@ -43,6 +43,22 @@ if (strpos($_SERVER['PHP_SELF'], '/games/') !== false) {
         </div>
         <div class="nav-right">
             <span class="balance">Balance: $<span id="balance"><?php echo number_format($user['balance'], 2); ?></span></span>
+            <div class="notification-menu">
+                <button class="notification-btn" id="notificationBtn" title="Notifications">
+                    <span class="notification-icon">🔔</span>
+                    <span class="notification-badge" id="notificationBadge" style="display: none;">0</span>
+                </button>
+                <div class="notification-dropdown" id="notificationDropdown" style="display: none;">
+                    <div class="notification-dropdown-header">
+                        <h3>Notifications</h3>
+                        <button class="notification-mark-all" id="markAllReadBtn">Mark all read</button>
+                    </div>
+                    <div class="notification-dropdown-list" id="notificationList"></div>
+                    <div class="notification-dropdown-empty" id="notificationEmpty" style="display: none;">
+                        <p>No notifications</p>
+                    </div>
+                </div>
+            </div>
             <div class="user-menu">
                 <button class="user-menu-btn" id="userMenuBtn">
                     <span class="user-avatar"><?php echo strtoupper(substr($user['username'], 0, 1)); ?></span>

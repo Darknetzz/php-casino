@@ -19,64 +19,117 @@ $(document).ready(function() {
     let lastRouletteResult = null;
     let lastCrashResult = null;
     
+    // Store notifications for dropdown
+    let notifications = [];
+    let unreadCount = 0;
+    
     // Polling interval (every 3 seconds)
     const POLL_INTERVAL = 3000;
     let pollInterval = null;
     
     /**
+     * Get game URL based on current page location
+     */
+    function getGameUrl(game) {
+        let basePath = '';
+        if (window.location.pathname.includes('/games/') || window.location.pathname.includes('/pages/')) {
+            basePath = '../';
+        }
+        
+        if (game === 'roulette') {
+            return basePath + 'games/roulette.php';
+        } else if (game === 'crash') {
+            return basePath + 'games/crash.php';
+        }
+        return '#';
+    }
+    
+    /**
+     * Add notification to storage and update UI
+     */
+    function addNotification(title, message, type = 'info', game = null) {
+        const notificationData = {
+            id: Date.now() + Math.random(),
+            title: title,
+            message: message,
+            type: type,
+            game: game,
+            timestamp: new Date(),
+            read: false
+        };
+        
+        notifications.unshift(notificationData); // Add to beginning
+        unreadCount++;
+        
+        // Keep only last 50 notifications
+        if (notifications.length > 50) {
+            notifications = notifications.slice(0, 50);
+        }
+        
+        // Update dropdown
+        updateNotificationDropdown();
+        
+        // Show toast notification
+        showNotificationToast(notificationData);
+    }
+    
+    /**
      * Show a notification toast
      */
-    function showNotification(title, message, type = 'info', game = null) {
+    function showNotificationToast(notificationData) {
         const notification = $('<div class="game-notification"></div>');
-        notification.addClass('notification-' + type);
+        notification.addClass('notification-' + notificationData.type);
+        notification.attr('data-notification-id', notificationData.id);
         
         let icon = 'ℹ️';
-        if (type === 'success') icon = '🎉';
-        else if (type === 'error') icon = '❌';
-        else if (type === 'warning') icon = '⚠️';
-        else if (type === 'bet') icon = '💰';
+        if (notificationData.type === 'success') icon = '🎉';
+        else if (notificationData.type === 'error') icon = '❌';
+        else if (notificationData.type === 'warning') icon = '⚠️';
+        else if (notificationData.type === 'bet') icon = '💰';
         
         let gameIcon = '';
-        if (game === 'roulette') gameIcon = '🛞';
-        else if (game === 'crash') gameIcon = '🚀';
+        if (notificationData.game === 'roulette') gameIcon = '🛞';
+        else if (notificationData.game === 'crash') gameIcon = '🚀';
         
         notification.html(`
             <div class="notification-content">
                 <div class="notification-header">
                     <span class="notification-icon">${gameIcon || icon}</span>
-                    <span class="notification-title">${title}</span>
+                    <span class="notification-title">${notificationData.title}</span>
                     <button class="notification-close">&times;</button>
                 </div>
-                <div class="notification-message">${message}</div>
+                <div class="notification-message">${notificationData.message}</div>
             </div>
         `);
         
         // Add click handler to close
-        notification.find('.notification-close').on('click', function() {
+        notification.find('.notification-close').on('click', function(e) {
+            e.stopPropagation();
+            markAsRead(notificationData.id);
             notification.fadeOut(300, function() {
                 $(this).remove();
             });
         });
         
         // Add click handler to navigate to game
-        if (game) {
+        if (notificationData.game) {
             notification.css('cursor', 'pointer');
             notification.on('click', function(e) {
                 if (!$(e.target).hasClass('notification-close')) {
-                    if (game === 'roulette') {
-                        window.location.href = '../games/roulette.php';
-                    } else if (game === 'crash') {
-                        window.location.href = '../games/crash.php';
-                    }
+                    markAsRead(notificationData.id);
+                    window.location.href = getGameUrl(notificationData.game);
                 }
             });
         }
         
         // Auto-remove after 8 seconds
         setTimeout(function() {
-            notification.fadeOut(300, function() {
-                $(this).remove();
-            });
+            if (notification.is(':visible')) {
+                markAsRead(notificationData.id);
+                notification.fadeOut(300, function() {
+                    $(this).remove();
+                });
+            }
         }, 8000);
         
         // Add to container
@@ -86,6 +139,115 @@ $(document).ready(function() {
         setTimeout(function() {
             notification.addClass('show');
         }, 10);
+    }
+    
+    /**
+     * Mark notification as read
+     */
+    function markAsRead(notificationId) {
+        const notification = notifications.find(n => n.id === notificationId);
+        if (notification && !notification.read) {
+            notification.read = true;
+            unreadCount = Math.max(0, unreadCount - 1);
+            updateNotificationDropdown();
+        }
+    }
+    
+    /**
+     * Mark all notifications as read
+     */
+    function markAllAsRead() {
+        notifications.forEach(n => {
+            if (!n.read) {
+                n.read = true;
+            }
+        });
+        unreadCount = 0;
+        updateNotificationDropdown();
+    }
+    
+    /**
+     * Update notification dropdown
+     */
+    function updateNotificationDropdown() {
+        const dropdown = $('#notificationDropdown');
+        const badge = $('#notificationBadge');
+        const list = $('#notificationList');
+        const emptyState = $('#notificationEmpty');
+        
+        // Update badge
+        if (unreadCount > 0) {
+            badge.text(unreadCount > 99 ? '99+' : unreadCount).show();
+        } else {
+            badge.hide();
+        }
+        
+        // Update list
+        if (notifications.length === 0) {
+            list.hide();
+            emptyState.show();
+        } else {
+            list.show();
+            emptyState.hide();
+            
+            let html = '';
+            notifications.slice(0, 20).forEach(function(notif) {
+                const timeAgo = getTimeAgo(notif.timestamp);
+                const readClass = notif.read ? 'notification-read' : 'notification-unread';
+                
+                let icon = 'ℹ️';
+                if (notif.type === 'success') icon = '🎉';
+                else if (notif.type === 'error') icon = '❌';
+                else if (notif.type === 'warning') icon = '⚠️';
+                else if (notif.type === 'bet') icon = '💰';
+                
+                let gameIcon = '';
+                if (notif.game === 'roulette') gameIcon = '🛞';
+                else if (notif.game === 'crash') gameIcon = '🚀';
+                
+                html += `
+                    <div class="notification-dropdown-item ${readClass}" data-id="${notif.id}">
+                        <div class="notification-dropdown-icon">${gameIcon || icon}</div>
+                        <div class="notification-dropdown-content">
+                            <div class="notification-dropdown-title">${notif.title}</div>
+                            <div class="notification-dropdown-message">${notif.message}</div>
+                            <div class="notification-dropdown-time">${timeAgo}</div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            list.html(html);
+            
+            // Add click handlers
+            list.find('.notification-dropdown-item').on('click', function() {
+                const id = parseFloat($(this).data('id'));
+                const notif = notifications.find(n => n.id === id);
+                if (notif) {
+                    markAsRead(id);
+                    if (notif.game) {
+                        window.location.href = getGameUrl(notif.game);
+                    }
+                }
+            });
+        }
+    }
+    
+    /**
+     * Get time ago string
+     */
+    function getTimeAgo(timestamp) {
+        const now = new Date();
+        const diff = now - timestamp;
+        const seconds = Math.floor(diff / 1000);
+        const minutes = Math.floor(seconds / 60);
+        const hours = Math.floor(minutes / 60);
+        const days = Math.floor(hours / 24);
+        
+        if (days > 0) return days + 'd ago';
+        if (hours > 0) return hours + 'h ago';
+        if (minutes > 0) return minutes + 'm ago';
+        return 'just now';
     }
     
     /**
@@ -126,7 +288,7 @@ $(document).ready(function() {
                     
                     if (newBets.length > 0) {
                         const totalBet = newBets.reduce((sum, bet) => sum + parseFloat(bet.amount || 0), 0);
-                        showNotification(
+                        addNotification(
                             'Roulette Bet Placed',
                             `You placed a bet of $${totalBet.toFixed(2)} on round #${round.round_number}`,
                             'bet',
@@ -168,14 +330,14 @@ $(document).ready(function() {
                             const netResult = totalWin - totalLoss;
                             
                             if (totalWin > 0) {
-                                showNotification(
+                                addNotification(
                                     'Roulette Win! 🎉',
                                     `Round #${round.round_number} result: ${resultNum}. You won $${netResult.toFixed(2)}!`,
                                     'success',
                                     'roulette'
                                 );
                             } else if (totalLoss > 0) {
-                                showNotification(
+                                addNotification(
                                     'Roulette Result',
                                     `Round #${round.round_number} result: ${resultNum}. You lost $${totalLoss.toFixed(2)}.`,
                                     'error',
@@ -215,7 +377,7 @@ $(document).ready(function() {
                     
                     if (newBets.length > 0) {
                         const totalBet = newBets.reduce((sum, bet) => sum + parseFloat(bet.bet_amount || bet.amount || 0), 0);
-                        showNotification(
+                        addNotification(
                             'Crash Bet Placed',
                             `You placed a bet of $${totalBet.toFixed(2)} on round #${round.round_number}`,
                             'bet',
@@ -245,7 +407,7 @@ $(document).ready(function() {
                             
                             if (won && payout > 0) {
                                 const cashOutMult = bet.cash_out_multiplier || 0;
-                                showNotification(
+                                addNotification(
                                     'Crash Win! 🎉',
                                     `Round #${round.round_number} crashed at ${crashPoint.toFixed(2)}x. You cashed out at ${cashOutMult.toFixed(2)}x and won $${payout.toFixed(2)}!`,
                                     'success',
@@ -253,7 +415,7 @@ $(document).ready(function() {
                                 );
                             } else {
                                 const betAmount = parseFloat(bet.bet_amount || bet.amount || 0);
-                                showNotification(
+                                addNotification(
                                     'Crash Result',
                                     `Round #${round.round_number} crashed at ${crashPoint.toFixed(2)}x. You lost $${betAmount.toFixed(2)}.`,
                                     'error',
@@ -305,7 +467,32 @@ $(document).ready(function() {
     
     // Initialize
     initNotificationContainer();
+    updateNotificationDropdown();
     startPolling();
+    
+    // Handle notification dropdown toggle
+    $('#notificationBtn').on('click', function(e) {
+        e.stopPropagation();
+        const dropdown = $('#notificationDropdown');
+        dropdown.toggle();
+        
+        // Close other dropdowns
+        $('.games-menu').removeClass('active');
+        $('.user-menu').removeClass('active');
+    });
+    
+    // Mark all as read button
+    $('#markAllReadBtn').on('click', function(e) {
+        e.stopPropagation();
+        markAllAsRead();
+    });
+    
+    // Close dropdown when clicking outside
+    $(document).on('click', function(e) {
+        if (!$(e.target).closest('#notificationBtn, #notificationDropdown').length) {
+            $('#notificationDropdown').hide();
+        }
+    });
     
     // Cleanup on page unload
     $(window).on('beforeunload', function() {
