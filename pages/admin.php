@@ -399,12 +399,29 @@ include __DIR__ . '/../includes/navbar.php';
                                         <div class="custom-combination-symbols" style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center;">
                                             <?php
                                             $comboSymbols = isset($combination['symbols']) && is_array($combination['symbols']) ? $combination['symbols'] : [];
-                                            // Pad to numReels if needed
-                                            while (count($comboSymbols) < $numReels) {
-                                                $comboSymbols[] = '';
+                                            // Convert old format ({emoji, count}) to new format (array of emojis)
+                                            $emojisArray = [];
+                                            foreach ($comboSymbols as $symbol) {
+                                                if (is_array($symbol) && isset($symbol['emoji'])) {
+                                                    // Old format: {emoji: '🔥', count: 2}
+                                                    $emoji = $symbol['emoji'] ?? '';
+                                                    $count = intval($symbol['count'] ?? 1);
+                                                    for ($j = 0; $j < $count; $j++) {
+                                                        $emojisArray[] = $emoji;
+                                                    }
+                                                } else if (is_string($symbol)) {
+                                                    // New format: array of emojis
+                                                    $emojisArray[] = $symbol;
+                                                }
                                             }
+                                            // Pad to numReels if needed
+                                            while (count($emojisArray) < $numReels) {
+                                                $emojisArray[] = '';
+                                            }
+                                            // Trim to numReels
+                                            $emojisArray = array_slice($emojisArray, 0, $numReels);
                                             for ($i = 0; $i < $numReels; $i++) {
-                                                $emoji = isset($comboSymbols[$i]) ? htmlspecialchars($comboSymbols[$i]) : '';
+                                                $emoji = isset($emojisArray[$i]) && is_string($emojisArray[$i]) ? htmlspecialchars($emojisArray[$i]) : '';
                                                 echo '<div style="display: flex; align-items: center; gap: 5px;">';
                                                 echo '<span style="font-size: 14px; color: #666;">#' . ($i + 1) . '</span>';
                                                 echo '<input type="text" class="custom-combo-emoji" data-position="' . $i . '" value="' . $emoji . '" maxlength="2" style="width: 60px; padding: 5px; font-size: 18px; text-align: center;" placeholder="🎰" required>';
