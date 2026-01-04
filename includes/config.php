@@ -11,7 +11,7 @@ function isLoggedIn() {
 
 function requireLogin() {
     if (!isLoggedIn()) {
-        header('Location: login.php');
+        header('Location: ../pages/login.php');
         exit;
     }
 }

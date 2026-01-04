@@ -117,7 +117,7 @@ $(document).ready(function() {
                     const multiplier = getMultiplier(selectedBet);
                     const winAmount = betAmount * multiplier;
                     
-                    $.post('api.php?action=updateBalance', {
+                    $.post('../api/api.php?action=updateBalance', {
                         amount: winAmount,
                         type: 'win',
                         description: `Roulette win: ${selectedBet} on ${resultNum} (${multiplier}x)`
@@ -128,7 +128,7 @@ $(document).ready(function() {
                         }
                     }, 'json');
                 } else {
-                    $.post('api.php?action=updateBalance', {
+                    $.post('../api/api.php?action=updateBalance', {
                         amount: -betAmount,
                         type: 'bet',
                         description: 'Roulette bet'
@@ -153,7 +153,7 @@ $(document).ready(function() {
     
     // Update balance periodically
     setInterval(function() {
-        $.get('api.php?action=getBalance', function(data) {
+        $.get('../api/api.php?action=getBalance', function(data) {
             if (data.success) {
                 $('#balance').text(parseFloat(data.balance).toFixed(2));
             }

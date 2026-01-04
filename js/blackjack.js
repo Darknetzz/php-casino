@@ -91,14 +91,14 @@ $(document).ready(function() {
             return;
         }
         
-        $.get('api.php?action=getBalance', function(data) {
+        $.get('../api/api.php?action=getBalance', function(data) {
             if (!data.success || parseFloat(data.balance) < bet) {
                 $('#result').html('<div class="alert alert-error">Insufficient funds</div>');
                 return;
             }
             
             // Deduct bet
-            $.post('api.php?action=updateBalance', {
+            $.post('../api/api.php?action=updateBalance', {
                 amount: -bet,
                 type: 'bet',
                 description: 'Blackjack bet'
@@ -158,7 +158,7 @@ $(document).ready(function() {
             won = true;
             const winAmount = isBlackjack ? betAmount * 2.5 : betAmount * 2;
             message = `Dealer busts! You won $${winAmount.toFixed(2)}!`;
-            $.post('api.php?action=updateBalance', {
+            $.post('../api/api.php?action=updateBalance', {
                 amount: winAmount,
                 type: 'win',
                 description: isBlackjack ? 'Blackjack win!' : 'Blackjack win'
@@ -171,7 +171,7 @@ $(document).ready(function() {
             won = true;
             const winAmount = betAmount * 2.5;
             message = `Blackjack! You won $${winAmount.toFixed(2)}!`;
-            $.post('api.php?action=updateBalance', {
+            $.post('../api/api.php?action=updateBalance', {
                 amount: winAmount,
                 type: 'win',
                 description: 'Blackjack win!'
@@ -184,7 +184,7 @@ $(document).ready(function() {
             won = true;
             const winAmount = betAmount * 2;
             message = `You win! You won $${winAmount.toFixed(2)}!`;
-            $.post('api.php?action=updateBalance', {
+            $.post('../api/api.php?action=updateBalance', {
                 amount: winAmount,
                 type: 'win',
                 description: 'Blackjack win'
@@ -197,7 +197,7 @@ $(document).ready(function() {
             message = `Dealer wins! You lost $${betAmount.toFixed(2)}`;
         } else {
             message = `Push! Your bet is returned.`;
-            $.post('api.php?action=updateBalance', {
+            $.post('../api/api.php?action=updateBalance', {
                 amount: betAmount,
                 type: 'win',
                 description: 'Blackjack push'
@@ -233,7 +233,7 @@ $(document).ready(function() {
     
     // Update balance periodically
     setInterval(function() {
-        $.get('api.php?action=getBalance', function(data) {
+        $.get('../api/api.php?action=getBalance', function(data) {
             if (data.success) {
                 $('#balance').text(parseFloat(data.balance).toFixed(2));
             }

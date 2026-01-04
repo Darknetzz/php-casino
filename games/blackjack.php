@@ -1,5 +1,5 @@
 <?php
-require_once 'config.php';
+require_once __DIR__ . '/../includes/config.php';
 requireLogin();
 
 $user = getCurrentUser();
@@ -10,7 +10,7 @@ $user = getCurrentUser();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Blackjack - Casino</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="../style.css">
 </head>
 <body>
     <nav class="navbar">
@@ -18,8 +18,8 @@ $user = getCurrentUser();
             <h2>🎰 Casino</h2>
             <div class="nav-right">
                 <span class="balance">Balance: $<span id="balance"><?php echo number_format($user['balance'], 2); ?></span></span>
-                <a href="index.php" class="btn btn-secondary">Home</a>
-                <a href="logout.php" class="btn btn-secondary">Logout</a>
+                <a href="../index.php" class="btn btn-secondary">Home</a>
+                <a href="../pages/logout.php" class="btn btn-secondary">Logout</a>
             </div>
         </div>
     </nav>
@@ -71,6 +71,6 @@ $user = getCurrentUser();
     </div>
     
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="blackjack.js"></script>
+    <script src="../js/blackjack.js"></script>
 </body>
 </html>

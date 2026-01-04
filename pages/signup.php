@@ -1,5 +1,5 @@
 <?php
-require_once 'config.php';
+require_once __DIR__ . '/../includes/config.php';
 
 $error = '';
 $success = '';
@@ -22,7 +22,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $error = 'Username already exists.';
             } else {
                 if ($db->createUser($username, $email, $password)) {
-                    $success = 'Account created successfully! You can now <a href="login.php">sign in</a>.';
+                    $success = 'Account created successfully! You can now <a href="../pages/login.php">sign in</a>.';
                 } else {
                     $error = 'Failed to create account. Please try again.';
                 }
@@ -39,7 +39,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sign Up - Casino</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="../style.css">
 </head>
 <body>
     <div class="container">
@@ -70,10 +70,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
                 <button type="submit" class="btn btn-primary">Sign Up</button>
             </form>
-            <p class="auth-link">Already have an account? <a href="login.php">Sign In</a></p>
+            <p class="auth-link">Already have an account? <a href="../pages/login.php">Sign In</a></p>
         </div>
     </div>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="auth.js"></script>
+    <script src="../js/auth.js"></script>
 </body>
 </html>

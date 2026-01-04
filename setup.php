@@ -5,6 +5,8 @@
  * Or access via browser if you have proper permissions
  */
 
+require_once __DIR__ . '/includes/database.php';
+
 $dataDir = __DIR__ . '/data';
 $dbPath = $dataDir . '/casino.db';
 

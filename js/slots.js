@@ -66,7 +66,7 @@ $(document).ready(function() {
             
             if (multiplier > 0) {
                 const winAmount = betAmount * multiplier;
-                $.post('api.php?action=updateBalance', {
+                $.post('../api/api.php?action=updateBalance', {
                     amount: winAmount,
                     type: 'win',
                     description: `Slots win: ${s1}${s2}${s3} (${multiplier}x)`
@@ -77,7 +77,7 @@ $(document).ready(function() {
                     }
                 }, 'json');
             } else {
-                $.post('api.php?action=updateBalance', {
+                $.post('../api/api.php?action=updateBalance', {
                     amount: -betAmount,
                     type: 'bet',
                     description: 'Slots bet'
@@ -98,7 +98,7 @@ $(document).ready(function() {
     
     // Update balance periodically
     setInterval(function() {
-        $.get('api.php?action=getBalance', function(data) {
+        $.get('../api/api.php?action=getBalance', function(data) {
             if (data.success) {
                 $('#balance').text(parseFloat(data.balance).toFixed(2));
             }

@@ -1,9 +1,9 @@
 <?php
-require_once 'config.php';
+require_once __DIR__ . '/../includes/config.php';
 
 // Redirect if already logged in
 if (isLoggedIn()) {
-    header('Location: index.php');
+    header('Location: ../index.php');
     exit;
 }
 
@@ -20,7 +20,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($user && password_verify($password, $user['password'])) {
             $_SESSION['user_id'] = $user['id'];
             $_SESSION['username'] = $user['username'];
-            header('Location: index.php');
+            header('Location: ../index.php');
             exit;
         } else {
             $error = 'Invalid username or password.';
@@ -34,7 +34,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sign In - Casino</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="../style.css">
 </head>
 <body>
     <div class="container">
@@ -54,10 +54,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
                 <button type="submit" class="btn btn-primary">Sign In</button>
             </form>
-            <p class="auth-link">Don't have an account? <a href="signup.php">Sign Up</a></p>
+            <p class="auth-link">Don't have an account? <a href="../pages/signup.php">Sign Up</a></p>
         </div>
     </div>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="auth.js"></script>
+    <script src="../js/auth.js"></script>
 </body>
 </html>

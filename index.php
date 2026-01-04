@@ -1,5 +1,5 @@
 <?php
-require_once 'config.php';
+require_once __DIR__ . '/includes/config.php';
 requireLogin();
 
 $user = getCurrentUser();
@@ -18,7 +18,7 @@ $user = getCurrentUser();
             <h2>🎰 Casino</h2>
             <div class="nav-right">
                 <span class="balance">Balance: $<span id="balance"><?php echo number_format($user['balance'], 2); ?></span></span>
-                <a href="logout.php" class="btn btn-secondary">Logout</a>
+                <a href="pages/logout.php" class="btn btn-secondary">Logout</a>
             </div>
         </div>
     </nav>
@@ -30,19 +30,19 @@ $user = getCurrentUser();
         </div>
         
         <div class="games-grid">
-            <div class="game-card" onclick="window.location.href='slots.php'">
+            <div class="game-card" onclick="window.location.href='games/slots.php'">
                 <div class="game-icon">🎰</div>
                 <h3>Slots</h3>
                 <p>Spin the reels and win big!</p>
             </div>
             
-            <div class="game-card" onclick="window.location.href='blackjack.php'">
+            <div class="game-card" onclick="window.location.href='games/blackjack.php'">
                 <div class="game-icon">🃏</div>
                 <h3>Blackjack</h3>
                 <p>Beat the dealer to 21!</p>
             </div>
             
-            <div class="game-card" onclick="window.location.href='roulette.php'">
+            <div class="game-card" onclick="window.location.href='games/roulette.php'">
                 <div class="game-icon">🎲</div>
                 <h3>Roulette</h3>
                 <p>Bet on your lucky number!</p>
@@ -61,7 +61,7 @@ $user = getCurrentUser();
     <script>
         $(document).ready(function() {
             // Load transactions
-            $.get('api.php?action=getTransactions', function(data) {
+            $.get('api/api.php?action=getTransactions', function(data) {
                 if (data.success) {
                     let html = '<table class="transactions-table"><thead><tr><th>Type</th><th>Amount</th><th>Description</th><th>Date</th></tr></thead><tbody>';
                     if (data.transactions.length === 0) {
@@ -85,7 +85,7 @@ $user = getCurrentUser();
             
             // Update balance periodically
             setInterval(function() {
-                $.get('api.php?action=getBalance', function(data) {
+                $.get('api/api.php?action=getBalance', function(data) {
                     if (data.success) {
                         $('#balance').text(parseFloat(data.balance).toFixed(2));
                     }
