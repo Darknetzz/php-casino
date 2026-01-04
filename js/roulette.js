@@ -93,26 +93,24 @@ $(document).ready(function() {
         const anglePerNumber = 360 / rouletteNumbers.length;
         const normalizedRotation = ((rotation % 360) + 360) % 360; // Ensure 0-360
         
-        // Calculate where each pocket will be after rotation and find closest to top (0°)
-        let closestIndex = 0;
-        let minDistance = 360;
+        // When wheel rotates clockwise by R, a pocket at starting angle A
+        // will be at final angle (A + R) mod 360
+        // To find which pocket is at top (0°) after rotation R:
+        // We need (A + R) mod 360 = 0, which means A = (360 - R) mod 360
         
-        for (let i = 0; i < rouletteNumbers.length; i++) {
-            const pocketStartAngle = i * anglePerNumber;
-            // After rotating clockwise by R, pocket at angle A moves to (A + R) mod 360
-            const pocketFinalAngle = (pocketStartAngle + normalizedRotation) % 360;
-            
-            // Distance from top (0°) - check both clockwise and counter-clockwise
-            let distance = Math.min(pocketFinalAngle, 360 - pocketFinalAngle);
-            
-            if (distance < minDistance) {
-                minDistance = distance;
-                closestIndex = i;
-            }
-        }
+        // Calculate which starting angle ends up at 0°
+        let targetStartingAngle = (360 - normalizedRotation) % 360;
+        if (targetStartingAngle < 0) targetStartingAngle += 360;
         
-        const result = rouletteNumbers[closestIndex].num;
-        console.log(`  getNumberAtTop(${rotation}): normalized=${normalizedRotation}, closestIndex=${closestIndex}, number=${result}, minDistance=${minDistance.toFixed(2)}`);
+        // Find which pocket index has this starting angle
+        // Pockets are at: 0, anglePerNumber, 2*anglePerNumber, ..., (n-1)*anglePerNumber
+        // Round to nearest pocket
+        let targetIndex = Math.round(targetStartingAngle / anglePerNumber);
+        targetIndex = targetIndex % rouletteNumbers.length;
+        if (targetIndex < 0) targetIndex += rouletteNumbers.length;
+        
+        const result = rouletteNumbers[targetIndex].num;
+        console.log(`  getNumberAtTop(${rotation.toFixed(2)}): normalized=${normalizedRotation.toFixed(2)}, targetAngle=${targetStartingAngle.toFixed(2)}, index=${targetIndex}, number=${result}`);
         
         return result;
     }
