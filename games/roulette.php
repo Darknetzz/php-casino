@@ -3,17 +3,10 @@ require_once __DIR__ . '/../includes/config.php';
 requireLogin();
 
 $user = getCurrentUser();
+$pageTitle = 'Roulette';
+include __DIR__ . '/../includes/header.php';
+include __DIR__ . '/../includes/navbar.php';
 ?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Roulette - Casino</title>
-    <link rel="stylesheet" href="../style.css">
-</head>
-<body>
-    <?php include __DIR__ . '/../includes/navbar.php'; ?>
     
     <div class="container">
         <div class="game-container">
@@ -113,8 +106,5 @@ $user = getCurrentUser();
         </div>
     </div>
     
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="../js/navbar.js"></script>
     <script src="../js/roulette.js"></script>
-</body>
-</html>
+<?php include __DIR__ . '/../includes/footer.php'; ?>

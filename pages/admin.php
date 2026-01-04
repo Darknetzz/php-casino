@@ -111,17 +111,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 $settings = $db->getAllSettings();
 $users = $db->getAllUsers();
+$pageTitle = 'Admin Panel';
+include __DIR__ . '/../includes/header.php';
+include __DIR__ . '/../includes/navbar.php';
 ?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Panel - Casino</title>
-    <link rel="stylesheet" href="../style.css">
-</head>
-<body>
-    <?php include __DIR__ . '/../includes/navbar.php'; ?>
     
     <div class="container">
         <div class="admin-panel">
@@ -384,8 +377,6 @@ $users = $db->getAllUsers();
         </div>
     </div>
     
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="../js/navbar.js"></script>
     <script>
         // Define functions globally so they can be called from onclick handlers
         function editBalance(userId, currentBalance) {
@@ -419,5 +410,4 @@ $users = $db->getAllUsers();
             };
         });
     </script>
-</body>
-</html>
+<?php include __DIR__ . '/../includes/footer.php'; ?>

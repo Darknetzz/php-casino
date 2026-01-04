@@ -3,17 +3,10 @@ require_once __DIR__ . '/includes/config.php';
 requireLogin();
 
 $user = getCurrentUser();
+$pageTitle = 'Welcome';
+include __DIR__ . '/includes/header.php';
+include __DIR__ . '/includes/navbar.php';
 ?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Casino - Welcome</title>
-    <link rel="stylesheet" href="style.css">
-</head>
-<body>
-    <?php include __DIR__ . '/includes/navbar.php'; ?>
     
     <div class="container">
         <div class="welcome-section">
@@ -55,12 +48,10 @@ $user = getCurrentUser();
         </div>
     </div>
     
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="js/navbar.js"></script>
     <script>
         $(document).ready(function() {
             // Load transactions
-            $.get('api/api.php?action=getTransactions', function(data) {
+            $.get(getApiPath('getTransactions'), function(data) {
                 if (data.success) {
                     let html = '<table class="transactions-table"><thead><tr><th>Type</th><th>Amount</th><th>Description</th><th>Date</th></tr></thead><tbody>';
                     if (data.transactions.length === 0) {
@@ -81,16 +72,6 @@ $user = getCurrentUser();
                     $('#transactions').html(html);
                 }
             }, 'json');
-            
-            // Update balance periodically
-            setInterval(function() {
-                $.get('api/api.php?action=getBalance', function(data) {
-                    if (data.success) {
-                        $('#balance').text(parseFloat(data.balance).toFixed(2));
-                    }
-                }, 'json');
-            }, 5000);
         });
     </script>
-</body>
-</html>
+<?php include __DIR__ . '/includes/footer.php'; ?>

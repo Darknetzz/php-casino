@@ -3,17 +3,10 @@ require_once __DIR__ . '/../includes/config.php';
 requireLogin();
 
 $user = getCurrentUser();
+$pageTitle = 'Profile';
+include __DIR__ . '/../includes/header.php';
+include __DIR__ . '/../includes/navbar.php';
 ?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Profile - Casino</title>
-    <link rel="stylesheet" href="../style.css">
-</head>
-<body>
-    <?php include __DIR__ . '/../includes/navbar.php'; ?>
     
     <div class="container">
         <div class="profile-container">
@@ -118,7 +111,7 @@ $user = getCurrentUser();
                 
                 const defaultBet = $('#default_bet').val();
                 
-                $.post('../api/api.php?action=updateDefaultBet', {
+                $.post(getApiPath('updateDefaultBet'), {
                     default_bet: defaultBet
                 }, function(data) {
                     if (data.success) {
@@ -144,7 +137,7 @@ $user = getCurrentUser();
                     return;
                 }
                 
-                $.post('../api/api.php?action=updateBalance', {
+                $.post(getApiPath('updateBalance'), {
                     amount: amount,
                     type: 'deposit',
                     description: 'Balance refill'
@@ -163,9 +156,9 @@ $user = getCurrentUser();
                 }, 'json');
             });
             
-            // Update balance periodically
+            // Update balance periodically (common.js handles this, but we also update balance-large)
             setInterval(function() {
-                $.get('../api/api.php?action=getBalance', function(data) {
+                $.get(getApiPath('getBalance'), function(data) {
                     if (data.success) {
                         $('#balance').text(parseFloat(data.balance).toFixed(2));
                         $('.balance-large').text('$' + parseFloat(data.balance).toFixed(2));
@@ -174,5 +167,4 @@ $user = getCurrentUser();
             }, 5000);
         });
     </script>
-</body>
-</html>
+<?php include __DIR__ . '/../includes/footer.php'; ?>

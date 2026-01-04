@@ -33,15 +33,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 ?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sign Up - Casino</title>
-    <link rel="stylesheet" href="../style.css">
-</head>
-<body>
+<?php
+$pageTitle = 'Sign Up';
+include __DIR__ . '/../includes/header.php';
+?>
     <div class="container">
         <div class="auth-box">
             <h1>🎰 Casino Sign Up</h1>
@@ -73,7 +68,5 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <p class="auth-link">Already have an account? <a href="../pages/login.php">Sign In</a></p>
         </div>
     </div>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="../js/auth.js"></script>
-</body>
-</html>
+<?php include __DIR__ . '/../includes/footer.php'; ?>
