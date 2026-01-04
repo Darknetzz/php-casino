@@ -1,5 +1,6 @@
 $(document).ready(function() {
     let maxBet = 100;
+    let maxBetEnabled = true;
     let isGameActive = false;
     let currentMultiplier = 1.00;
     let crashPoint = 1.00;
@@ -36,10 +37,14 @@ $(document).ready(function() {
     // Load max bet, default bet, and crash settings from settings
     $.get(getApiPath('getSettings'), function(data) {
         if (data.success) {
-            if (data.settings.max_bet) {
+            maxBetEnabled = data.settings.max_bet_enabled !== false;
+            if (data.settings.max_bet && maxBetEnabled) {
                 maxBet = data.settings.max_bet;
                 $('#maxBet').text(maxBet);
                 $('#betAmount').attr('max', maxBet);
+            } else if (!maxBetEnabled) {
+                $('#maxBet').text('Unlimited');
+                $('#betAmount').removeAttr('max');
             }
             if (data.settings.default_bet) {
                 $('#betAmount').val(data.settings.default_bet);
@@ -569,8 +574,9 @@ $(document).ready(function() {
         
         betAmount = parseFloat($('#betAmount').val());
         
-        if (betAmount < 1 || betAmount > maxBet) {
-            $('#result').html('<div class="alert alert-error">Bet must be between $1 and $' + maxBet + '</div>');
+        if (betAmount < 1 || (maxBetEnabled && betAmount > maxBet)) {
+            const maxBetText = maxBetEnabled ? '$' + maxBet : 'unlimited';
+            $('#result').html('<div class="alert alert-error">Bet must be at least $1' + (maxBetEnabled ? ' and not exceed $' + maxBet : '') + '</div>');
             return;
         }
         

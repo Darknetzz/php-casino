@@ -3,6 +3,7 @@ $(document).ready(function() {
     const diceValues = [1, 2, 3, 4, 5, 6];
     let isRolling = false;
     let maxBet = 100;
+    let maxBetEnabled = true;
     let settings = {};
     
     // Multipliers for different combinations (will be loaded from settings)
@@ -15,10 +16,14 @@ $(document).ready(function() {
     $.get('../api/api.php?action=getSettings', function(data) {
         if (data.success) {
             settings = data.settings;
-            if (data.settings.max_bet) {
+            maxBetEnabled = data.settings.max_bet_enabled !== false;
+            if (data.settings.max_bet && maxBetEnabled) {
                 maxBet = data.settings.max_bet;
                 $('#maxBet').text(maxBet);
                 $('#betAmount').attr('max', maxBet);
+            } else if (!maxBetEnabled) {
+                $('#maxBet').text('Unlimited');
+                $('#betAmount').removeAttr('max');
             }
             if (data.settings.default_bet) {
                 $('#betAmount').val(data.settings.default_bet);
@@ -110,8 +115,9 @@ $(document).ready(function() {
         if (isRolling) return;
         
         const betAmount = parseFloat($('#betAmount').val());
-        if (betAmount < 1 || betAmount > maxBet) {
-            $('#result').html('<div class="alert alert-error">Bet must be between $1 and $' + maxBet + '</div>');
+        if (betAmount < 1 || (maxBetEnabled && betAmount > maxBet)) {
+            const maxBetText = maxBetEnabled ? '$' + maxBet : 'unlimited';
+            $('#result').html('<div class="alert alert-error">Bet must be at least $1' + (maxBetEnabled ? ' and not exceed $' + maxBet : '') + '</div>');
             return;
         }
         

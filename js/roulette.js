@@ -4,6 +4,7 @@ $(document).ready(function() {
     let isSpinning = false;
     let currentRotation = 0;
     let maxBet = 100;
+    let maxBetEnabled = true;
     let currentRound = null;
     let lastRoundResult = null; // Store the last round result
     let pollInterval = null;
@@ -20,10 +21,14 @@ $(document).ready(function() {
     // Load max bet, default bet, and spinning duration from settings
     $.get('../api/api.php?action=getSettings', function(data) {
         if (data.success) {
-            if (data.settings.max_bet) {
+            maxBetEnabled = data.settings.max_bet_enabled !== false; // Default to true if not set
+            if (data.settings.max_bet && maxBetEnabled) {
                 maxBet = data.settings.max_bet;
                 $('#maxBet').text(maxBet);
                 $('#betAmount').attr('max', maxBet);
+            } else if (!maxBetEnabled) {
+                $('#maxBet').text('Unlimited');
+                $('#betAmount').removeAttr('max');
             }
             if (data.settings.default_bet) {
                 $('#betAmount').val(data.settings.default_bet);
@@ -492,7 +497,7 @@ $(document).ready(function() {
                     $('#rouletteCenterResult').css('opacity', 0);
                     const bettingEndsIn = round.time_until_betting_ends || 0;
                     const resultIn = round.time_until_result || (bettingEndsIn + 4); // fallback to +4 if not provided
-                    $('#rouletteResult').html(`Round #${round.round_number} - Betting ends in ${Math.ceil(bettingEndsIn)}s`);
+                    $('#rouletteResult').html(`Round #${round.round_number}`);
                     // Hide spin button, show countdown in central mode
                     $('#spinBtn').hide();
                     $('#roundCountdown').show();
@@ -638,7 +643,8 @@ $(document).ready(function() {
                 if (countdownPhase === 'betting') {
                     // Show betting countdown
                     if (bettingEnds > 0) {
-                        $('#rouletteResult').html(`Round #${currentRound.round_number} - Place your bets (${bettingEnds}s)...`);
+                        $('#rouletteResult').html(`Round #${currentRound.round_number}`);
+                        $('#countdownText').html(`Place your bets (${bettingEnds}s)...`);
                         
                         // Enable betting
                         $('.bet-btn, #addNumberBetBtn').prop('disabled', false).removeClass('disabled');
@@ -647,7 +653,8 @@ $(document).ready(function() {
                 } else if (countdownPhase === 'spinning') {
                     // Show spinning countdown
                     if (spinningTime > 0) {
-                        $('#rouletteResult').html(`Round #${currentRound.round_number} - Spinning...`);
+                        $('#rouletteResult').html(`Round #${currentRound.round_number}`);
+                        $('#countdownText').html(`Spinning in ${spinningTime}s...`);
                     } else {
                         clearInterval(bettingCountdownInterval);
                         bettingCountdownInterval = null;
@@ -934,8 +941,9 @@ $(document).ready(function() {
         const multiplier = parseInt($(this).data('multiplier'));
         const amount = parseFloat($('#betAmount').val());
         
-        if (isNaN(amount) || amount < 1 || amount > maxBet) {
-            $('#bettingResult').html('<div class="alert alert-error">Bet amount must be between $1 and $' + maxBet + '</div>');
+        if (isNaN(amount) || amount < 1 || (maxBetEnabled && amount > maxBet)) {
+            const maxBetText = maxBetEnabled ? '$' + maxBet : 'unlimited';
+            $('#bettingResult').html('<div class="alert alert-error">Bet amount must be at least $1' + (maxBetEnabled ? ' and not exceed $' + maxBet : '') + '</div>');
             $('#result').html('');
             return;
         }
@@ -990,8 +998,9 @@ $(document).ready(function() {
             return;
         }
         
-        if (isNaN(amount) || amount < 1 || amount > maxBet) {
-            $('#bettingResult').html('<div class="alert alert-error">Bet amount must be between $1 and $' + maxBet + '</div>');
+        if (isNaN(amount) || amount < 1 || (maxBetEnabled && amount > maxBet)) {
+            const maxBetText = maxBetEnabled ? '$' + maxBet : 'unlimited';
+            $('#bettingResult').html('<div class="alert alert-error">Bet amount must be at least $1' + (maxBetEnabled ? ' and not exceed $' + maxBet : '') + '</div>');
             $('#result').html('');
             return;
         }
@@ -1060,7 +1069,7 @@ $(document).ready(function() {
         const totalBetAmount = numberBets.reduce((sum, bet) => sum + bet.amount, 0) + 
                               colorBets.reduce((sum, bet) => sum + bet.amount, 0);
         
-        if (totalBetAmount > maxBet) {
+        if (maxBetEnabled && totalBetAmount > maxBet) {
             $('#bettingResult').html('<div class="alert alert-error">Total bet amount ($' + totalBetAmount.toFixed(2) + ') exceeds maximum of $' + formatNumber(maxBet) + '</div>');
             $('#result').html('');
             return;

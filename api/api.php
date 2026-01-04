@@ -160,6 +160,8 @@ switch ($action) {
         $settings = [
             'max_bet' => floatval(getSetting('max_bet', 100)),
             'max_deposit' => floatval(getSetting('max_deposit', 10000)),
+            'max_bet_enabled' => getSetting('max_bet_enabled', '1') === '1',
+            'max_deposit_enabled' => getSetting('max_deposit_enabled', '1') === '1',
             'default_bet' => $defaultBet,
             'slots_multipliers' => $slotsMultipliers,
             'slots_num_reels' => intval(getSetting('slots_num_reels', 3)),
@@ -437,10 +439,13 @@ switch ($action) {
             break;
         }
         
-        $maxBet = floatval(getSetting('max_bet', 100));
-        if ($betAmount > $maxBet) {
-            echo json_encode(['success' => false, 'message' => 'Bet amount exceeds maximum of $' . number_format($maxBet, 2)]);
-            break;
+        $maxBetEnabled = getSetting('max_bet_enabled', '1') === '1';
+        if ($maxBetEnabled) {
+            $maxBet = floatval(getSetting('max_bet', 100));
+            if ($betAmount > $maxBet) {
+                echo json_encode(['success' => false, 'message' => 'Bet amount exceeds maximum of $' . number_format($maxBet, 2)]);
+                break;
+            }
         }
         
         // Check balance

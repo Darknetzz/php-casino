@@ -4,6 +4,7 @@ $(document).ready(function() {
     let isDropping = false;
     let activeBalls = []; // Array to track multiple balls
     let maxBet = 100;
+    let maxBetEnabled = true;
     
     // Multipliers for each slot (0-8, left to right) - will be loaded from settings
     let multipliers = [0.2, 0.5, 0.8, 1.0, 2.0, 1.0, 0.8, 0.5, 0.2];
@@ -12,10 +13,14 @@ $(document).ready(function() {
     // Load max bet, default bet, and multipliers from settings
     $.get('../api/api.php?action=getSettings', function(data) {
         if (data.success) {
-            if (data.settings.max_bet) {
+            maxBetEnabled = data.settings.max_bet_enabled !== false;
+            if (data.settings.max_bet && maxBetEnabled) {
                 maxBet = data.settings.max_bet;
                 $('#maxBet').text(maxBet);
                 $('#betAmount').attr('max', maxBet);
+            } else if (!maxBetEnabled) {
+                $('#maxBet').text('Unlimited');
+                $('#betAmount').removeAttr('max');
             }
             if (data.settings.default_bet) {
                 $('#betAmount').val(data.settings.default_bet);
@@ -88,8 +93,9 @@ $(document).ready(function() {
         const betAmount = parseFloat($('#betAmount').val());
         const ballCount = parseInt($('#ballCount').val()) || 1;
         
-        if (betAmount < 1 || betAmount > maxBet) {
-            $('#result').html('<div class="alert alert-error">Bet must be between $1 and $' + maxBet + '</div>');
+        if (betAmount < 1 || (maxBetEnabled && betAmount > maxBet)) {
+            const maxBetText = maxBetEnabled ? '$' + maxBet : 'unlimited';
+            $('#result').html('<div class="alert alert-error">Bet must be at least $1' + (maxBetEnabled ? ' and not exceed $' + maxBet : '') + '</div>');
             return;
         }
         

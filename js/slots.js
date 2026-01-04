@@ -2,6 +2,7 @@ $(document).ready(function() {
     let symbols = [];
     let isSpinning = false;
     let maxBet = 100;
+    let maxBetEnabled = true;
     let settings = {};
     let multipliers = {};
     let nOfKindRules = [];
@@ -29,10 +30,14 @@ $(document).ready(function() {
     $.get('../api/api.php?action=getSettings', function(data) {
         if (data.success) {
             settings = data.settings;
-            if (data.settings.max_bet) {
+            maxBetEnabled = data.settings.max_bet_enabled !== false;
+            if (data.settings.max_bet && maxBetEnabled) {
                 maxBet = data.settings.max_bet;
                 $('#maxBet').text(maxBet);
                 $('#betAmount').attr('max', maxBet);
+            } else if (!maxBetEnabled) {
+                $('#maxBet').text('Unlimited');
+                $('#betAmount').removeAttr('max');
             }
             if (data.settings.default_bet) {
                 $('#betAmount').val(data.settings.default_bet).trigger('change');
@@ -459,8 +464,9 @@ $(document).ready(function() {
         if (isSpinning) return;
         
         const betAmount = parseFloat($('#betAmount').val());
-        if (betAmount < 1 || betAmount > maxBet) {
-            $('#result').html('<div class="alert alert-error">Bet must be between $1 and $' + maxBet + '</div>');
+        if (betAmount < 1 || (maxBetEnabled && betAmount > maxBet)) {
+            const maxBetText = maxBetEnabled ? '$' + maxBet : 'unlimited';
+            $('#result').html('<div class="alert alert-error">Bet must be at least $1' + (maxBetEnabled ? ' and not exceed $' + maxBet : '') + '</div>');
             return;
         }
         
