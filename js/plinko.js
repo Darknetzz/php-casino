@@ -133,6 +133,9 @@ $(document).ready(function() {
                     const ballId = 'ball_' + Date.now() + '_' + i;
                     const ballElement = $('<div class="plinko-ball"></div>');
                     ballElement.attr('data-ball-id', ballId);
+                    // Add counter element for overlapping balls
+                    const counterElement = $('<span class="ball-counter"></span>');
+                    ballElement.append(counterElement);
                     board.append(ballElement);
                     
                     // Start at the top of the triangle (row 0)
@@ -140,6 +143,7 @@ $(document).ready(function() {
                     const ballData = {
                         id: ballId,
                         element: ballElement,
+                        counterElement: counterElement,
                         currentRow: 0,
                         currentCol: 0, // Column index within the current row (0 to currentRow)
                         completed: false,
@@ -152,6 +156,8 @@ $(document).ready(function() {
                     activeBalls.push(ballData);
                     updateBallPosition(ballData);
                 }
+                // Update counters after all balls are created
+                updateBallCounters();
                 
                 // Animate all balls dropping step by step
                 const stepDelay = 350; // Milliseconds between steps (slower movement)
@@ -395,6 +401,49 @@ $(document).ready(function() {
                 transition: 'left 0.3s ease-out, top 0.3s ease-out'
             });
         }
+        
+        // Update counters after position update
+        updateBallCounters();
+    }
+    
+    // Update counters on balls that are at the same position
+    function updateBallCounters() {
+        if (!activeBalls || activeBalls.length === 0) return;
+        
+        // Group balls by position (row, col rounded to avoid floating point issues)
+        const positionGroups = {};
+        activeBalls.forEach(function(ball) {
+            if (ball.completed) return;
+            
+            const row = ball.currentRow;
+            // Round column to nearest 0.01 to handle floating point precision
+            const col = Math.round(ball.currentCol * 100) / 100;
+            const positionKey = `${row},${col}`;
+            
+            if (!positionGroups[positionKey]) {
+                positionGroups[positionKey] = [];
+            }
+            positionGroups[positionKey].push(ball);
+        });
+        
+        // Update counters for each ball
+        activeBalls.forEach(function(ball) {
+            if (ball.completed || !ball.counterElement) return;
+            
+            const row = ball.currentRow;
+            const col = Math.round(ball.currentCol * 100) / 100;
+            const positionKey = `${row},${col}`;
+            const ballsAtPosition = positionGroups[positionKey] || [];
+            
+            if (ballsAtPosition.length > 1) {
+                // Multiple balls at this position - show counter with number of balls
+                ball.counterElement.text(ballsAtPosition.length);
+                ball.counterElement.css('display', 'flex');
+            } else {
+                // Only one ball at this position - hide counter
+                ball.counterElement.css('display', 'none');
+            }
+        });
     }
     
     // Initialize board
