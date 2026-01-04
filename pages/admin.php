@@ -1267,25 +1267,25 @@ include __DIR__ . '/../includes/navbar.php';
                 
                 <!-- Worker Management Section -->
                 <h3 style="margin-top: 20px; margin-bottom: 15px; color: #667eea;">⚙️ Worker Management</h3>
-                <p style="margin-bottom: 15px; color: #666;">Manage the game rounds worker process. Required for central mode roulette and crash games.</p>
+                <p class="admin-description" style="margin-bottom: 15px;">Manage the game rounds worker process. Required for central mode roulette and crash games.</p>
                 
                 <!-- Worker Interval Setting -->
-                <form method="POST" action="admin.php?tab=rounds" class="admin-form" style="margin-bottom: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px;">
+                <form method="POST" action="admin.php?tab=rounds" class="admin-form worker-settings-form">
                     <div class="form-group" style="margin-bottom: 0;">
                         <label for="worker_interval">Worker Check Interval (seconds)</label>
                         <input type="number" id="worker_interval" name="worker_interval" min="1" max="60" step="1" 
                                value="<?php echo htmlspecialchars($settings['worker_interval'] ?? '1'); ?>" required style="max-width: 150px;">
-                        <small>How often the worker checks for new rounds (1-60 seconds). Lower values = more frequent checks but higher CPU usage. Changes take effect after restarting the worker.</small>
+                        <small class="worker-settings-small">How often the worker checks for new rounds (1-60 seconds). Lower values = more frequent checks but higher CPU usage. Changes take effect after restarting the worker.</small>
                     </div>
                     <button type="submit" name="update_worker_settings" class="btn btn-secondary" style="margin-top: 10px;">Update Interval</button>
                 </form>
                 
-                <div id="workerStatus" style="margin-bottom: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px;">
+                <div id="workerStatus" class="worker-status-box">
                     <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
                         <strong>Status:</strong>
                         <span id="workerStatusText" style="padding: 5px 10px; border-radius: 4px; font-weight: bold;">Loading...</span>
                     </div>
-                    <div id="workerDetails" style="font-size: 0.9em; color: #666;">
+                    <div id="workerDetails" class="worker-details">
                         <div>PID: <span id="workerPid">-</span></div>
                     </div>
                 </div>
@@ -1300,7 +1300,7 @@ include __DIR__ . '/../includes/navbar.php';
                 
                 <div id="workerMessage" style="margin-top: 15px;"></div>
                 
-                <hr style="border: none; border-top: 2px solid #e0e0e0; margin: 40px 0 30px 0;">
+                <hr class="worker-section-separator">
                 
                 <!-- Game Rounds Monitor Section -->
                 <h3 style="margin-top: 20px; margin-bottom: 15px; color: #667eea;">Game Rounds Monitor</h3>

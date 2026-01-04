@@ -35,32 +35,30 @@ include __DIR__ . '/../includes/navbar.php';
     
     <script>
     $(document).ready(function() {
-        const STORAGE_KEY = 'casino_notifications';
-        
         /**
-         * Load notifications from localStorage
+         * Load notifications from API
          */
-        function loadNotifications() {
-            try {
-                const stored = localStorage.getItem(STORAGE_KEY);
-                if (stored) {
-                    return JSON.parse(stored);
+        function loadNotifications(callback) {
+            $.get(getApiPath('getNotifications') + '&limit=200', function(data) {
+                if (data.success && data.notifications) {
+                    // Convert database format to our format
+                    const notifications = data.notifications.map(n => ({
+                        id: parseInt(n.id),
+                        title: n.title,
+                        message: n.message,
+                        type: n.type,
+                        game: n.game,
+                        read: n.read === 1 || n.read === '1',
+                        timestamp: new Date(n.created_at)
+                    }));
+                    if (callback) callback(notifications);
+                } else {
+                    if (callback) callback([]);
                 }
-            } catch (e) {
-                console.error('Error loading notifications:', e);
-            }
-            return [];
-        }
-        
-        /**
-         * Save notifications to localStorage
-         */
-        function saveNotifications(notifications) {
-            try {
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(notifications));
-            } catch (e) {
-                console.error('Error saving notifications:', e);
-            }
+            }, 'json').fail(function() {
+                console.error('Failed to load notifications');
+                if (callback) callback([]);
+            });
         }
         
         /**
@@ -102,23 +100,23 @@ include __DIR__ . '/../includes/navbar.php';
          * Render notifications
          */
         function renderNotifications() {
-            const notifications = loadNotifications();
-            const list = $('#notificationsPageList');
-            const empty = $('#notificationsEmpty');
-            
-            if (notifications.length === 0) {
-                list.hide();
-                empty.show();
-                return;
-            }
-            
-            list.show();
-            empty.hide();
-            
-            // Sort by timestamp (newest first)
-            const sorted = notifications.sort((a, b) => {
-                return new Date(b.timestamp) - new Date(a.timestamp);
-            });
+            loadNotifications(function(notifications) {
+                const list = $('#notificationsPageList');
+                const empty = $('#notificationsEmpty');
+                
+                if (notifications.length === 0) {
+                    list.hide();
+                    empty.show();
+                    return;
+                }
+                
+                list.show();
+                empty.hide();
+                
+                // Sort by timestamp (newest first)
+                const sorted = notifications.sort((a, b) => {
+                    return new Date(b.timestamp) - new Date(a.timestamp);
+                });
             
             let html = '';
             sorted.forEach(function(notif) {
@@ -150,15 +148,16 @@ include __DIR__ . '/../includes/navbar.php';
                 `;
             });
             
-            list.html(html);
-            
-            // Add click handlers
-            list.find('.notification-clickable').on('click', function() {
-                const id = parseFloat($(this).data('id'));
-                const notif = notifications.find(n => n.id === id);
-                if (notif && notif.game) {
-                    window.location.href = getGameUrl(notif.game);
-                }
+                list.html(html);
+                
+                // Add click handlers
+                list.find('.notification-clickable').on('click', function() {
+                    const id = parseFloat($(this).data('id'));
+                    const notif = notifications.find(n => n.id === id);
+                    if (notif && notif.game) {
+                        window.location.href = getGameUrl(notif.game);
+                    }
+                });
             });
         }
         
@@ -166,19 +165,20 @@ include __DIR__ . '/../includes/navbar.php';
          * Mark all as read
          */
         $('#markAllReadBtn').on('click', function() {
-            const notifications = loadNotifications();
-            notifications.forEach(n => {
-                n.read = true;
-            });
-            saveNotifications(notifications);
-            renderNotifications();
-            
-            // Update badge in navbar if notification system is loaded
-            if (typeof window.markAllAsRead === 'function') {
-                window.markAllAsRead();
-            } else if (typeof updateNotificationDropdown === 'function') {
-                updateNotificationDropdown();
-            }
+            $.post(getApiPath('markAllNotificationsAsRead'), {}, function(data) {
+                if (data.success) {
+                    renderNotifications();
+                    
+                    // Update badge in navbar if notification system is loaded
+                    if (typeof window.markAllAsRead === 'function') {
+                        window.markAllAsRead();
+                    } else if (typeof window.updateNotificationDropdown === 'function') {
+                        window.updateNotificationDropdown();
+                    }
+                } else {
+                    alert('Failed to mark all notifications as read');
+                }
+            }, 'json');
         });
         
         /**
@@ -186,18 +186,25 @@ include __DIR__ . '/../includes/navbar.php';
          */
         $('#clearAllBtn').on('click', function() {
             if (confirm('Are you sure you want to clear all notifications? This cannot be undone.')) {
-                localStorage.removeItem(STORAGE_KEY);
-                
-                // Update global references
-                window.notifications = [];
-                window.unreadCount = 0;
-                
-                renderNotifications();
-                
-                // Update badge in navbar if notification system is loaded
-                if (typeof window.updateNotificationDropdown === 'function') {
-                    window.updateNotificationDropdown();
-                }
+                $.post(getApiPath('deleteAllNotifications'), {}, function(data) {
+                    if (data.success) {
+                        renderNotifications();
+                        
+                        // Update badge in navbar if notification system is loaded
+                        if (typeof window.updateNotificationDropdown === 'function') {
+                            // Reload notifications in the global system
+                            if (typeof window.loadNotificationsFromAPI === 'function') {
+                                window.loadNotificationsFromAPI(function() {
+                                    window.updateNotificationDropdown();
+                                });
+                            } else {
+                                window.updateNotificationDropdown();
+                            }
+                        }
+                    } else {
+                        alert('Failed to clear all notifications');
+                    }
+                }, 'json');
             }
         });
         

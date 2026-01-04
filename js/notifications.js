@@ -539,6 +539,7 @@ $(document).ready(function() {
     // Make functions accessible globally
     window.updateNotificationDropdown = updateNotificationDropdown;
     window.markAllAsRead = markAllAsRead;
+    window.loadNotificationsFromAPI = loadNotificationsFromAPI;
     
     /**
      * Poll for unread notification count
