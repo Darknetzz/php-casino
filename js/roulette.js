@@ -395,6 +395,8 @@ $(document).ready(function() {
                     currentRound = null;
                     // Update status display
                     updateRoundStatusDisplay(null);
+                    // Clear all players' bets display
+                    updateAllPlayersBetsDisplay([]);
                     // Load history anyway
                     loadHistory();
                     // Continue polling to catch when a round starts
