@@ -1743,17 +1743,21 @@ body.dark-mode .roulette-pocket {
     color: #e0e0e0;
 }
 
-body.dark-mode .roulette-pocket.red {
-    background: rgba(220, 53, 69, 0.8);
+body.dark-mode .roulette-pocket.roulette-red {
+    background: #dc3545 !important;
+    color: white !important;
 }
 
-body.dark-mode .roulette-pocket.black {
-    background: rgba(30, 30, 30, 0.9);
-    color: #e0e0e0;
+body.dark-mode .roulette-pocket.roulette-black {
+    background: #1a1a1a !important;
+    color: white !important;
 }
 
-body.dark-mode .roulette-pocket.green {
-    background: rgba(40, 167, 69, 0.8);
+body.dark-mode .roulette-pocket.roulette-green {
+    background: #28a745 !important;
+    color: white !important;
+    border: 2px solid #fff !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3), 0 0 8px rgba(40, 167, 69, 0.4) !important;
 }
 
 body.dark-mode .plinko-peg {

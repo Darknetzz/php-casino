@@ -104,33 +104,7 @@ include __DIR__ . '/../includes/navbar.php';
         </div>
     </div>
     
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="../js/navbar.js"></script>
     <script>
-        $(document).ready(function() {
-            // Games menu dropdown toggle
-            $('#gamesMenuBtn').on('click', function(e) {
-                e.stopPropagation();
-                $('.games-menu').toggleClass('active');
-            });
-            
-            // User menu dropdown toggle
-            $('#userMenuBtn').on('click', function(e) {
-                e.stopPropagation();
-                $('.user-menu').toggleClass('active');
-            });
-            
-            // Close dropdowns when clicking outside
-            $(document).on('click', function(e) {
-                if (!$(e.target).closest('.user-menu').length) {
-                    $('.user-menu').removeClass('active');
-                }
-                if (!$(e.target).closest('.games-menu').length) {
-                    $('.games-menu').removeClass('active');
-                }
-            });
-        });
-        
         function setRefillAmount(amount) {
             $('#refill_amount').val(amount);
         }
