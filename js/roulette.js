@@ -170,14 +170,16 @@ $(document).ready(function() {
         
         // Calculate the target rotation
         // After rotating by totalRotation, the pocket at pocketStartAngle should be at 0 (top)
-        // Current position of winning pocket: (pocketStartAngle - currentRotation) % 360
-        // We need to rotate so it ends up at 0
-        // So: (pocketStartAngle - currentRotation + additionalRotation) % 360 = 0
-        // Therefore: additionalRotation = (360 - pocketStartAngle + currentRotation) % 360
+        // Formula: (pocketStartAngle + totalRotation) % 360 = 0
+        // Therefore: totalRotation = (360 - pocketStartAngle) % 360 (plus full spins)
+        // CSS transform is absolute, so we calculate the absolute rotation needed
         const fullSpins = 5 + Math.random() * 3; // 5-8 full spins
-        const rotationToTop = (360 - pocketStartAngle + currentRotation) % 360;
-        const additionalRotation = (fullSpins * 360) + rotationToTop;
-        const totalRotation = currentRotation + additionalRotation;
+        // Calculate base rotation to get winning pocket to top (from original position)
+        const baseRotation = (360 - pocketStartAngle) % 360;
+        // Add full spins to make it look natural
+        // The totalRotation is the absolute rotation from the original position
+        const totalRotation = (fullSpins * 360) + baseRotation;
+        // Update currentRotation to track where we are (modulo 360)
         currentRotation = totalRotation % 360;
         
         // Animate wheel spin

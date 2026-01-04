@@ -1,5 +1,5 @@
-- [ ] Colorize the bet buttons on roulette
-- [ ] Make spin the wheel show 3 on each row
-- [ ] Plinkoballs are visually misaligned, please fix
+- [x] Colorize the bet buttons on roulette
+- [x] Make spin the wheel show 3 on each row
+- [-] Plinkoballs are visually misaligned, please fix
 - [ ] Roulette: let player bet on multiple numbers with possibility for different amount on each - and don't reset it after spin
 - [ ] Beautify the navbar (use a dropdown for the user/admin menu)
