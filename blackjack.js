@@ -1,0 +1,242 @@
+$(document).ready(function() {
+    let deck = [];
+    let playerHand = [];
+    let dealerHand = [];
+    let gameActive = false;
+    let betAmount = 0;
+    
+    const suits = ['♠', '♥', '♦', '♣'];
+    const ranks = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
+    
+    function createDeck() {
+        deck = [];
+        for (let suit of suits) {
+            for (let rank of ranks) {
+                deck.push({suit, rank, value: getCardValue(rank)});
+            }
+        }
+        shuffleDeck();
+    }
+    
+    function shuffleDeck() {
+        for (let i = deck.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [deck[i], deck[j]] = [deck[j], deck[i]];
+        }
+    }
+    
+    function getCardValue(rank) {
+        if (rank === 'A') return 11;
+        if (['J', 'Q', 'K'].includes(rank)) return 10;
+        return parseInt(rank);
+    }
+    
+    function calculateHand(hand) {
+        let total = 0;
+        let aces = 0;
+        
+        for (let card of hand) {
+            if (card.rank === 'A') {
+                aces++;
+                total += 11;
+            } else {
+                total += card.value;
+            }
+        }
+        
+        while (total > 21 && aces > 0) {
+            total -= 10;
+            aces--;
+        }
+        
+        return total;
+    }
+    
+    function displayCard(card, isHidden = false) {
+        if (isHidden) {
+            return '<div class="card card-hidden">?</div>';
+        }
+        const color = (card.suit === '♥' || card.suit === '♦') ? 'red' : 'black';
+        return `<div class="card card-${color}">${card.rank}${card.suit}</div>`;
+    }
+    
+    function displayHand(hand, elementId, hideFirst = false) {
+        let html = '';
+        for (let i = 0; i < hand.length; i++) {
+            html += displayCard(hand[i], hideFirst && i === 0);
+        }
+        $(elementId).html(html);
+    }
+    
+    function updateScores() {
+        const playerScore = calculateHand(playerHand);
+        const dealerScore = calculateHand(dealerHand);
+        $('#playerScore').text(`Score: ${playerScore}`);
+        $('#dealerScore').text(`Score: ${hideFirst ? '?' : dealerScore}`);
+    }
+    
+    let hideFirst = true;
+    
+    function dealCard(hand) {
+        if (deck.length === 0) {
+            createDeck();
+        }
+        return hand.push(deck.pop());
+    }
+    
+    function startGame() {
+        const bet = parseFloat($('#betAmount').val());
+        if (bet < 1 || bet > 100) {
+            $('#result').html('<div class="alert alert-error">Bet must be between $1 and $100</div>');
+            return;
+        }
+        
+        $.get('api.php?action=getBalance', function(data) {
+            if (!data.success || parseFloat(data.balance) < bet) {
+                $('#result').html('<div class="alert alert-error">Insufficient funds</div>');
+                return;
+            }
+            
+            // Deduct bet
+            $.post('api.php?action=updateBalance', {
+                amount: -bet,
+                type: 'bet',
+                description: 'Blackjack bet'
+            }, function(data) {
+                if (data.success) {
+                    $('#balance').text(parseFloat(data.balance).toFixed(2));
+                    betAmount = bet;
+                    gameActive = true;
+                    hideFirst = true;
+                    
+                    createDeck();
+                    playerHand = [];
+                    dealerHand = [];
+                    
+                    dealCard(playerHand);
+                    dealCard(playerHand);
+                    dealCard(dealerHand);
+                    dealCard(dealerHand);
+                    
+                    displayHand(playerHand, '#playerHand');
+                    displayHand(dealerHand, '#dealerHand', true);
+                    updateScores();
+                    
+                    $('#gameControls').show();
+                    $('#result').html('');
+                    
+                    // Check for blackjack
+                    if (calculateHand(playerHand) === 21) {
+                        endGame(true, true);
+                    }
+                }
+            }, 'json');
+        }, 'json');
+    }
+    
+    function endGame(playerWon, isBlackjack = false) {
+        gameActive = false;
+        hideFirst = false;
+        
+        // Dealer draws until 17 or higher
+        while (calculateHand(dealerHand) < 17) {
+            dealCard(dealerHand);
+        }
+        
+        displayHand(dealerHand, '#dealerHand', false);
+        updateScores();
+        
+        const playerScore = calculateHand(playerHand);
+        const dealerScore = calculateHand(dealerHand);
+        
+        let won = false;
+        let message = '';
+        
+        if (playerScore > 21) {
+            message = `Bust! You lost $${betAmount.toFixed(2)}`;
+        } else if (dealerScore > 21) {
+            won = true;
+            const winAmount = isBlackjack ? betAmount * 2.5 : betAmount * 2;
+            message = `Dealer busts! You won $${winAmount.toFixed(2)}!`;
+            $.post('api.php?action=updateBalance', {
+                amount: winAmount,
+                type: 'win',
+                description: isBlackjack ? 'Blackjack win!' : 'Blackjack win'
+            }, function(data) {
+                if (data.success) {
+                    $('#balance').text(parseFloat(data.balance).toFixed(2));
+                }
+            }, 'json');
+        } else if (isBlackjack) {
+            won = true;
+            const winAmount = betAmount * 2.5;
+            message = `Blackjack! You won $${winAmount.toFixed(2)}!`;
+            $.post('api.php?action=updateBalance', {
+                amount: winAmount,
+                type: 'win',
+                description: 'Blackjack win!'
+            }, function(data) {
+                if (data.success) {
+                    $('#balance').text(parseFloat(data.balance).toFixed(2));
+                }
+            }, 'json');
+        } else if (playerScore > dealerScore) {
+            won = true;
+            const winAmount = betAmount * 2;
+            message = `You win! You won $${winAmount.toFixed(2)}!`;
+            $.post('api.php?action=updateBalance', {
+                amount: winAmount,
+                type: 'win',
+                description: 'Blackjack win'
+            }, function(data) {
+                if (data.success) {
+                    $('#balance').text(parseFloat(data.balance).toFixed(2));
+                }
+            }, 'json');
+        } else if (playerScore < dealerScore) {
+            message = `Dealer wins! You lost $${betAmount.toFixed(2)}`;
+        } else {
+            message = `Push! Your bet is returned.`;
+            $.post('api.php?action=updateBalance', {
+                amount: betAmount,
+                type: 'win',
+                description: 'Blackjack push'
+            }, function(data) {
+                if (data.success) {
+                    $('#balance').text(parseFloat(data.balance).toFixed(2));
+                }
+            }, 'json');
+        }
+        
+        $('#result').html(`<div class="alert ${won ? 'alert-success' : 'alert-error'}">${message}</div>`);
+        $('#gameControls').hide();
+    }
+    
+    $('#newGameBtn').click(startGame);
+    
+    $('#hitBtn').click(function() {
+        if (!gameActive) return;
+        
+        dealCard(playerHand);
+        displayHand(playerHand, '#playerHand');
+        updateScores();
+        
+        if (calculateHand(playerHand) > 21) {
+            endGame(false);
+        }
+    });
+    
+    $('#standBtn').click(function() {
+        if (!gameActive) return;
+        endGame(false);
+    });
+    
+    // Update balance periodically
+    setInterval(function() {
+        $.get('api.php?action=getBalance', function(data) {
+            if (data.success) {
+                $('#balance').text(parseFloat(data.balance).toFixed(2));
+            }
+        }, 'json');
+    }, 5000);
+});
