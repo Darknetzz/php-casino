@@ -988,13 +988,13 @@ include __DIR__ . '/../includes/navbar.php';
             ?>
             <div class="admin-section section">
                 <h2>🎯 Game Rounds Monitor</h2>
-                <p style="margin-bottom: 20px; color: #666;">Monitor current game rounds and predict upcoming results (admin only).</p>
+                <p style="margin-bottom: 20px;" class="admin-description">Monitor current game rounds and predict upcoming results (admin only).</p>
                 
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px;">
                     <!-- Roulette Round -->
-                    <div class="section" style="background: #f8f9fa; padding: 20px; border-radius: 8px;">
-                        <h3 style="margin-top: 0; color: #667eea;">🛞 Roulette</h3>
-                        <div id="rouletteRoundInfo">
+                    <div class="section rounds-card" style="padding: 20px; border-radius: 8px;">
+                        <h3 style="margin-top: 0;" class="rounds-card-title">🛞 Roulette</h3>
+                        <div id="rouletteRoundInfo" class="rounds-card-content">
                             <?php if ($rouletteRound): ?>
                                 <p><strong>Round #<?php echo $rouletteRound['round_number']; ?></strong></p>
                                 <p>Status: <strong><?php echo ucfirst($rouletteRound['status']); ?></strong></p>
@@ -1009,7 +1009,7 @@ include __DIR__ . '/../includes/navbar.php';
                                         Result: <span style="font-size: 1.2em;"><?php echo $rouletteRound['result_number']; ?></span>
                                     </p>
                                 <?php endif; ?>
-                                <p style="font-size: 0.9em; color: #999; margin-top: 10px;">
+                                <p style="font-size: 0.9em; margin-top: 10px;" class="rounds-seed-hash">
                                     Server Seed Hash: <code style="font-size: 0.8em;"><?php echo substr($rouletteRound['server_seed_hash'], 0, 16); ?>...</code>
                                 </p>
                             <?php else: ?>
@@ -1019,9 +1019,9 @@ include __DIR__ . '/../includes/navbar.php';
                     </div>
                     
                     <!-- Crash Round -->
-                    <div class="section" style="background: #f8f9fa; padding: 20px; border-radius: 8px;">
-                        <h3 style="margin-top: 0; color: #667eea;">🚀 Crash</h3>
-                        <div id="crashRoundInfo">
+                    <div class="section rounds-card" style="padding: 20px; border-radius: 8px;">
+                        <h3 style="margin-top: 0;" class="rounds-card-title">🚀 Crash</h3>
+                        <div id="crashRoundInfo" class="rounds-card-content">
                             <?php if ($crashRound): ?>
                                 <p><strong>Round #<?php echo $crashRound['round_number']; ?></strong></p>
                                 <p>Status: <strong><?php echo ucfirst($crashRound['status']); ?></strong></p>
@@ -1041,7 +1041,7 @@ include __DIR__ . '/../includes/navbar.php';
                                         Crashed at: <span style="font-size: 1.2em;"><?php echo number_format($crashRound['crash_point'], 2); ?>x</span>
                                     </p>
                                 <?php endif; ?>
-                                <p style="font-size: 0.9em; color: #999; margin-top: 10px;">
+                                <p style="font-size: 0.9em; margin-top: 10px;" class="rounds-seed-hash">
                                     Server Seed Hash: <code style="font-size: 0.8em;"><?php echo substr($crashRound['server_seed_hash'], 0, 16); ?>...</code>
                                 </p>
                             <?php else: ?>
@@ -1051,8 +1051,8 @@ include __DIR__ . '/../includes/navbar.php';
                     </div>
                 </div>
                 
-                <div class="section" style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-top: 20px;">
-                    <h3 style="margin-top: 0; color: #667eea;">📋 Recent History</h3>
+                <div class="section rounds-card" style="padding: 20px; border-radius: 8px; margin-top: 20px;">
+                    <h3 style="margin-top: 0;" class="rounds-card-title">📋 Recent History</h3>
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
                         <div>
                             <h4>Roulette (Last 10)</h4>

@@ -3010,3 +3010,68 @@ body.dark-mode .dice {
 body.dark-mode .dice.rolling {
     box-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
 }
+
+/* Game Rounds Dark Mode Styles */
+.rounds-card {
+    background: #f8f9fa;
+    color: #333;
+}
+
+body.dark-mode .rounds-card {
+    background: rgba(40, 40, 60, 0.9);
+    color: #e0e0e0;
+    border: 1px solid rgba(102, 126, 234, 0.3);
+}
+
+.rounds-card-title {
+    color: #667eea;
+}
+
+body.dark-mode .rounds-card-title {
+    color: #667eea;
+}
+
+.rounds-card-content {
+    color: #333;
+}
+
+body.dark-mode .rounds-card-content {
+    color: #e0e0e0;
+}
+
+body.dark-mode .rounds-card-content p {
+    color: #e0e0e0;
+}
+
+body.dark-mode .rounds-card-content strong {
+    color: #fff;
+}
+
+.rounds-seed-hash {
+    color: #999;
+}
+
+body.dark-mode .rounds-seed-hash {
+    color: #aaa;
+}
+
+body.dark-mode .rounds-seed-hash code {
+    background: rgba(0, 0, 0, 0.3);
+    color: #bbb;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: 'Courier New', monospace;
+}
+
+.admin-description {
+    color: #666;
+}
+
+body.dark-mode .admin-description {
+    color: #aaa;
+}
+
+body.dark-mode .rounds-card h4 {
+    color: #e0e0e0;
+    margin-bottom: 10px;
+}
