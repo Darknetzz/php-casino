@@ -111,6 +111,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 $settings = $db->getAllSettings();
 $users = $db->getAllUsers();
+
+// Get current tab from URL
+$currentTab = $_GET['tab'] ?? 'settings';
+
+// Check for success message
+if (isset($_GET['success'])) {
+    if ($currentTab === 'settings') {
+        $message = 'Casino settings updated successfully!';
+    } elseif ($currentTab === 'multipliers') {
+        $message = 'Game multipliers updated successfully!';
+    } elseif ($currentTab === 'users') {
+        $message = 'User updated successfully!';
+    }
+}
+
 $pageTitle = 'Admin Panel';
 include __DIR__ . '/../includes/header.php';
 include __DIR__ . '/../includes/navbar.php';
@@ -127,10 +142,24 @@ include __DIR__ . '/../includes/navbar.php';
                 <div class="alert alert-error"><?php echo htmlspecialchars($error); ?></div>
             <?php endif; ?>
             
+            <!-- Admin Navigation Tabs -->
+            <div class="admin-nav-tabs">
+                <a href="admin.php?tab=settings" class="admin-tab <?php echo $currentTab === 'settings' ? 'active' : ''; ?>">
+                    <span>📊</span> Casino Settings
+                </a>
+                <a href="admin.php?tab=multipliers" class="admin-tab <?php echo $currentTab === 'multipliers' ? 'active' : ''; ?>">
+                    <span>🎰</span> Game Multipliers
+                </a>
+                <a href="admin.php?tab=users" class="admin-tab <?php echo $currentTab === 'users' ? 'active' : ''; ?>">
+                    <span>👥</span> User Management
+                </a>
+            </div>
+            
             <!-- Settings Section -->
+            <?php if ($currentTab === 'settings'): ?>
             <div class="admin-section">
                 <h2>📊 Casino Settings</h2>
-                <form method="POST" action="admin.php" class="admin-form">
+                <form method="POST" action="admin.php?tab=settings" class="admin-form">
                     <div class="form-group">
                         <label for="max_deposit">Max Deposit ($)</label>
                         <input type="number" id="max_deposit" name="max_deposit" min="1" step="0.01" 
@@ -155,17 +184,13 @@ include __DIR__ . '/../includes/navbar.php';
                     <button type="submit" name="update_settings" class="btn btn-primary">Update Settings</button>
                 </form>
             </div>
+            <?php endif; ?>
             
             <!-- Game Multipliers Section -->
+            <?php if ($currentTab === 'multipliers'): ?>
             <div class="admin-section">
                 <h2>🎰 Game Multipliers</h2>
-                <form method="POST" action="admin.php" class="admin-form">
-                    <!-- Hidden fields to preserve casino settings when updating multipliers -->
-                    <input type="hidden" name="max_deposit" value="<?php echo htmlspecialchars($settings['max_deposit'] ?? '10000'); ?>">
-                    <input type="hidden" name="max_bet" value="<?php echo htmlspecialchars($settings['max_bet'] ?? '100'); ?>">
-                    <input type="hidden" name="starting_balance" value="<?php echo htmlspecialchars($settings['starting_balance'] ?? '1000'); ?>">
-                    <input type="hidden" name="default_bet" value="<?php echo htmlspecialchars($settings['default_bet'] ?? '10'); ?>">
-                    
+                <form method="POST" action="admin.php?tab=multipliers" class="admin-form">
                     <h3 style="margin-top: 20px; margin-bottom: 15px; color: #667eea;">Slot Machine Multipliers</h3>
                     <table class="multiplier-table">
                         <thead>
@@ -286,8 +311,10 @@ include __DIR__ . '/../includes/navbar.php';
                     <button type="submit" name="update_settings" class="btn btn-primary" style="margin-top: 20px;">Update Multipliers</button>
                 </form>
             </div>
+            <?php endif; ?>
             
             <!-- User Management Section -->
+            <?php if ($currentTab === 'users'): ?>
             <div class="admin-section">
                 <h2>👥 User Management</h2>
                 <div class="users-table-container">
@@ -325,6 +352,7 @@ include __DIR__ . '/../includes/navbar.php';
                     </table>
                 </div>
             </div>
+            <?php endif; ?>
         </div>
     </div>
     
@@ -333,7 +361,7 @@ include __DIR__ . '/../includes/navbar.php';
         <div class="modal-content">
             <span class="close" onclick="closeModal('balanceModal')">&times;</span>
             <h3>Edit User Balance</h3>
-            <form method="POST" action="admin.php" id="balanceForm">
+            <form method="POST" action="admin.php?tab=users" id="balanceForm">
                 <input type="hidden" name="user_id" id="balance_user_id">
                 <div class="form-group">
                     <label for="new_balance">New Balance ($)</label>
@@ -349,7 +377,7 @@ include __DIR__ . '/../includes/navbar.php';
         <div class="modal-content">
             <span class="close" onclick="closeModal('adminModal')">&times;</span>
             <h3>Toggle Admin Status</h3>
-            <form method="POST" action="admin.php" id="adminForm">
+            <form method="POST" action="admin.php?tab=users" id="adminForm">
                 <input type="hidden" name="user_id" id="admin_user_id">
                 <div class="form-group">
                     <label>
@@ -369,7 +397,7 @@ include __DIR__ . '/../includes/navbar.php';
             <h3>Delete User</h3>
             <p>Are you sure you want to delete user: <strong id="delete_username"></strong>?</p>
             <p class="warning">This action cannot be undone!</p>
-            <form method="POST" action="admin.php" id="deleteForm">
+            <form method="POST" action="admin.php?tab=users" id="deleteForm">
                 <input type="hidden" name="user_id" id="delete_user_id">
                 <button type="submit" name="delete_user" class="btn btn-danger">Delete User</button>
                 <button type="button" onclick="closeModal('deleteModal')" class="btn btn-secondary">Cancel</button>
