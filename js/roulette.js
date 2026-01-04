@@ -4,6 +4,9 @@ $(document).ready(function() {
     let isSpinning = false;
     let currentRotation = 0;
     let maxBet = 100;
+    let currentRound = null;
+    let pollInterval = null;
+    let bettingCountdownInterval = null;
     
     // Load max bet and default bet from settings
     $.get('../api/api.php?action=getSettings', function(data) {
@@ -91,18 +94,9 @@ $(document).ready(function() {
         const anglePerNumber = 360 / rouletteNumbers.length;
         const normalizedRotation = ((rotation % 360) + 360) % 360; // Ensure 0-360
         
-        // When wheel rotates clockwise by R, a pocket at starting angle A
-        // will be at final angle (A + R) mod 360
-        // To find which pocket is at top (0°) after rotation R:
-        // We need (A + R) mod 360 = 0, which means A = (360 - R) mod 360
-        
-        // Calculate which starting angle ends up at 0°
         let targetStartingAngle = (360 - normalizedRotation) % 360;
         if (targetStartingAngle < 0) targetStartingAngle += 360;
         
-        // Find which pocket index has this starting angle
-        // Pockets are at: 0, anglePerNumber, 2*anglePerNumber, ..., (n-1)*anglePerNumber
-        // Round to nearest pocket
         let targetIndex = Math.round(targetStartingAngle / anglePerNumber);
         targetIndex = targetIndex % rouletteNumbers.length;
         if (targetIndex < 0) targetIndex += rouletteNumbers.length;
@@ -191,23 +185,230 @@ $(document).ready(function() {
         
         // Add click handlers for remove buttons
         $('.btn-remove-bet').click(function() {
-            if (isSpinning) return;
+            if (isSpinning || (currentRound && currentRound.status !== 'betting')) return;
             const index = parseInt($(this).data('index'));
             const type = $(this).data('type');
             if (type === 'number') {
                 numberBets.splice(index, 1);
             } else {
                 colorBets.splice(index, 1);
-                // Also remove active class from button
                 $('.bet-btn').removeClass('active');
             }
             updateActiveBetsDisplay();
         });
     }
     
+    // Poll server for current round state
+    function pollRoundState() {
+        $.get('../api/api.php?action=getRouletteRound', function(data) {
+            if (data.success) {
+                const round = data.round;
+                
+                if (!round) {
+                    // No active round
+                    $('#rouletteResult').html('Waiting for next round...');
+                    $('#spinBtn').prop('disabled', true).text('WAITING FOR ROUND');
+                    return;
+                }
+                
+                currentRound = round;
+                
+                // Update round info display
+                if (round.status === 'betting') {
+                    const timeLeft = round.time_until_betting_ends || 0;
+                    $('#rouletteResult').html(`Round #${round.round_number} - Betting ends in ${Math.ceil(timeLeft)}s`);
+                    $('#spinBtn').prop('disabled', false).text('PLACE BETS');
+                    updateBettingCountdown(timeLeft);
+                } else if (round.status === 'spinning') {
+                    $('#spinBtn').prop('disabled', true).text('SPINNING...');
+                    if (round.result_number !== null && round.result_number !== undefined) {
+                        // Round finished, show result
+                        showRoundResult(round.result_number);
+                    } else {
+                        // Start spinning animation
+                        startSpinningAnimation(round);
+                    }
+                } else if (round.status === 'finished') {
+                    if (round.result_number !== null) {
+                        showRoundResult(round.result_number);
+                    }
+                    // Wait for next round
+                    setTimeout(pollRoundState, 1000);
+                }
+                
+                // Load history
+                loadHistory();
+            }
+        }, 'json').fail(function() {
+            console.error('Failed to poll round state');
+        });
+    }
+    
+    function updateBettingCountdown(seconds) {
+        if (bettingCountdownInterval) {
+            clearInterval(bettingCountdownInterval);
+        }
+        
+        let timeLeft = Math.ceil(seconds);
+        bettingCountdownInterval = setInterval(function() {
+            timeLeft--;
+            if (timeLeft > 0) {
+                $('#rouletteResult').html(`Round #${currentRound.round_number} - Betting ends in ${timeLeft}s`);
+            } else {
+                clearInterval(bettingCountdownInterval);
+                bettingCountdownInterval = null;
+            }
+        }, 1000);
+    }
+    
+    function startSpinningAnimation(round) {
+        if (isSpinning) return;
+        
+        isSpinning = true;
+        $('#spinBtn').prop('disabled', true).text('SPINNING...');
+        
+        // We'll get the result when the round finishes
+        // For now, show a spinning animation
+        let spinCount = 0;
+        const maxSpins = 40;
+        const spinInterval = setInterval(function() {
+            const randomNum = Math.floor(Math.random() * 37);
+            const color = getNumberColor(randomNum);
+            $('#rouletteResult').html(`<span class="roulette-number roulette-${color}">${randomNum}</span>`);
+            spinCount++;
+            
+            if (spinCount >= maxSpins) {
+                clearInterval(spinInterval);
+            }
+        }, 100);
+    }
+    
+    function showRoundResult(resultNum) {
+        const resultColor = getNumberColor(resultNum);
+        $('#rouletteResult').html(`<span class="roulette-number roulette-${resultColor}">${resultNum}</span>`);
+        
+        // Animate wheel to result
+        animateWheelToResult(resultNum);
+        
+        // Check user's bets and show results
+        if (currentRound && currentRound.user_bets) {
+            checkUserBets(currentRound.user_bets, resultNum);
+        }
+        
+        isSpinning = false;
+    }
+    
+    function animateWheelToResult(resultNum) {
+        const anglePerNumber = 360 / rouletteNumbers.length;
+        const winningIndex = rouletteNumbers.findIndex(n => n.num === resultNum);
+        const pocketStartAngle = winningIndex * anglePerNumber;
+        
+        let rotationToTop = 0;
+        let found = false;
+        
+        for (let i = 0; i < rouletteNumbers.length; i++) {
+            const testRot = i * anglePerNumber;
+            const testNum = getNumberAtTop(testRot);
+            if (testNum === resultNum) {
+                rotationToTop = testRot;
+                found = true;
+                break;
+            }
+        }
+        
+        if (!found) {
+            rotationToTop = (360 - pocketStartAngle) % 360;
+        }
+        
+        const fullSpins = Math.floor(5 + Math.random() * 3);
+        let totalRotation = (fullSpins * 360) + rotationToTop;
+        currentRotation = totalRotation % 360;
+        
+        $('#rouletteWheel').css({
+            transition: 'none',
+            transform: 'rotate(0deg)'
+        });
+        
+        $('#rouletteWheel')[0].offsetHeight;
+        
+        $('#rouletteWheel').css({
+            transition: 'transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99)',
+            transform: `rotate(${totalRotation}deg)`
+        });
+    }
+    
+    function checkUserBets(userBets, resultNum) {
+        let totalWin = 0;
+        let totalLoss = 0;
+        const winningBets = [];
+        const losingBets = [];
+        
+        userBets.forEach(function(bet) {
+            let won = false;
+            let payout = 0;
+            
+            if (bet.bet_type === 'number') {
+                if (parseInt(bet.bet_value) === resultNum) {
+                    won = true;
+                    payout = bet.amount * bet.multiplier;
+                }
+            } else if (bet.bet_type === 'color' || bet.bet_type === 'range') {
+                won = checkColorBetWin(bet.bet_value, resultNum);
+                if (won) {
+                    payout = bet.amount * bet.multiplier;
+                }
+            }
+            
+            if (won) {
+                totalWin += payout;
+                winningBets.push(bet);
+            } else {
+                totalLoss += bet.amount;
+                losingBets.push(bet);
+            }
+        });
+        
+        const netResult = totalWin - totalLoss;
+        
+        if (totalWin > 0) {
+            let message = `<div class="alert alert-success">🎉 You won $${netResult.toFixed(2)}!<br>`;
+            if (winningBets.length > 0) {
+                message += `Winning bets: ${winningBets.length}<br>`;
+            }
+            if (losingBets.length > 0) {
+                message += `Lost: $${totalLoss.toFixed(2)} on ${losingBets.length} bet(s)`;
+            }
+            message += '</div>';
+            $('#result').html(message);
+            updateWinRateStats('roulette');
+        } else if (totalLoss > 0) {
+            $('#result').html(`<div class="alert alert-error">Lost $${totalLoss.toFixed(2)} on ${losingBets.length} bet(s)</div>`);
+            updateWinRateStats('roulette');
+        }
+        
+        // Clear local bets
+        numberBets = [];
+        colorBets = [];
+        updateActiveBetsDisplay();
+        
+        // Update balance
+        updateBalance();
+    }
+    
+    function loadHistory() {
+        $.get('../api/api.php?action=getRouletteHistory&limit=10', function(data) {
+            if (data.success && data.history) {
+                // Could display history here if needed
+            }
+        }, 'json');
+    }
+    
     // Handle color/range bet buttons
     $('.bet-btn').click(function() {
-        if (isSpinning) return;
+        if (!currentRound || currentRound.status !== 'betting') {
+            $('#result').html('<div class="alert alert-error">Betting is not open</div>');
+            return;
+        }
         
         const betType = $(this).data('bet');
         const multiplier = parseInt($(this).data('multiplier'));
@@ -221,14 +422,11 @@ $(document).ready(function() {
         // Check if this bet type already exists
         const existingIndex = colorBets.findIndex(b => b.type === betType);
         if (existingIndex !== -1) {
-            // Update existing bet
             colorBets[existingIndex].amount = amount;
         } else {
-            // Add new bet
             colorBets.push({type: betType, amount: amount, multiplier: multiplier});
         }
         
-        // Toggle active state
         $('.bet-btn').removeClass('active');
         $(this).addClass('active');
         
@@ -237,7 +435,10 @@ $(document).ready(function() {
     });
     
     $('#addNumberBetBtn').click(function() {
-        if (isSpinning) return;
+        if (!currentRound || currentRound.status !== 'betting') {
+            $('#result').html('<div class="alert alert-error">Betting is not open</div>');
+            return;
+        }
         
         const number = parseInt($('#numberBet').val());
         const amount = parseFloat($('#betAmount').val());
@@ -255,10 +456,8 @@ $(document).ready(function() {
         // Check if number already has a bet
         const existingIndex = numberBets.findIndex(b => b.number === number);
         if (existingIndex !== -1) {
-            // Update existing bet
             numberBets[existingIndex].amount = amount;
         } else {
-            // Add new bet
             numberBets.push({number: number, amount: amount});
         }
         
@@ -267,276 +466,115 @@ $(document).ready(function() {
         $('#result').html('');
     });
     
-    // Allow Enter key to add bet
     $('#numberBet').keypress(function(e) {
         if (e.which === 13) {
             $('#addNumberBetBtn').click();
         }
     });
     
+    // Place all bets when spin button is clicked (during betting phase)
     $('#spinBtn').click(function() {
-        if (isSpinning) return;
-        
-        if (numberBets.length === 0 && colorBets.length === 0) {
-            $('#result').html('<div class="alert alert-error">Please add at least one bet before spinning</div>');
+        if (!currentRound || currentRound.status !== 'betting') {
             return;
         }
         
-        // Calculate total bet amount
+        if (numberBets.length === 0 && colorBets.length === 0) {
+            $('#result').html('<div class="alert alert-error">Please add at least one bet</div>');
+            return;
+        }
+        
         const totalBetAmount = numberBets.reduce((sum, bet) => sum + bet.amount, 0) + 
                               colorBets.reduce((sum, bet) => sum + bet.amount, 0);
         
-        // Check if total bet amount exceeds maximum
         if (totalBetAmount > maxBet) {
             $('#result').html('<div class="alert alert-error">Total bet amount ($' + totalBetAmount.toFixed(2) + ') exceeds maximum of $' + formatNumber(maxBet) + '</div>');
             return;
         }
         
-        // Check if user has enough balance
+        // Check balance
         $.get('../api/api.php?action=getBalance', function(data) {
             if (!data.success || parseFloat(data.balance) < totalBetAmount) {
-                $('#result').html('<div class="alert alert-error">Insufficient funds. Your balance is $' + (data.success ? formatNumber(data.balance) : '0.00') + ', but you need $' + totalBetAmount.toFixed(2) + '</div>');
+                $('#result').html('<div class="alert alert-error">Insufficient funds</div>');
                 return;
             }
             
-            isSpinning = true;
-            $('#spinBtn').prop('disabled', true).text('SPINNING...').addClass('game-disabled');
-            $('.game-container button, .game-container .btn').not('[onclick*="openModal"]').addClass('game-disabled');
-            $('#result').html('');
+            // Place all bets
+            let betsPlaced = 0;
+            let betsToPlace = numberBets.length + colorBets.length;
             
-            // Add beforeunload warning to prevent navigation during game
-            $(window).on('beforeunload', function() {
-                if (isSpinning) {
-                    return 'A roulette game is in progress. If you leave now, your bet may be lost. Are you sure you want to leave?';
+            function placeNextBet() {
+                if (betsPlaced >= betsToPlace) {
+                    // All bets placed
+                    updateBalance();
+                    $('#result').html('<div class="alert alert-success">All bets placed!</div>');
+                    return;
                 }
-            });
-            
-            // Determine winning number
-            const resultNum = Math.floor(Math.random() * 37);
-            const resultColor = getNumberColor(resultNum);
-            
-            // Calculate rotation needed to land on winning number
-            const anglePerNumber = 360 / rouletteNumbers.length;
-            const winningIndex = rouletteNumbers.findIndex(n => n.num === resultNum);
-            const pocketStartAngle = winningIndex * anglePerNumber;
-            
-            // Use brute force: test all rotations to find the one that puts resultNum at top
-            let rotationToTop = 0;
-            let found = false;
-            
-            // Test at each pocket position (rough test first)
-            for (let i = 0; i < rouletteNumbers.length; i++) {
-                const testRot = i * anglePerNumber;
-                const testNum = getNumberAtTop(testRot);
-                if (testNum === resultNum) {
-                    rotationToTop = testRot;
-                    found = true;
-                    break;
+                
+                let betData = null;
+                if (betsPlaced < numberBets.length) {
+                    const bet = numberBets[betsPlaced];
+                    betData = {
+                        bet_type: 'number',
+                        bet_value: bet.number.toString(),
+                        amount: bet.amount,
+                        multiplier: 36
+                    };
+                } else {
+                    const bet = colorBets[betsPlaced - numberBets.length];
+                    betData = {
+                        bet_type: bet.type === 'red' || bet.type === 'black' || bet.type === 'green' ? 'color' : 'range',
+                        bet_value: bet.type,
+                        amount: bet.amount,
+                        multiplier: bet.multiplier
+                    };
                 }
-            }
-            
-            // If not found, try with small offsets around each pocket
-            if (!found) {
-                for (let i = 0; i < rouletteNumbers.length; i++) {
-                    const baseRot = i * anglePerNumber;
-                    for (let offset = -anglePerNumber/4; offset <= anglePerNumber/4; offset += 1) {
-                        const testRot = (baseRot + offset + 360) % 360;
-                        const testNum = getNumberAtTop(testRot);
-                        if (testNum === resultNum) {
-                            rotationToTop = testRot;
-                            found = true;
-                            break;
-                        }
-                    }
-                    if (found) break;
-                }
-            }
-            
-            if (!found) {
-                // Fallback: try the calculated rotation
-                rotationToTop = (360 - pocketStartAngle) % 360;
-            }
-            
-            // Add full spins for animation (must be integer to preserve rotationToTop mod 360)
-            const fullSpins = Math.floor(5 + Math.random() * 3); // 5-7 full spins (integer)
-            let totalRotation = (fullSpins * 360) + rotationToTop;
-            
-            currentRotation = totalRotation % 360;
-            
-            // Reset wheel to 0 first to ensure we start from a known position
-            $('#rouletteWheel').css({
-                transition: 'none',
-                transform: 'rotate(0deg)'
-            });
-            
-            // Force a reflow to apply the reset
-            $('#rouletteWheel')[0].offsetHeight;
-            
-            // Now animate to the target rotation
-            $('#rouletteWheel').css({
-                transition: 'transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99)',
-                transform: `rotate(${totalRotation}deg)`
-            });
-            
-            // After animation completes, verify and correct if needed (silent - no console logs)
-            $('#rouletteWheel').one('transitionend', function() {
-                const finalRotation = totalRotation % 360;
-                const calculatedNumber = getNumberAtTop(finalRotation);
                 
-                if (calculatedNumber !== resultNum) {
-                    // Need to correct - calculate adjustment needed
-                    const actualIndex = rouletteNumbers.findIndex(n => n.num === calculatedNumber);
-                    const winningIndex = rouletteNumbers.findIndex(n => n.num === resultNum);
-                    let indexDiff = (winningIndex - actualIndex + rouletteNumbers.length) % rouletteNumbers.length;
-                    const angleAdjustment = indexDiff * anglePerNumber;
-                    
-                    // Update totalRotation for the correction
-                    totalRotation = totalRotation + angleAdjustment;
-                    
-                    // Apply small corrective rotation
-                    $('#rouletteWheel').css({
-                        transition: 'transform 0.3s ease-out',
-                        transform: `rotate(${totalRotation}deg)`
-                    });
-                }
-            });
-            
-        
-        // Show spinning result text
-        let spinCount = 0;
-        const maxSpins = 40;
-        const spinInterval = setInterval(function() {
-            const randomNum = Math.floor(Math.random() * 37);
-            const color = getNumberColor(randomNum);
-            $('#rouletteResult').html(`<span class="roulette-number roulette-${color}">${randomNum}</span>`);
-            spinCount++;
-            
-            if (spinCount >= maxSpins) {
-                clearInterval(spinInterval);
-                
-                // Show final result
-                $('#rouletteResult').html(`<span class="roulette-number roulette-${resultColor}">${resultNum}</span>`);
-                
-                // Calculate wins and losses for all bets
-                let totalWin = 0;
-                let totalLoss = 0;
-                const winningNumberBets = [];
-                const losingNumberBets = [];
-                const winningColorBets = [];
-                const losingColorBets = [];
-                
-                // Check number bets
-                numberBets.forEach(function(bet) {
-                    if (bet.number === resultNum) {
-                        // Win! 36x multiplier
-                        const winAmount = bet.amount * 36;
-                        totalWin += winAmount;
-                        winningNumberBets.push({number: bet.number, amount: bet.amount, win: winAmount});
+                $.post('../api/api.php?action=placeRouletteBet', betData, function(data) {
+                    if (data.success) {
+                        betsPlaced++;
+                        placeNextBet();
                     } else {
-                        // Loss
-                        totalLoss += bet.amount;
-                        losingNumberBets.push({number: bet.number, amount: bet.amount});
-                    }
-                });
-                
-                // Check color/range bets
-                colorBets.forEach(function(bet) {
-                    if (checkColorBetWin(bet.type, resultNum)) {
-                        // Win!
-                        const winAmount = bet.amount * bet.multiplier;
-                        totalWin += winAmount;
-                        winningColorBets.push({type: bet.type, amount: bet.amount, win: winAmount, multiplier: bet.multiplier});
-                    } else {
-                        // Loss
-                        totalLoss += bet.amount;
-                        losingColorBets.push({type: bet.type, amount: bet.amount});
-                    }
-                });
-                
-                // Calculate net result and total bet amount
-                const netResult = totalWin - totalLoss;
-                const totalBets = numberBets.length + colorBets.length;
-                const totalWins = winningNumberBets.length + winningColorBets.length;
-                
-                // Calculate total amount bet (sum of all bet amounts)
-                let totalBetAmount = 0;
-                numberBets.forEach(b => totalBetAmount += b.amount);
-                colorBets.forEach(b => totalBetAmount += b.amount);
-                
-                // Always record the bet first
-                $.post('../api/api.php?action=updateBalance', {
-                    amount: -totalBetAmount,
-                    type: 'bet',
-                    description: `Roulette bet: ${totalBets} bet(s)`,
-                    game: 'roulette'
-                }, function(betData) {
-                    if (betData.success) {
-                        if (totalWin > 0) {
-                            // Record the win
-                            $.post('../api/api.php?action=updateBalance', {
-                                amount: totalWin,
-                                type: 'win',
-                                description: `Roulette win: ${totalWins} winning bet(s)`,
-                                game: 'roulette'
-                            }, function(winData) {
-                                if (winData.success) {
-                                    $('#balance').text(formatNumber(winData.balance));
-                                    let message = `<div class="alert alert-success">🎉 You won $${netResult.toFixed(2)}!<br>`;
-                                    if (winningNumberBets.length > 0) {
-                                        message += `Winning number bets: `;
-                                        winningNumberBets.forEach(b => message += `#${b.number} ($${b.amount.toFixed(2)} → $${b.win.toFixed(2)}), `);
-                                        message = message.slice(0, -2) + '<br>';
-                                    }
-                                    if (winningColorBets.length > 0) {
-                                        message += `Winning color/range bets: `;
-                                        winningColorBets.forEach(b => {
-                                            const betName = b.type.charAt(0).toUpperCase() + b.type.slice(1);
-                                            message += `${betName} ($${b.amount.toFixed(2)} → $${b.win.toFixed(2)}), `;
-                                        });
-                                        message = message.slice(0, -2) + '<br>';
-                                    }
-                                    if (losingNumberBets.length > 0 || losingColorBets.length > 0) {
-                                        message += `Lost: $${totalLoss.toFixed(2)} on ${losingNumberBets.length + losingColorBets.length} bet(s)`;
-                                    }
-                                    message += '</div>';
-                                    $('#result').html(message);
-                                    // Update stats after win
-                                    updateWinRateStats('roulette');
-                                }
-                            }, 'json');
-                        } else {
-                            // Loss - bet already recorded above
-                            $('#balance').text(formatNumber(betData.balance));
-                            let message = `<div class="alert alert-error">Lost $${totalBetAmount.toFixed(2)}<br>`;
-                            message += `Lost: $${totalLoss.toFixed(2)} on ${losingNumberBets.length + losingColorBets.length} bet(s)</div>`;
-                            $('#result').html(message);
-                            // Update stats after loss
-                            updateWinRateStats('roulette');
-                        }
-                    } else {
-                        $('#result').html(`<div class="alert alert-error">${betData.message}</div>`);
+                        $('#result').html('<div class="alert alert-error">' + (data.message || 'Failed to place bet') + '</div>');
                     }
                 }, 'json');
-                
-                isSpinning = false;
-                $('#spinBtn').prop('disabled', false).text('SPIN').removeClass('game-disabled');
-                $('.game-container button, .game-container .btn').not('[onclick*="openModal"]').removeClass('game-disabled');
-                
-                // Remove beforeunload warning
-                $(window).off('beforeunload');
-                
-                // Don't clear bets - they persist
             }
-        }, 100);
+            
+            placeNextBet();
         }, 'json');
     });
     
-    // Update balance periodically
-    setInterval(function() {
+    function updateBalance() {
         $.get('../api/api.php?action=getBalance', function(data) {
             if (data.success) {
                 $('#balance').text(formatNumber(data.balance));
             }
         }, 'json');
-    }, 5000);
+    }
+    
+    function updateWinRateStats(game) {
+        $.get('../api/api.php?action=getWinRates&game=' + game, function(data) {
+            if (data.success && data.winRate) {
+                $('#winRate').text(data.winRate.rate || 0);
+                $('#gamesPlayed').text(data.winRate.total || 0);
+                $('#wins').text(data.winRate.wins || 0);
+            }
+        }, 'json');
+    }
+    
+    // Start polling
+    pollRoundState();
+    pollInterval = setInterval(pollRoundState, 2000); // Poll every 2 seconds
+    
+    // Update balance periodically
+    setInterval(updateBalance, 5000);
+    
+    // Cleanup on page unload
+    $(window).on('beforeunload', function() {
+        if (pollInterval) {
+            clearInterval(pollInterval);
+        }
+        if (bettingCountdownInterval) {
+            clearInterval(bettingCountdownInterval);
+        }
+    });
 });

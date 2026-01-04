@@ -347,6 +347,9 @@ include __DIR__ . '/../includes/navbar.php';
                 <a href="admin.php?tab=users" class="admin-tab <?php echo $currentTab === 'users' ? 'active' : ''; ?>">
                     <span>👥</span> User Management
                 </a>
+                <a href="admin.php?tab=rounds" class="admin-tab <?php echo $currentTab === 'rounds' ? 'active' : ''; ?>">
+                    <span>🎯</span> Game Rounds
+                </a>
             </div>
             
             <!-- Game Settings Subnav -->
@@ -973,6 +976,133 @@ include __DIR__ . '/../includes/navbar.php';
                             <?php endforeach; ?>
                         </tbody>
                     </table>
+                </div>
+            </div>
+            <?php endif; ?>
+            
+            <!-- Game Rounds Section -->
+            <?php if ($currentTab === 'rounds'): 
+                require_once __DIR__ . '/../includes/provably_fair.php';
+                $rouletteRound = $db->getCurrentRouletteRound();
+                $crashRound = $db->getCurrentCrashRound();
+            ?>
+            <div class="admin-section section">
+                <h2>🎯 Game Rounds Monitor</h2>
+                <p style="margin-bottom: 20px; color: #666;">Monitor current game rounds and predict upcoming results (admin only).</p>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px;">
+                    <!-- Roulette Round -->
+                    <div class="section" style="background: #f8f9fa; padding: 20px; border-radius: 8px;">
+                        <h3 style="margin-top: 0; color: #667eea;">🛞 Roulette</h3>
+                        <div id="rouletteRoundInfo">
+                            <?php if ($rouletteRound): ?>
+                                <p><strong>Round #<?php echo $rouletteRound['round_number']; ?></strong></p>
+                                <p>Status: <strong><?php echo ucfirst($rouletteRound['status']); ?></strong></p>
+                                <?php if ($rouletteRound['status'] === 'betting' || $rouletteRound['status'] === 'spinning'): 
+                                    $predictedResult = ProvablyFair::generateRouletteResult($rouletteRound['server_seed'], $rouletteRound['client_seed'] ?? '');
+                                ?>
+                                    <p style="color: #28a745; font-weight: bold; margin-top: 10px;">
+                                        🔮 Predicted Result: <span style="font-size: 1.2em;"><?php echo $predictedResult; ?></span>
+                                    </p>
+                                <?php elseif ($rouletteRound['status'] === 'finished' && $rouletteRound['result_number'] !== null): ?>
+                                    <p style="color: #667eea; font-weight: bold; margin-top: 10px;">
+                                        Result: <span style="font-size: 1.2em;"><?php echo $rouletteRound['result_number']; ?></span>
+                                    </p>
+                                <?php endif; ?>
+                                <p style="font-size: 0.9em; color: #999; margin-top: 10px;">
+                                    Server Seed Hash: <code style="font-size: 0.8em;"><?php echo substr($rouletteRound['server_seed_hash'], 0, 16); ?>...</code>
+                                </p>
+                            <?php else: ?>
+                                <p>No active round</p>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                    
+                    <!-- Crash Round -->
+                    <div class="section" style="background: #f8f9fa; padding: 20px; border-radius: 8px;">
+                        <h3 style="margin-top: 0; color: #667eea;">🚀 Crash</h3>
+                        <div id="crashRoundInfo">
+                            <?php if ($crashRound): ?>
+                                <p><strong>Round #<?php echo $crashRound['round_number']; ?></strong></p>
+                                <p>Status: <strong><?php echo ucfirst($crashRound['status']); ?></strong></p>
+                                <?php if ($crashRound['status'] === 'betting'): 
+                                    $distributionParam = floatval(getSetting('crash_distribution_param', 0.99));
+                                    $predictedCrashPoint = ProvablyFair::generateCrashPoint($crashRound['server_seed'], $crashRound['client_seed'] ?? '', $distributionParam);
+                                ?>
+                                    <p style="color: #28a745; font-weight: bold; margin-top: 10px;">
+                                        🔮 Predicted Crash Point: <span style="font-size: 1.2em;"><?php echo number_format($predictedCrashPoint, 2); ?>x</span>
+                                    </p>
+                                <?php elseif ($crashRound['status'] === 'running' && $crashRound['crash_point']): ?>
+                                    <p style="color: #ffc107; font-weight: bold; margin-top: 10px;">
+                                        Crash Point: <span style="font-size: 1.2em;"><?php echo number_format($crashRound['crash_point'], 2); ?>x</span>
+                                    </p>
+                                <?php elseif ($crashRound['status'] === 'finished' && $crashRound['crash_point']): ?>
+                                    <p style="color: #667eea; font-weight: bold; margin-top: 10px;">
+                                        Crashed at: <span style="font-size: 1.2em;"><?php echo number_format($crashRound['crash_point'], 2); ?>x</span>
+                                    </p>
+                                <?php endif; ?>
+                                <p style="font-size: 0.9em; color: #999; margin-top: 10px;">
+                                    Server Seed Hash: <code style="font-size: 0.8em;"><?php echo substr($crashRound['server_seed_hash'], 0, 16); ?>...</code>
+                                </p>
+                            <?php else: ?>
+                                <p>No active round</p>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="section" style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-top: 20px;">
+                    <h3 style="margin-top: 0; color: #667eea;">📋 Recent History</h3>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                        <div>
+                            <h4>Roulette (Last 10)</h4>
+                            <table class="admin-table" style="font-size: 0.9em;">
+                                <thead>
+                                    <tr>
+                                        <th>Round</th>
+                                        <th>Result</th>
+                                        <th>Finished</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php 
+                                    $rouletteHistory = $db->getRouletteRoundsHistory(10);
+                                    foreach ($rouletteHistory as $round): 
+                                    ?>
+                                    <tr>
+                                        <td>#<?php echo $round['round_number']; ?></td>
+                                        <td><strong><?php echo $round['result_number'] !== null ? $round['result_number'] : '-'; ?></strong></td>
+                                        <td><?php echo $round['finished_at'] ? date('H:i:s', strtotime($round['finished_at'])) : '-'; ?></td>
+                                    </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div>
+                            <h4>Crash (Last 10)</h4>
+                            <table class="admin-table" style="font-size: 0.9em;">
+                                <thead>
+                                    <tr>
+                                        <th>Round</th>
+                                        <th>Crash Point</th>
+                                        <th>Finished</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php 
+                                    $crashHistory = $db->getCrashRoundsHistory(10);
+                                    foreach ($crashHistory as $round): 
+                                    ?>
+                                    <tr>
+                                        <td>#<?php echo $round['round_number']; ?></td>
+                                        <td><strong><?php echo $round['crash_point'] ? number_format($round['crash_point'], 2) . 'x' : '-'; ?></strong></td>
+                                        <td><?php echo $round['finished_at'] ? date('H:i:s', strtotime($round['finished_at'])) : '-'; ?></td>
+                                    </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
             </div>
             <?php endif; ?>

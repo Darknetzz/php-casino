@@ -101,6 +101,93 @@ class Database {
         
         // Initialize default settings
         $this->initializeSettings();
+        
+        // Game rounds tables for synchronized games
+        $this->initializeGameRoundsTables();
+    }
+    
+    private function initializeGameRoundsTables() {
+        // Roulette rounds table
+        $this->db->exec("
+            CREATE TABLE IF NOT EXISTS roulette_rounds (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                round_number INTEGER NOT NULL,
+                status TEXT NOT NULL DEFAULT 'betting',
+                result_number INTEGER,
+                server_seed TEXT NOT NULL,
+                client_seed TEXT,
+                server_seed_hash TEXT NOT NULL,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                betting_ends_at DATETIME,
+                started_at DATETIME,
+                finished_at DATETIME
+            )
+        ");
+        
+        // Crash rounds table
+        $this->db->exec("
+            CREATE TABLE IF NOT EXISTS crash_rounds (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                round_number INTEGER NOT NULL,
+                status TEXT NOT NULL DEFAULT 'betting',
+                crash_point REAL,
+                server_seed TEXT NOT NULL,
+                client_seed TEXT,
+                server_seed_hash TEXT NOT NULL,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                betting_ends_at DATETIME,
+                started_at DATETIME,
+                finished_at DATETIME
+            )
+        ");
+        
+        // Roulette bets table
+        $this->db->exec("
+            CREATE TABLE IF NOT EXISTS roulette_bets (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                round_id INTEGER NOT NULL,
+                user_id INTEGER NOT NULL,
+                bet_type TEXT NOT NULL,
+                bet_value TEXT,
+                amount REAL NOT NULL,
+                multiplier REAL NOT NULL,
+                won INTEGER DEFAULT 0,
+                payout REAL DEFAULT 0,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (round_id) REFERENCES roulette_rounds(id),
+                FOREIGN KEY (user_id) REFERENCES users(id)
+            )
+        ");
+        
+        // Crash bets table
+        $this->db->exec("
+            CREATE TABLE IF NOT EXISTS crash_bets (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                round_id INTEGER NOT NULL,
+                user_id INTEGER NOT NULL,
+                bet_amount REAL NOT NULL,
+                cash_out_multiplier REAL,
+                won INTEGER DEFAULT 0,
+                payout REAL DEFAULT 0,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (round_id) REFERENCES crash_rounds(id),
+                FOREIGN KEY (user_id) REFERENCES users(id)
+            )
+        ");
+        
+        // Create indexes for performance
+        try {
+            $this->db->exec("CREATE INDEX IF NOT EXISTS idx_roulette_rounds_status ON roulette_rounds(status)");
+            $this->db->exec("CREATE INDEX IF NOT EXISTS idx_roulette_rounds_number ON roulette_rounds(round_number)");
+            $this->db->exec("CREATE INDEX IF NOT EXISTS idx_crash_rounds_status ON crash_rounds(status)");
+            $this->db->exec("CREATE INDEX IF NOT EXISTS idx_crash_rounds_number ON crash_rounds(round_number)");
+            $this->db->exec("CREATE INDEX IF NOT EXISTS idx_roulette_bets_round ON roulette_bets(round_id)");
+            $this->db->exec("CREATE INDEX IF NOT EXISTS idx_roulette_bets_user ON roulette_bets(user_id)");
+            $this->db->exec("CREATE INDEX IF NOT EXISTS idx_crash_bets_round ON crash_bets(round_id)");
+            $this->db->exec("CREATE INDEX IF NOT EXISTS idx_crash_bets_user ON crash_bets(user_id)");
+        } catch (PDOException $e) {
+            // Indexes might already exist, ignore
+        }
     }
     
     private function initializeSettings() {
@@ -136,7 +223,14 @@ class Database {
             // Blackjack blackjack multiplier (21 with first 2 cards)
             'blackjack_blackjack_multiplier' => '2.5',
             // Blackjack dealer stand threshold
-            'blackjack_dealer_stand' => '17'
+            'blackjack_dealer_stand' => '17',
+            // Roulette round settings
+            'roulette_betting_duration' => '15', // seconds
+            'roulette_spinning_duration' => '4', // seconds
+            'roulette_round_interval' => '5', // seconds between rounds
+            // Crash round settings
+            'crash_betting_duration' => '15', // seconds
+            'crash_round_interval' => '5' // seconds between rounds
         ];
         
         foreach ($defaultSettings as $key => $value) {
@@ -392,6 +486,151 @@ class Database {
         $totalDeposit = $startingBalance + $totalDeposits;
         
         return round($totalDeposit, 2);
+    }
+    
+    // Roulette rounds functions
+    public function getCurrentRouletteRound() {
+        $stmt = $this->db->prepare("SELECT * FROM roulette_rounds WHERE status IN ('betting', 'spinning') ORDER BY round_number DESC LIMIT 1");
+        $stmt->execute();
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+    
+    public function createRouletteRound($roundNumber, $serverSeed, $serverSeedHash, $bettingEndsAt) {
+        $stmt = $this->db->prepare("INSERT INTO roulette_rounds (round_number, server_seed, server_seed_hash, betting_ends_at) VALUES (?, ?, ?, ?)");
+        $stmt->execute([$roundNumber, $serverSeed, $serverSeedHash, $bettingEndsAt]);
+        return $this->db->lastInsertId();
+    }
+    
+    public function updateRouletteRound($roundId, $status, $resultNumber = null, $clientSeed = null) {
+        $updates = ['status = ?'];
+        $params = [$status];
+        
+        if ($resultNumber !== null) {
+            $updates[] = 'result_number = ?';
+            $params[] = $resultNumber;
+        }
+        if ($clientSeed !== null) {
+            $updates[] = 'client_seed = ?';
+            $params[] = $clientSeed;
+        }
+        if ($status === 'spinning') {
+            $updates[] = 'started_at = CURRENT_TIMESTAMP';
+        } elseif ($status === 'finished') {
+            $updates[] = 'finished_at = CURRENT_TIMESTAMP';
+        }
+        
+        $params[] = $roundId;
+        $stmt = $this->db->prepare("UPDATE roulette_rounds SET " . implode(', ', $updates) . " WHERE id = ?");
+        return $stmt->execute($params);
+    }
+    
+    public function getRouletteRound($roundId) {
+        $stmt = $this->db->prepare("SELECT * FROM roulette_rounds WHERE id = ?");
+        $stmt->execute([$roundId]);
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+    
+    public function getRouletteRoundsHistory($limit = 20) {
+        $stmt = $this->db->prepare("SELECT * FROM roulette_rounds WHERE status = 'finished' ORDER BY round_number DESC LIMIT ?");
+        $stmt->execute([$limit]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+    
+    public function placeRouletteBet($roundId, $userId, $betType, $betValue, $amount, $multiplier) {
+        $stmt = $this->db->prepare("INSERT INTO roulette_bets (round_id, user_id, bet_type, bet_value, amount, multiplier) VALUES (?, ?, ?, ?, ?, ?)");
+        return $stmt->execute([$roundId, $userId, $betType, $betValue, $amount, $multiplier]);
+    }
+    
+    public function getRouletteBetsForRound($roundId) {
+        $stmt = $this->db->prepare("SELECT * FROM roulette_bets WHERE round_id = ?");
+        $stmt->execute([$roundId]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+    
+    public function getUserRouletteBetsForRound($roundId, $userId) {
+        $stmt = $this->db->prepare("SELECT * FROM roulette_bets WHERE round_id = ? AND user_id = ?");
+        $stmt->execute([$roundId, $userId]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+    
+    public function updateRouletteBetResult($betId, $won, $payout) {
+        $stmt = $this->db->prepare("UPDATE roulette_bets SET won = ?, payout = ? WHERE id = ?");
+        return $stmt->execute([$won ? 1 : 0, $payout, $betId]);
+    }
+    
+    // Crash rounds functions
+    public function getCurrentCrashRound() {
+        $stmt = $this->db->prepare("SELECT * FROM crash_rounds WHERE status IN ('betting', 'running') ORDER BY round_number DESC LIMIT 1");
+        $stmt->execute();
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+    
+    public function createCrashRound($roundNumber, $serverSeed, $serverSeedHash, $bettingEndsAt) {
+        $stmt = $this->db->prepare("INSERT INTO crash_rounds (round_number, server_seed, server_seed_hash, betting_ends_at) VALUES (?, ?, ?, ?)");
+        $stmt->execute([$roundNumber, $serverSeed, $serverSeedHash, $bettingEndsAt]);
+        return $this->db->lastInsertId();
+    }
+    
+    public function updateCrashRound($roundId, $status, $crashPoint = null, $clientSeed = null) {
+        $updates = ['status = ?'];
+        $params = [$status];
+        
+        if ($crashPoint !== null) {
+            $updates[] = 'crash_point = ?';
+            $params[] = $crashPoint;
+        }
+        if ($clientSeed !== null) {
+            $updates[] = 'client_seed = ?';
+            $params[] = $clientSeed;
+        }
+        if ($status === 'running') {
+            $updates[] = 'started_at = CURRENT_TIMESTAMP';
+        } elseif ($status === 'finished') {
+            $updates[] = 'finished_at = CURRENT_TIMESTAMP';
+        }
+        
+        $params[] = $roundId;
+        $stmt = $this->db->prepare("UPDATE crash_rounds SET " . implode(', ', $updates) . " WHERE id = ?");
+        return $stmt->execute($params);
+    }
+    
+    public function getCrashRound($roundId) {
+        $stmt = $this->db->prepare("SELECT * FROM crash_rounds WHERE id = ?");
+        $stmt->execute([$roundId]);
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+    
+    public function getCrashRoundsHistory($limit = 20) {
+        $stmt = $this->db->prepare("SELECT * FROM crash_rounds WHERE status = 'finished' ORDER BY round_number DESC LIMIT ?");
+        $stmt->execute([$limit]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+    
+    public function placeCrashBet($roundId, $userId, $betAmount) {
+        $stmt = $this->db->prepare("INSERT INTO crash_bets (round_id, user_id, bet_amount) VALUES (?, ?, ?)");
+        return $stmt->execute([$roundId, $userId, $betAmount]);
+    }
+    
+    public function getCrashBetsForRound($roundId) {
+        $stmt = $this->db->prepare("SELECT * FROM crash_bets WHERE round_id = ?");
+        $stmt->execute([$roundId]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+    
+    public function getUserCrashBetsForRound($roundId, $userId) {
+        $stmt = $this->db->prepare("SELECT * FROM crash_bets WHERE round_id = ? AND user_id = ?");
+        $stmt->execute([$roundId, $userId]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+    
+    public function updateCrashBetCashOut($betId, $cashOutMultiplier) {
+        $stmt = $this->db->prepare("UPDATE crash_bets SET cash_out_multiplier = ? WHERE id = ?");
+        return $stmt->execute([$cashOutMultiplier, $betId]);
+    }
+    
+    public function updateCrashBetResult($betId, $won, $payout) {
+        $stmt = $this->db->prepare("UPDATE crash_bets SET won = ?, payout = ? WHERE id = ?");
+        return $stmt->execute([$won ? 1 : 0, $payout, $betId]);
     }
 }
 ?>

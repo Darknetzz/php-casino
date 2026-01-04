@@ -12,6 +12,10 @@ $(document).ready(function() {
     let crashSpeed = 0.02; // Default speed
     let crashMaxMultiplier = 0; // 0 = unlimited
     let crashDistributionParam = 0.99; // Distribution curve parameter
+    let currentRound = null;
+    let pollInterval = null;
+    let bettingCountdownInterval = null;
+    let userBet = null;
     
     const canvas = document.getElementById('crashCanvas');
     const ctx = canvas.getContext('2d');
@@ -57,31 +61,10 @@ $(document).ready(function() {
         }
     }, 'json');
     
-    // Generate crash point using a configurable distribution
-    // This formula makes lower multipliers more likely, but allows for high multipliers
-    // The distribution parameter controls the curve (higher = more low multipliers)
-    function generateCrashPoint() {
-        // Generate a random number between 0 and 1
-        const r = Math.random();
-        // Use a configurable formula that favors lower multipliers based on distribution param
-        // Formula: crash = 1 + (r * param) / (1 - r * param)
-        // When param is close to 1, lower multipliers are much more likely
-        // When param is lower, higher multipliers become more common
-        const param = Math.max(0.01, Math.min(0.999, crashDistributionParam));
-        const crash = Math.max(1.00, 1 + (r * param) / (1 - r * param));
-        return Math.round(crash * 100) / 100; // Round to 2 decimal places
-    }
-    
     // Calculate probability of crashing before a given multiplier
-    // This is the inverse of the distribution function
-    // Original: crash = 1 + (r * param) / (1 - r * param)
-    // Solving for r: r = (crash - 1) / (param * crash)
     function calculateCrashProbability(beforeMultiplier) {
         const param = Math.max(0.01, Math.min(0.999, crashDistributionParam));
         if (beforeMultiplier <= 1.00) return 0;
-        // Inverse formula: r = (multiplier - 1) / (param * multiplier)
-        // This gives us the random value r that would produce this multiplier
-        // The probability is simply this r value (since r is uniform 0-1)
         const r = (beforeMultiplier - 1) / (param * beforeMultiplier);
         return Math.min(1, Math.max(0, r)) * 100; // Return as percentage
     }
@@ -169,62 +152,124 @@ $(document).ready(function() {
             ctx.stroke();
             ctx.setLineDash([]);
         }
+        
+        // Draw crash point line if known
+        if (currentRound && currentRound.crash_point && currentRound.status === 'finished') {
+            const crashY = height - (height / 10) * (currentRound.crash_point - 1);
+            ctx.strokeStyle = '#dc3545';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([3, 3]);
+            ctx.beginPath();
+            ctx.moveTo(0, crashY);
+            ctx.lineTo(width, crashY);
+            ctx.stroke();
+            ctx.setLineDash([]);
+        }
     }
     
-    // Start the crash game
-    function startGame() {
-        if (isGameActive) return;
-        
-        betAmount = parseFloat($('#betAmount').val());
-        
-        if (betAmount < 1 || betAmount > maxBet) {
-            $('#result').html('<div class="alert alert-error">Bet must be between $1 and $' + maxBet + '</div>');
-            return;
-        }
-        
-        // Check balance
-        $.get(getApiPath('getBalance'), function(data) {
-            if (!data.success || data.balance < betAmount) {
-                $('#result').html('<div class="alert alert-error">Insufficient funds</div>');
-                return;
-            }
-            
-            // Place bet
-            $.post(getApiPath('updateBalance'), {
-                amount: -betAmount,
-                type: 'bet',
-                description: 'Crash bet',
-                game: 'crash'
-            }, function(data) {
-                if (!data.success) {
-                    $('#result').html('<div class="alert alert-error">' + (data.message || 'Failed to place bet') + '</div>');
+    // Poll server for current round state
+    function pollRoundState() {
+        $.get('../api/api.php?action=getCrashRound', function(data) {
+            if (data.success) {
+                const round = data.round;
+                
+                if (!round) {
+                    // No active round
+                    $('#multiplierDisplay').text('1.00x');
+                    $('#placeBetBtn').prop('disabled', true).text('WAITING FOR ROUND');
+                    $('#crashControls').hide();
                     return;
                 }
                 
-                // Initialize game
-                isGameActive = true;
-                hasCashedOut = false;
-                currentMultiplier = 1.00;
-                cashOutMultiplier = 0;
-                graphData = [1.00];
-                lastGraphUpdate = Date.now();
+                currentRound = round;
                 
-                // Generate crash point
-                crashPoint = generateCrashPoint();
-                console.log('Crash point:', crashPoint);
+                // Update round info
+                if (round.status === 'betting') {
+                    const timeLeft = round.time_until_betting_ends || 0;
+                    $('#multiplierDisplay').text(`Round #${round.round_number} - Betting ends in ${Math.ceil(timeLeft)}s`);
+                    $('#placeBetBtn').prop('disabled', false).text('Place Bet');
+                    $('#crashControls').hide();
+                    updateBettingCountdown(timeLeft);
+                    
+                    // Reset game state
+                    isGameActive = false;
+                    hasCashedOut = false;
+                    currentMultiplier = 1.00;
+                    cashOutMultiplier = 0;
+                    graphData = [];
+                    userBet = null;
+                    
+                    // Check if user has a bet for this round
+                    if (round.user_bets && round.user_bets.length > 0) {
+                        userBet = round.user_bets[0];
+                        betAmount = userBet.bet_amount;
+                        $('#placeBetBtn').prop('disabled', true).text('Bet Placed: $' + betAmount.toFixed(2));
+                    }
+                } else if (round.status === 'running') {
+                    // Round is running
+                    if (round.crash_point) {
+                        crashPoint = parseFloat(round.crash_point);
+                    }
+                    if (!isGameActive && userBet) {
+                        // Start the game animation
+                        startGameAnimation(round);
+                    } else if (isGameActive) {
+                        // Update crash point if it changed
+                        if (round.crash_point) {
+                            crashPoint = parseFloat(round.crash_point);
+                        }
+                    }
+                } else if (round.status === 'finished') {
+                    // Round finished
+                    if (round.crash_point) {
+                        crashPoint = parseFloat(round.crash_point);
+                        finishRound(round);
+                    }
+                }
                 
-                // Update UI
-                $('#placeBetBtn').prop('disabled', true).text('Game In Progress...').addClass('game-disabled');
-                $('#betAmount').prop('disabled', true);
-                // Grey out all buttons except the cash out button and info buttons (players need to be able to cash out and view info!)
-                $('.game-container button, .game-container .btn').not('#cashOutBtn, [onclick*="openModal"]').addClass('game-disabled');
-                $('#crashControls').show();
-                $('#result').html('');
-                
-                // Start animation
-                animate();
-            }, 'json');
-        }, 'json');
+                // Load history
+                loadHistory();
+            }
+        }, 'json').fail(function() {
+            console.error('Failed to poll round state');
+        });
+    }
+    
+    function updateBettingCountdown(seconds) {
+        if (bettingCountdownInterval) {
+            clearInterval(bettingCountdownInterval);
+        }
+        
+        let timeLeft = Math.ceil(seconds);
+        bettingCountdownInterval = setInterval(function() {
+            timeLeft--;
+            if (timeLeft > 0 && currentRound && currentRound.status === 'betting') {
+                $('#multiplierDisplay').text(`Round #${currentRound.round_number} - Betting ends in ${timeLeft}s`);
+            } else {
+                clearInterval(bettingCountdownInterval);
+                bettingCountdownInterval = null;
+            }
+        }, 1000);
+    }
+    
+    function startGameAnimation(round) {
+        isGameActive = true;
+        currentMultiplier = 1.00;
+        graphData = [1.00];
+        lastGraphUpdate = Date.now();
+        
+        if (round.crash_point) {
+            crashPoint = parseFloat(round.crash_point);
+        }
+        
+        $('#placeBetBtn').prop('disabled', true).text('Game In Progress...').addClass('game-disabled');
+        $('#betAmount').prop('disabled', true);
+        $('#crashControls').show();
+        $('#cashOutBtn').prop('disabled', false);
+        $('#result').html('');
+        
+        // Start animation
+        animate();
     }
     
     // Animate the multiplier
@@ -234,8 +279,7 @@ $(document).ready(function() {
         const now = Date.now();
         const deltaTime = (now - lastGraphUpdate) / 1000; // Convert to seconds
         
-        // Increase multiplier (exponential growth for excitement)
-        // Speed increases slightly as multiplier goes up, using configured crash speed
+        // Increase multiplier (exponential growth)
         const speed = crashSpeed + (currentMultiplier - 1) * (crashSpeed * 0.05);
         currentMultiplier += speed * deltaTime;
         currentMultiplier = Math.round(currentMultiplier * 100) / 100;
@@ -259,22 +303,16 @@ $(document).ready(function() {
         // Update display
         $('#multiplierDisplay').text(currentMultiplier.toFixed(2) + 'x');
         
-        // Update button text to show current multiplier
-        if (isGameActive && !hasCashedOut) {
-            $('#placeBetBtn').text('Game In Progress: ' + currentMultiplier.toFixed(2) + 'x');
-        }
-        
         if (hasCashedOut) {
             const winAmount = (betAmount * cashOutMultiplier).toFixed(2);
             $('#cashOutInfo').html('<div style="color: #28a745; font-weight: bold; margin-top: 10px;">Cashed out at ' + cashOutMultiplier.toFixed(2) + 'x<br>Win: $' + winAmount + '</div>');
-            $('#placeBetBtn').text('Cashed Out - Waiting for Crash');
         } else {
             const potentialWin = (betAmount * currentMultiplier).toFixed(2);
             $('#cashOutInfo').html('<div style="color: #666; margin-top: 10px;">Potential win: $' + potentialWin + '</div>');
         }
         
         // Check if crashed
-        if (currentMultiplier >= crashPoint) {
+        if (crashPoint > 0 && currentMultiplier >= crashPoint) {
             crash();
             return;
         }
@@ -288,32 +326,25 @@ $(document).ready(function() {
     
     // Handle cash out
     function cashOut() {
-        if (!isGameActive || hasCashedOut) return;
+        if (!isGameActive || hasCashedOut || !userBet) return;
         
         cashOutMultiplier = currentMultiplier;
         hasCashedOut = true;
         
-        // Calculate win
-        const winAmount = betAmount * cashOutMultiplier;
-        
-        // Update balance
-        $.post(getApiPath('updateBalance'), {
-            amount: winAmount,
-            type: 'win',
-            description: 'Crash cash out at ' + cashOutMultiplier.toFixed(2) + 'x',
-            game: 'crash'
+        // Send cash out to server
+        $.post('../api/api.php?action=cashOutCrash', {
+            multiplier: cashOutMultiplier
         }, function(data) {
             if (data.success) {
-                $('#result').html('<div class="alert alert-success">Cashed out at ' + cashOutMultiplier.toFixed(2) + 'x! You won $' + winAmount.toFixed(2) + '</div>');
+                $('#cashOutBtn').prop('disabled', true);
                 updateBalance();
+            } else {
+                $('#result').html('<div class="alert alert-error">' + (data.message || 'Failed to cash out') + '</div>');
             }
         }, 'json');
         
         // Disable cash out button
         $('#cashOutBtn').prop('disabled', true);
-        
-        // Wait for crash to see result
-        // Game will end when crash happens
     }
     
     // Handle crash
@@ -325,33 +356,30 @@ $(document).ready(function() {
             animationFrame = null;
         }
         
-        // Add to history
-        crashHistory.unshift(crashPoint.toFixed(2) + 'x');
-        if (crashHistory.length > maxHistoryItems) {
-            crashHistory.pop();
-        }
-        updateHistory();
-        
         // Final graph update
         drawGraph();
+        
+        // Results will be processed by the server
+        // Just show the crash point
+        if (crashPoint > 0) {
+            $('#multiplierDisplay').text('Crashed at ' + crashPoint.toFixed(2) + 'x');
+        }
         
         if (!hasCashedOut) {
             // Player lost
             $('#result').html('<div class="alert alert-error">Crashed at ' + crashPoint.toFixed(2) + 'x! You lost $' + betAmount.toFixed(2) + '</div>');
         } else {
-            // Player already cashed out, show final result
+            // Player already cashed out
             const winAmount = (betAmount * cashOutMultiplier).toFixed(2);
             $('#result').html('<div class="alert alert-success">Crashed at ' + crashPoint.toFixed(2) + 'x. You cashed out at ' + cashOutMultiplier.toFixed(2) + 'x and won $' + winAmount + '</div>');
         }
         
-        // Reset UI
+        // Reset UI after delay
         setTimeout(function() {
             $('#placeBetBtn').prop('disabled', false).text('Place Bet').removeClass('game-disabled');
             $('#betAmount').prop('disabled', false);
             $('#crashControls').hide();
             $('#cashOutBtn').prop('disabled', false);
-            // Remove disabled class from all buttons (cash out and info buttons were never disabled)
-            $('.game-container button, .game-container .btn').not('[onclick*="openModal"]').removeClass('game-disabled');
             $('#cashOutInfo').html('');
             currentMultiplier = 1.00;
             graphData = [];
@@ -359,6 +387,19 @@ $(document).ready(function() {
             updateBalance();
             updateStats();
         }, 3000);
+    }
+    
+    function finishRound(round) {
+        // Round finished, check results
+        if (userBet) {
+            if (userBet.won) {
+                $('#result').html('<div class="alert alert-success">You won $' + (userBet.payout || 0).toFixed(2) + '!</div>');
+            } else {
+                $('#result').html('<div class="alert alert-error">You lost $' + userBet.bet_amount.toFixed(2) + '</div>');
+            }
+            updateBalance();
+            updateStats();
+        }
     }
     
     // Update history display
@@ -381,17 +422,26 @@ $(document).ready(function() {
         $('#historyList').html(html);
     }
     
+    function loadHistory() {
+        $.get('../api/api.php?action=getCrashHistory&limit=10', function(data) {
+            if (data.success && data.history) {
+                crashHistory = data.history.map(function(round) {
+                    return round.crash_point ? round.crash_point.toFixed(2) + 'x' : '1.00x';
+                });
+                updateHistory();
+            }
+        }, 'json');
+    }
+    
     // Update balance display
     function updateBalance() {
         $.get(getApiPath('getBalance'), function(data) {
             if (data.success) {
-                // Update balance in navbar (same pattern as other games)
                 if (typeof formatNumber === 'function') {
                     $('#balance').text(formatNumber(data.balance));
                 } else {
                     $('#balance').text('$' + parseFloat(data.balance).toFixed(2));
                 }
-                // Also update large balance if it exists
                 $('.balance-large').text('$' + (typeof formatNumber === 'function' ? formatNumber(data.balance) : parseFloat(data.balance).toFixed(2)));
             }
         }, 'json');
@@ -409,13 +459,50 @@ $(document).ready(function() {
     }
     
     // Event handlers
-    $('#placeBetBtn').on('click', startGame);
+    $('#placeBetBtn').on('click', function() {
+        if (!currentRound || currentRound.status !== 'betting') {
+            $('#result').html('<div class="alert alert-error">Betting is not open</div>');
+            return;
+        }
+        
+        betAmount = parseFloat($('#betAmount').val());
+        
+        if (betAmount < 1 || betAmount > maxBet) {
+            $('#result').html('<div class="alert alert-error">Bet must be between $1 and $' + maxBet + '</div>');
+            return;
+        }
+        
+        // Check balance
+        $.get(getApiPath('getBalance'), function(data) {
+            if (!data.success || data.balance < betAmount) {
+                $('#result').html('<div class="alert alert-error">Insufficient funds</div>');
+                return;
+            }
+            
+            // Place bet
+            $.post('../api/api.php?action=placeCrashBet', {
+                bet_amount: betAmount
+            }, function(data) {
+                if (data.success) {
+                    $('#placeBetBtn').prop('disabled', true).text('Bet Placed: $' + betAmount.toFixed(2));
+                    $('#result').html('<div class="alert alert-success">Bet placed!</div>');
+                    updateBalance();
+                    
+                    // Store user bet
+                    userBet = {bet_amount: betAmount};
+                } else {
+                    $('#result').html('<div class="alert alert-error">' + (data.message || 'Failed to place bet') + '</div>');
+                }
+            }, 'json');
+        }, 'json');
+    });
+    
     $('#cashOutBtn').on('click', cashOut);
     
     // Allow Enter key to place bet
     $('#betAmount').on('keypress', function(e) {
         if (e.which === 13 && !isGameActive) {
-            startGame();
+            $('#placeBetBtn').click();
         }
     });
     
@@ -433,5 +520,21 @@ $(document).ready(function() {
     
     // Initial graph draw and probability stats
     drawGraph();
-    // Probability stats will be updated after settings load
+    
+    // Start polling
+    pollRoundState();
+    pollInterval = setInterval(pollRoundState, 2000); // Poll every 2 seconds
+    
+    // Cleanup on page unload
+    $(window).on('beforeunload', function() {
+        if (pollInterval) {
+            clearInterval(pollInterval);
+        }
+        if (bettingCountdownInterval) {
+            clearInterval(bettingCountdownInterval);
+        }
+        if (animationFrame) {
+            cancelAnimationFrame(animationFrame);
+        }
+    });
 });

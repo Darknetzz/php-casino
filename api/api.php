@@ -235,6 +235,232 @@ switch ($action) {
         $db->setDarkMode($user['id'], $darkMode);
         echo json_encode(['success' => true, 'darkMode' => $darkMode]);
         break;
+    
+    // Roulette round endpoints
+    case 'getRouletteRound':
+        require_once __DIR__ . '/../includes/provably_fair.php';
+        $round = $db->getCurrentRouletteRound();
+        if ($round) {
+            $now = time();
+            $bettingEndsAt = strtotime($round['betting_ends_at']);
+            $timeUntilBettingEnds = max(0, $bettingEndsAt - $now);
+            
+            // Calculate time until round starts/finishes
+            $timeUntilStart = 0;
+            $timeUntilFinish = 0;
+            if ($round['status'] === 'betting') {
+                $timeUntilStart = $timeUntilBettingEnds;
+            } elseif ($round['status'] === 'spinning' && $round['started_at']) {
+                $spinningDuration = intval(getSetting('roulette_spinning_duration', 4));
+                $startedAt = strtotime($round['started_at']);
+                $finishesAt = $startedAt + $spinningDuration;
+                $timeUntilFinish = max(0, $finishesAt - $now);
+            }
+            
+            // Get user's bets for this round
+            $userBets = $db->getUserRouletteBetsForRound($round['id'], $user['id']);
+            
+            $round['time_until_betting_ends'] = $timeUntilBettingEnds;
+            $round['time_until_start'] = $timeUntilStart;
+            $round['time_until_finish'] = $timeUntilFinish;
+            $round['user_bets'] = $userBets;
+            
+            // Don't reveal server seed until round is finished (for provably fair)
+            if ($round['status'] !== 'finished') {
+                unset($round['server_seed']);
+            }
+        }
+        echo json_encode(['success' => true, 'round' => $round]);
+        break;
+    
+    case 'placeRouletteBet':
+        require_once __DIR__ . '/../includes/provably_fair.php';
+        $round = $db->getCurrentRouletteRound();
+        
+        if (!$round || $round['status'] !== 'betting') {
+            echo json_encode(['success' => false, 'message' => 'No active betting round']);
+            break;
+        }
+        
+        $betType = $_POST['bet_type'] ?? '';
+        $betValue = $_POST['bet_value'] ?? '';
+        $amount = floatval($_POST['amount'] ?? 0);
+        $multiplier = floatval($_POST['multiplier'] ?? 1);
+        
+        if ($amount < 1) {
+            echo json_encode(['success' => false, 'message' => 'Invalid bet amount']);
+            break;
+        }
+        
+        $maxBet = floatval(getSetting('max_bet', 100));
+        if ($amount > $maxBet) {
+            echo json_encode(['success' => false, 'message' => 'Bet amount exceeds maximum of $' . number_format($maxBet, 2)]);
+            break;
+        }
+        
+        // Check balance
+        if ($user['balance'] < $amount) {
+            echo json_encode(['success' => false, 'message' => 'Insufficient funds']);
+            break;
+        }
+        
+        // Deduct bet amount
+        $newBalance = $user['balance'] - $amount;
+        $db->updateBalance($user['id'], $newBalance);
+        
+        // Place bet
+        $db->placeRouletteBet($round['id'], $user['id'], $betType, $betValue, $amount, $multiplier);
+        
+        echo json_encode(['success' => true, 'balance' => $newBalance]);
+        break;
+    
+    case 'getRouletteHistory':
+        $limit = intval($_GET['limit'] ?? 20);
+        $history = $db->getRouletteRoundsHistory($limit);
+        echo json_encode(['success' => true, 'history' => $history]);
+        break;
+    
+    // Crash round endpoints
+    case 'getCrashRound':
+        require_once __DIR__ . '/../includes/provably_fair.php';
+        $round = $db->getCurrentCrashRound();
+        if ($round) {
+            $now = time();
+            $bettingEndsAt = strtotime($round['betting_ends_at']);
+            $timeUntilBettingEnds = max(0, $bettingEndsAt - $now);
+            
+            // Calculate time until round starts/finishes
+            $timeUntilStart = 0;
+            if ($round['status'] === 'betting') {
+                $timeUntilStart = $timeUntilBettingEnds;
+            }
+            
+            // Get user's bets for this round
+            $userBets = $db->getUserCrashBetsForRound($round['id'], $user['id']);
+            
+            $round['time_until_betting_ends'] = $timeUntilBettingEnds;
+            $round['time_until_start'] = $timeUntilStart;
+            $round['user_bets'] = $userBets;
+            
+            // Don't reveal server seed until round is finished (for provably fair)
+            // But reveal crash point when round is running so client can animate
+            if ($round['status'] !== 'finished') {
+                unset($round['server_seed']);
+            }
+        }
+        echo json_encode(['success' => true, 'round' => $round]);
+        break;
+    
+    case 'placeCrashBet':
+        require_once __DIR__ . '/../includes/provably_fair.php';
+        $round = $db->getCurrentCrashRound();
+        
+        if (!$round || $round['status'] !== 'betting') {
+            echo json_encode(['success' => false, 'message' => 'No active betting round']);
+            break;
+        }
+        
+        $betAmount = floatval($_POST['bet_amount'] ?? 0);
+        
+        if ($betAmount < 1) {
+            echo json_encode(['success' => false, 'message' => 'Invalid bet amount']);
+            break;
+        }
+        
+        $maxBet = floatval(getSetting('max_bet', 100));
+        if ($betAmount > $maxBet) {
+            echo json_encode(['success' => false, 'message' => 'Bet amount exceeds maximum of $' . number_format($maxBet, 2)]);
+            break;
+        }
+        
+        // Check balance
+        if ($user['balance'] < $betAmount) {
+            echo json_encode(['success' => false, 'message' => 'Insufficient funds']);
+            break;
+        }
+        
+        // Deduct bet amount
+        $newBalance = $user['balance'] - $betAmount;
+        $db->updateBalance($user['id'], $newBalance);
+        
+        // Place bet
+        $db->placeCrashBet($round['id'], $user['id'], $betAmount);
+        
+        echo json_encode(['success' => true, 'balance' => $newBalance]);
+        break;
+    
+    case 'cashOutCrash':
+        require_once __DIR__ . '/../includes/provably_fair.php';
+        $round = $db->getCurrentCrashRound();
+        
+        if (!$round || $round['status'] !== 'running') {
+            echo json_encode(['success' => false, 'message' => 'Round is not running']);
+            break;
+        }
+        
+        $multiplier = floatval($_POST['multiplier'] ?? 0);
+        
+        if ($multiplier < 1.00) {
+            echo json_encode(['success' => false, 'message' => 'Invalid multiplier']);
+            break;
+        }
+        
+        // Get user's bet for this round
+        $userBets = $db->getUserCrashBetsForRound($round['id'], $user['id']);
+        if (empty($userBets)) {
+            echo json_encode(['success' => false, 'message' => 'No bet found for this round']);
+            break;
+        }
+        
+        $bet = $userBets[0];
+        
+        // Check if already cashed out
+        if ($bet['cash_out_multiplier'] && $bet['cash_out_multiplier'] > 0) {
+            echo json_encode(['success' => false, 'message' => 'Already cashed out']);
+            break;
+        }
+        
+        // Update cash out multiplier
+        $db->updateCrashBetCashOut($bet['id'], $multiplier);
+        
+        echo json_encode(['success' => true, 'cash_out_multiplier' => $multiplier]);
+        break;
+    
+    case 'getCrashHistory':
+        $limit = intval($_GET['limit'] ?? 20);
+        $history = $db->getCrashRoundsHistory($limit);
+        echo json_encode(['success' => true, 'history' => $history]);
+        break;
+    
+    // Admin endpoints for predicting rounds
+    case 'getRouletteRoundAdmin':
+        requireAdmin();
+        require_once __DIR__ . '/../includes/provably_fair.php';
+        $round = $db->getCurrentRouletteRound();
+        if ($round) {
+            // Admins can see the server seed and predict the result
+            if ($round['status'] === 'betting' || $round['status'] === 'spinning') {
+                $predictedResult = ProvablyFair::generateRouletteResult($round['server_seed'], $round['client_seed'] ?? '');
+                $round['predicted_result'] = $predictedResult;
+            }
+        }
+        echo json_encode(['success' => true, 'round' => $round]);
+        break;
+    
+    case 'getCrashRoundAdmin':
+        requireAdmin();
+        require_once __DIR__ . '/../includes/provably_fair.php';
+        $round = $db->getCurrentCrashRound();
+        if ($round) {
+            // Admins can see the server seed and predict the crash point
+            if ($round['status'] === 'betting') {
+                $distributionParam = floatval(getSetting('crash_distribution_param', 0.99));
+                $predictedCrashPoint = ProvablyFair::generateCrashPoint($round['server_seed'], $round['client_seed'] ?? '', $distributionParam);
+                $round['predicted_crash_point'] = $predictedCrashPoint;
+            }
+        }
+        echo json_encode(['success' => true, 'round' => $round]);
+        break;
         
     default:
         echo json_encode(['success' => false, 'message' => 'Invalid action']);
