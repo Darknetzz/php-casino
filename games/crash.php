@@ -12,7 +12,51 @@ include __DIR__ . '/../includes/navbar.php';
         <div class="game-container section">
             <h1>🚀 Crash</h1>
             
-            <div class="crash-game">
+            <?php 
+            $crashMode = getSetting('crash_mode', 'local');
+            $workerRunning = true; // Default to true for local mode
+            
+            if ($crashMode === 'central'): 
+                // Check worker status
+                $pidFile = __DIR__ . '/../workers/worker.pid';
+                $workerRunning = false;
+                
+                if (file_exists($pidFile)) {
+                    $pid = trim(file_get_contents($pidFile));
+                    if ($pid && is_numeric($pid)) {
+                        $output = [];
+                        $returnVar = 0;
+                        exec("ps -p $pid -o pid,cmd 2>/dev/null", $output, $returnVar);
+                        if ($returnVar === 0 && count($output) > 1) {
+                            $workerRunning = true;
+                        }
+                    }
+                }
+                
+                if (!$workerRunning) {
+                    // Check by process name as fallback
+                    $output = [];
+                    exec("ps aux | grep '[p]hp.*game_rounds_worker.php'", $output);
+                    if (!empty($output)) {
+                        $workerRunning = true;
+                    }
+                }
+                
+                if (!$workerRunning):
+            ?>
+            <div class="game-closed-message" style="background: #fff3cd; border: 2px solid #ffc107; border-radius: 10px; padding: 30px; text-align: center; margin-bottom: 20px;">
+                <h2 style="color: #856404; margin-top: 0;">⚠️ Temporarily Closed</h2>
+                <p style="color: #856404; font-size: 16px; margin-bottom: 0;">
+                    This game is temporarily unavailable. The worker process is not running.<br>
+                    Please check back later or contact an administrator.
+                </p>
+            </div>
+            <?php 
+                endif;
+            endif; 
+            ?>
+            
+            <div class="crash-game" <?php if ($crashMode === 'central' && !$workerRunning): ?>style="display: none;"<?php endif; ?>>
                 <div class="bet-controls">
                     <label>Bet Amount: $</label>
                     <input type="number" id="betAmount" min="1" value="10" step="1" class="bet-input-with-adjust">

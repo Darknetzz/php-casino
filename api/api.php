@@ -585,9 +585,9 @@ switch ($action) {
         echo json_encode(['success' => true, 'predictions' => $predictions]);
         break;
     
-    // Worker management endpoints (admin only)
+    // Worker management endpoints
     case 'getWorkerStatus':
-        requireAdmin();
+        // Public endpoint - anyone can check worker status
         $workerScript = __DIR__ . '/../workers/game_rounds_worker.php';
         $pidFile = __DIR__ . '/../workers/worker.pid';
         

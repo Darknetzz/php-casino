@@ -3970,6 +3970,30 @@ body.dark-mode .mode-description strong {
     color: #e0e0e0;
 }
 
+/* Game Closed Message */
+.game-closed-message {
+    background: #fff3cd;
+    border: 2px solid #ffc107;
+    border-radius: 10px;
+    padding: 30px;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+body.dark-mode .game-closed-message {
+    background: rgba(255, 193, 7, 0.15);
+    border-color: #ffc107;
+    color: #ffc107;
+}
+
+body.dark-mode .game-closed-message h2 {
+    color: #ffc107;
+}
+
+body.dark-mode .game-closed-message p {
+    color: #ffc107;
+}
+
 body.dark-mode .round-history-section p,
 body.dark-mode .crash-history p {
     color: #aaa !important;
