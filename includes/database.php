@@ -233,7 +233,9 @@ class Database {
             'crash_round_interval' => '60', // seconds between rounds
             // Game mode settings
             'roulette_mode' => 'local', // 'local' or 'central'
-            'crash_mode' => 'local' // 'local' or 'central'
+            'crash_mode' => 'local', // 'local' or 'central'
+            // Worker settings
+            'worker_interval' => '1' // seconds between worker checks
         ];
         
         foreach ($defaultSettings as $key => $value) {

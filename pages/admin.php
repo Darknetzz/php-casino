@@ -53,6 +53,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
         
+        // Check if this is worker settings update
+        if (isset($_POST['worker_interval']) && isset($_POST['update_worker_settings'])) {
+            $workerInterval = intval($_POST['worker_interval'] ?? 1);
+            
+            if ($workerInterval < 1) {
+                $errors[] = 'Worker interval must be at least 1 second';
+            }
+            if ($workerInterval > 60) {
+                $errors[] = 'Worker interval cannot exceed 60 seconds';
+            }
+            
+            if (empty($errors)) {
+                $db->setSetting('worker_interval', $workerInterval);
+                header('Location: admin.php?tab=rounds&success=1');
+                exit;
+            }
+        }
+        
+        // Check if this is casino settings update
+        if (isset($_POST['site_name']) && isset($_POST['update_casino_settings'])) {
+            $siteName = trim($_POST['site_name'] ?? '');
+            $maintenanceMode = isset($_POST['maintenance_mode']) ? '1' : '0';
+            
+            $db->setSetting('site_name', $siteName);
+            $db->setSetting('maintenance_mode', $maintenanceMode);
+            header('Location: admin.php?tab=settings&success=1');
+            exit;
+        }
+        
         // Check if this is multipliers update
         if (isset($_POST['slots_symbols']) || isset($_POST['plinko_multiplier_0']) || isset($_POST['dice_num_dice']) || isset($_POST['crash_speed']) || isset($_POST['roulette_betting_duration']) || isset($_POST['blackjack_regular_multiplier'])) {
             // Slots multipliers (dynamic symbols)
