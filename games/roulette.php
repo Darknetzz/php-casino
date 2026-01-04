@@ -19,10 +19,10 @@ include __DIR__ . '/../includes/navbar.php';
                 
                 <div class="bet-options section">
                     <h3>Place Your Bets:</h3>
-                    <div class="bet-amount-control" style="margin-bottom: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px;">
-                        <label style="display: block; margin-bottom: 8px; font-weight: 500;">Bet Amount: $</label>
+                    <div class="bet-amount-control">
+                        <label>Bet Amount: $</label>
                         <input type="number" id="betAmount" min="1" step="1" value="10" class="bet-input-with-adjust" style="width: 150px; padding: 8px; font-size: 16px;">
-                        <small style="display: block; margin-top: 5px; color: #666;">Max: $<span id="maxBet">100</span></small>
+                        <small>Max: $<span id="maxBet">100</span></small>
                     </div>
                     <div class="color-bets-section">
                         <h4>Color & Range Bets (2x payout):</h4>

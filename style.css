@@ -1197,6 +1197,25 @@ body {
     border-radius: 10px;
 }
 
+.bet-amount-control {
+    margin-bottom: 20px;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 8px;
+}
+
+.bet-amount-control label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+}
+
+.bet-amount-control small {
+    display: block;
+    margin-top: 5px;
+    color: #666;
+}
+
 .bet-options h3 {
     color: #667eea;
     margin-bottom: 15px;
@@ -2586,6 +2605,72 @@ body.dark-mode .bet-options {
 body.dark-mode .bet-options h3,
 body.dark-mode .bet-options h4 {
     color: #8a9eff;
+}
+
+body.dark-mode .bet-amount-control {
+    background: rgba(30, 30, 50, 0.9) !important;
+    border: 1px solid #555;
+    color: #e0e0e0;
+}
+
+body.dark-mode .bet-amount-control label {
+    color: #e0e0e0;
+}
+
+body.dark-mode .bet-amount-control small {
+    color: #aaa;
+}
+
+body.dark-mode .bet-btn {
+    background: rgba(40, 40, 60, 0.9) !important;
+    border-color: #667eea;
+    color: #8a9eff;
+}
+
+body.dark-mode .bet-btn:hover {
+    background: #667eea !important;
+    color: white;
+}
+
+body.dark-mode .bet-btn.active {
+    background: #667eea !important;
+    color: white;
+}
+
+body.dark-mode .bet-btn[data-bet="red"] {
+    border-color: #dc3545;
+    color: #ff6b6b;
+    background: rgba(40, 40, 60, 0.9) !important;
+}
+
+body.dark-mode .bet-btn[data-bet="red"]:hover,
+body.dark-mode .bet-btn[data-bet="red"].active {
+    background: #dc3545 !important;
+    color: white;
+}
+
+body.dark-mode .bet-btn[data-bet="black"] {
+    border-color: #666;
+    color: #ccc;
+    background: rgba(40, 40, 60, 0.9) !important;
+}
+
+body.dark-mode .bet-btn[data-bet="black"]:hover,
+body.dark-mode .bet-btn[data-bet="black"].active {
+    background: #1a1a1a !important;
+    color: white;
+}
+
+body.dark-mode .bet-btn[data-bet="green"] {
+    border-color: #28a745;
+    color: #51cf66;
+    background: rgba(40, 40, 60, 0.9) !important;
+}
+
+body.dark-mode .bet-btn[data-bet="green"]:hover,
+body.dark-mode .bet-btn[data-bet="green"].active {
+    background: #28a745 !important;
+    color: white;
 }
 
 body.dark-mode .active-bets-list {
