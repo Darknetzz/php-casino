@@ -1815,6 +1815,22 @@ include __DIR__ . '/../includes/navbar.php';
         $(document).ready(function() {
             updateWorkerStatus();
             setInterval(updateWorkerStatus, 5000);
+            
+            // Add submit handlers for game modes and worker settings forms
+            $('.game-modes-form, .worker-settings-form').on('submit', function(e) {
+                // Don't prevent default - let the form submit normally
+                // Just add visual feedback
+                const $form = $(this);
+                const $button = $form.find('button[type="submit"]');
+                const originalText = $button.text();
+                
+                $button.prop('disabled', true).text('Saving...');
+                
+                // Re-enable after a timeout in case submission fails
+                setTimeout(function() {
+                    $button.prop('disabled', false).text(originalText);
+                }, 5000);
+            });
         });
         <?php endif; ?>
         
