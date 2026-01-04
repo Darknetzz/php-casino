@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  casino:
+    image: casino-app:latest
+    build:
+      context: https://github.com/Darknetzz/php-casino.git#main
+      dockerfile: Dockerfile
+    container_name: casino-app
+    ports:
+      - "7948:80"
+    volumes:
+      # Persist database data
+      - casino_data:/var/www/html/data
+    environment:
+      - PHP_INI_SCAN_DIR=/usr/local/etc/php/conf.d
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+
+volumes:
+  casino_data:
+    driver: local

@@ -2607,18 +2607,18 @@ include __DIR__ . '/../includes/navbar.php';
                 
                 if (maxDepositEnabled) {
                     maxDepositInput.prop('required', true);
-                    maxDepositInput.prop('disabled', false);
+                    maxDepositInput.removeClass('limit-disabled');
                 } else {
                     maxDepositInput.prop('required', false);
-                    maxDepositInput.prop('disabled', true);
+                    maxDepositInput.addClass('limit-disabled');
                 }
                 
                 if (maxBetEnabled) {
                     maxBetInput.prop('required', true);
-                    maxBetInput.prop('disabled', false);
+                    maxBetInput.removeClass('limit-disabled');
                 } else {
                     maxBetInput.prop('required', false);
-                    maxBetInput.prop('disabled', true);
+                    maxBetInput.addClass('limit-disabled');
                 }
             }
             

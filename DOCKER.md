@@ -2,6 +2,22 @@
 
 This guide explains how to run the Casino application using Docker.
 
+## Portainer Deployment
+
+If you're deploying this as a stack in Portainer, use `docker-compose.portainer.yml`:
+
+1. In Portainer, go to **Stacks** → **Add Stack**
+2. Give it a name (e.g., "casino")
+3. Select **Repository** or **Web editor**
+4. If using Repository:
+   - Repository URL: `https://github.com/Darknetzz/php-casino.git`
+   - Compose path: `docker-compose.portainer.yml`
+   - Branch: `main`
+5. If using Web editor, paste the contents of `docker-compose.portainer.yml`
+6. Click **Deploy the stack**
+
+**Note:** Portainer will build the image from the git repository automatically.
+
 ## Quick Start
 
 The Docker setup automatically pulls the application from the GitHub repository using HTTPS.
