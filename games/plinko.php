@@ -18,7 +18,7 @@ include __DIR__ . '/../includes/navbar.php';
                     <input type="number" id="betAmount" min="1" value="10" step="1" class="bet-input-with-adjust">
                     <small>Max: $<span id="maxBet">100</span></small>
                     <label style="margin-left: 15px;">Balls: </label>
-                    <input type="number" id="ballCount" min="1" max="10" value="1" step="1" class="bet-input-with-adjust" style="width: 60px;">
+                    <input type="number" id="ballCount" min="1" max="10" value="1" step="1" style="width: 60px;">
                     <button id="dropBtn" class="btn btn-primary btn-large">DROP BALL(S)</button>
                 </div>
                 
