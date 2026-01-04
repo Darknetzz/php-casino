@@ -1,9 +1,13 @@
 FROM php:8.2-apache
 
 # Install required PHP extensions, curl, and git for healthcheck and git clone
-RUN docker-php-ext-install pdo pdo_sqlite && \
-    apt-get update && \
-    apt-get install -y curl git && \
+RUN apt-get update && \
+    apt-get install -y \
+        curl \
+        git \
+        libsqlite3-dev \
+        && \
+    docker-php-ext-install pdo_sqlite && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
