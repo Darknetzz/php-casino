@@ -4,43 +4,41 @@ This worker script manages automatic game rounds for Roulette and Crash games. I
 
 ## Setup
 
-### Option 1: Cron Job (Recommended)
+### Option 1: Cron Job
 
-Add this to your crontab to run the worker every 2 seconds:
-
-```bash
-* * * * * /usr/bin/php /path/to/casino/workers/game_rounds_worker.php
-* * * * * sleep 2; /usr/bin/php /path/to/casino/workers/game_rounds_worker.php
-* * * * * sleep 4; /usr/bin/php /path/to/casino/workers/game_rounds_worker.php
-* * * * * sleep 6; /usr/bin/php /path/to/casino/workers/game_rounds_worker.php
-* * * * * sleep 8; /usr/bin/php /path/to/casino/workers/game_rounds_worker.php
-* * * * * sleep 10; /usr/bin/php /path/to/casino/workers/game_rounds_worker.php
-* * * * * sleep 12; /usr/bin/php /path/to/casino/workers/game_rounds_worker.php
-* * * * * sleep 14; /usr/bin/php /path/to/casino/workers/game_rounds_worker.php
-* * * * * sleep 16; /usr/bin/php /path/to/casino/workers/game_rounds_worker.php
-* * * * * sleep 18; /usr/bin/php /path/to/casino/workers/game_rounds_worker.php
-* * * * * sleep 20; /usr/bin/php /path/to/casino/workers/game_rounds_worker.php
-* * * * * sleep 22; /usr/bin/php /path/to/casino/workers/game_rounds_worker.php
-* * * * * sleep 24; /usr/bin/php /path/to/casino/workers/game_rounds_worker.php
-* * * * * sleep 26; /usr/bin/php /path/to/casino/workers/game_rounds_worker.php
-* * * * * sleep 28; /usr/bin/php /path/to/casino/workers/game_rounds_worker.php
-```
-
-Or use a simpler approach with a single cron job that runs every minute and processes multiple times:
+**Note:** Cron has a minimum granularity of 1 minute. To run the worker more frequently, use a single cron job with a loop:
 
 ```bash
 * * * * * for i in {0..29}; do /usr/bin/php /path/to/casino/workers/game_rounds_worker.php; sleep 2; done
 ```
 
-### Option 2: Background Process
+Replace `/path/to/casino` with your actual path (e.g., `/home/kriss/web/html/casino`).
 
-Run as a background daemon:
+**⚠️ Do NOT add multiple separate cron entries** - use the single loop approach above, or prefer Option 2 or 3 below.
+
+### Option 2: Background Process (Recommended for most users)
+
+Run as a background daemon using the management script:
+
+```bash
+cd /path/to/casino
+chmod +x workers/manage_worker.sh
+./workers/manage_worker.sh start
+```
+
+Or manually:
 
 ```bash
 nohup php workers/game_rounds_worker.php > /dev/null 2>&1 &
 ```
 
-### Option 3: Systemd Service
+The management script provides easy control:
+- `./workers/manage_worker.sh start` - Start the worker
+- `./workers/manage_worker.sh stop` - Stop the worker
+- `./workers/manage_worker.sh restart` - Restart the worker
+- `./workers/manage_worker.sh status` - Check if worker is running
+
+### Option 3: Systemd Service (Best for production servers)
 
 Create `/etc/systemd/system/casino-worker.service`:
 
