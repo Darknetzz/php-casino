@@ -4,27 +4,13 @@ This guide explains how to run the Casino application using Docker.
 
 ## Quick Start
 
-The Docker setup automatically pulls the application from the GitHub repository using SSH.
-
-### Prerequisites
-
-1. **Ensure you have SSH access to the repository:**
-   ```bash
-   ssh -T git@github.com
-   ```
-   You should see: "Hi username! You've successfully authenticated..."
-
-2. **Ensure your SSH key is loaded in the SSH agent:**
-   ```bash
-   eval $(ssh-agent)
-   ssh-add ~/.ssh/id_rsa  # or your SSH key path
-   ```
+The Docker setup automatically pulls the application from the GitHub repository using HTTPS.
 
 ### Build and Run
 
 1. **Build and start the container:**
    ```bash
-   DOCKER_BUILDKIT=1 docker-compose up -d --build
+   docker-compose up -d --build
    ```
 
 2. **Access the application:**
@@ -35,15 +21,13 @@ The Docker setup automatically pulls the application from the GitHub repository 
    docker-compose down
    ```
 
-**Note:** The `DOCKER_BUILDKIT=1` environment variable is required for SSH key forwarding during the build process.
-
 ## Docker Commands
 
 ### Basic Operations
-- **Start containers:** `DOCKER_BUILDKIT=1 docker-compose up -d`
+- **Start containers:** `docker-compose up -d`
 - **Stop containers:** `docker-compose down`
 - **View logs:** `docker-compose logs -f`
-- **Rebuild (pulls latest from git):** `DOCKER_BUILDKIT=1 docker-compose up -d --build`
+- **Rebuild (pulls latest from git):** `docker-compose up -d --build`
 - **Restart:** `docker-compose restart`
 
 ### Container Management
@@ -53,8 +37,8 @@ The Docker setup automatically pulls the application from the GitHub repository 
 
 ## Git Repository Configuration
 
-The Docker setup pulls the application directly from the GitHub repository using SSH:
-- **Repository:** `git@github.com:Darknetzz/php-casino.git`
+The Docker setup pulls the application directly from the GitHub repository using HTTPS:
+- **Repository:** `https://github.com/Darknetzz/php-casino.git`
 - **Default Branch:** `main`
 
 ### Changing the Repository
@@ -64,27 +48,31 @@ Edit `docker-compose.yml` to change the repository URL or branch:
 ```yaml
 build:
   args:
-    GIT_REPO: git@github.com:your-username/your-repo.git
+    GIT_REPO: https://github.com/your-username/your-repo.git
     GIT_BRANCH: main
 ```
 
-### Using HTTPS Instead of SSH
+### Using SSH Instead of HTTPS
 
-If you prefer HTTPS (for public repositories only):
+If you need SSH access (for private repositories):
 
 1. Edit `docker-compose.yml` and change:
    ```yaml
    build:
      context: .
-     dockerfile: Dockerfile  # Use regular Dockerfile instead of Dockerfile.ssh
+     dockerfile: Dockerfile.ssh  # Use SSH Dockerfile
+     ssh:
+       - default
      args:
-       GIT_REPO: https://github.com/Darknetzz/php-casino.git
+       GIT_REPO: git@github.com:Darknetzz/php-casino.git
        GIT_BRANCH: main
    ```
 
-2. Build normally:
+2. Ensure SSH agent is running and build:
    ```bash
-   docker-compose up -d --build
+   eval $(ssh-agent)
+   ssh-add ~/.ssh/id_rsa
+   DOCKER_BUILDKIT=1 docker-compose -f docker-compose.ssh.yml up -d --build
    ```
 
 ## Data Persistence
@@ -116,7 +104,7 @@ For development, you can mount the source code as a volume to see changes withou
 
 2. Rebuild and restart:
    ```bash
-   DOCKER_BUILDKIT=1 docker-compose up -d --build
+   docker-compose up -d --build
    ```
 
 **Note:** In production, remove the source code volume mount for better security.
@@ -142,7 +130,7 @@ The application includes a worker service for managing game rounds. To enable it
        - casino
      restart: unless-stopped
    ```
-3. Restart: `DOCKER_BUILDKIT=1 docker-compose up -d`
+3. Restart: `docker-compose up -d`
 
 The worker manages synchronized rounds for roulette and crash games.
 
@@ -151,12 +139,8 @@ The worker manages synchronized rounds for roulette and crash games.
 ### Container won't start
 - Check logs: `docker-compose logs`
 - Ensure port 8080 is not in use: `lsof -i :8080`
-- Try rebuilding: `DOCKER_BUILDKIT=1 docker-compose up -d --build`
+- Try rebuilding: `docker-compose up -d --build`
 
-### SSH Authentication Errors
-- Verify SSH access: `ssh -T git@github.com`
-- Ensure SSH agent is running: `eval $(ssh-agent) && ssh-add ~/.ssh/id_rsa`
-- Check that `DOCKER_BUILDKIT=1` is set before building
 
 ### Database permission errors
 - The container automatically sets correct permissions
@@ -204,7 +188,7 @@ docker-compose down
 tar -czf casino-backup-$(date +%Y%m%d).tar.gz data/
 
 # Start the container
-DOCKER_BUILDKIT=1 docker-compose up -d
+docker-compose up -d
 ```
 
 ### Restore
@@ -216,5 +200,5 @@ docker-compose down
 tar -xzf casino-backup-YYYYMMDD.tar.gz
 
 # Start the container
-DOCKER_BUILDKIT=1 docker-compose up -d
+docker-compose up -d
 ```

@@ -4,15 +4,13 @@ services:
   casino:
     build:
       context: .
-      dockerfile: Dockerfile.ssh
-      ssh:
-        - default
+      dockerfile: Dockerfile
       args:
-        GIT_REPO: git@github.com:Darknetzz/php-casino.git
+        GIT_REPO: https://github.com/Darknetzz/php-casino.git
         GIT_BRANCH: main
     container_name: casino-app
     ports:
-      - "8080:80"
+      - "7948:80"
     volumes:
       # Persist database data
       - ./data:/var/www/html/data
