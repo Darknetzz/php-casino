@@ -45,6 +45,12 @@ include __DIR__ . '/includes/navbar.php';
                 <p>Roll 6 dice and match to win!</p>
             </div>
             
+            <div class="game-card" onclick="window.location.href='games/coinflip.php'">
+                <div class="game-icon">🪙</div>
+                <h3>Coinflip</h3>
+                <p>Choose heads or tails and flip!</p>
+            </div>
+            
             <div class="game-card" onclick="window.location.href='games/crash.php'">
                 <div class="game-icon">🚀</div>
                 <h3>Crash</h3>
