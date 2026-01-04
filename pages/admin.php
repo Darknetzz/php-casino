@@ -8,10 +8,6 @@ $error = '';
 
 // Handle form submissions
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Debug: Log POST data
-    error_log('POST data: ' . print_r($_POST, true));
-    error_log('POST update_game_modes: ' . (isset($_POST['update_game_modes']) ? 'SET' : 'NOT SET'));
-    
     if (isset($_POST['update_settings'])) {
         $errors = [];
         
@@ -44,12 +40,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         // Check if this is game modes update (from rounds tab)
         if (isset($_POST['update_game_modes'])) {
-            error_log('Processing update_game_modes');
             $errors = [];
-            $rouletteMode = $_POST['roulette_mode'] ?? 'local';
-            $crashMode = $_POST['crash_mode'] ?? 'local';
+            // Get values and trim whitespace
+            // Use the select value if provided, otherwise fall back to the hidden current value
+            $rouletteMode = trim($_POST['roulette_mode'] ?? $_POST['roulette_mode_current'] ?? 'local');
+            $crashMode = trim($_POST['crash_mode'] ?? $_POST['crash_mode_current'] ?? 'local');
             
-            error_log('Roulette mode: ' . $rouletteMode . ', Crash mode: ' . $crashMode);
+            // Debug: Log what we received
+            error_log('Game modes update - Received: roulette=' . $rouletteMode . ', crash=' . $crashMode);
+            error_log('POST data - roulette_mode: ' . ($_POST['roulette_mode'] ?? 'NOT SET') . ', crash_mode: ' . ($_POST['crash_mode'] ?? 'NOT SET'));
             
             // Force stay on rounds tab
             $currentTab = 'rounds';
@@ -63,28 +62,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             if (empty($errors)) {
                 try {
-                    error_log('Attempting to save settings...');
+                    // Save the settings
                     $result1 = $db->setSetting('roulette_mode', $rouletteMode);
                     $result2 = $db->setSetting('crash_mode', $crashMode);
-                    error_log('setSetting results: roulette=' . ($result1 ? 'true' : 'false') . ', crash=' . ($result2 ? 'true' : 'false'));
+                    
                     if ($result1 && $result2) {
-                        error_log('Settings saved, redirecting...');
-                        header('Location: admin.php?tab=rounds&success=1');
-                        exit;
+                        // Immediately verify what was saved
+                        $savedRoulette = $db->getSetting('roulette_mode', 'local');
+                        $savedCrash = $db->getSetting('crash_mode', 'local');
+                        
+                        // Log for debugging
+                        error_log('Saved: roulette=' . $rouletteMode . ', crash=' . $crashMode);
+                        error_log('Verified: roulette=' . $savedRoulette . ', crash=' . $savedCrash);
+                        
+                        if ($savedRoulette === $rouletteMode && $savedCrash === $crashMode) {
+                            header('Location: admin.php?tab=rounds&success=1');
+                            exit;
+                        } else {
+                            $error = 'Settings mismatch! Tried to save: roulette=' . $rouletteMode . ', crash=' . $crashMode . ' but database has: roulette=' . $savedRoulette . ', crash=' . $savedCrash;
+                        }
                     } else {
-                        $error = 'Failed to save settings. setSetting returned: roulette=' . ($result1 ? 'true' : 'false') . ', crash=' . ($result2 ? 'true' : 'false');
-                        error_log('Error: ' . $error);
+                        $error = 'Failed to save settings. Please try again.';
                     }
                 } catch (Exception $e) {
                     $error = 'Error saving settings: ' . $e->getMessage();
-                    error_log('Exception: ' . $error);
                 }
             } else {
                 $error = implode(', ', $errors);
-                error_log('Validation errors: ' . $error);
             }
-        } else {
-            error_log('update_game_modes NOT in POST. POST keys: ' . implode(', ', array_keys($_POST)));
         }
         
         // Check if this is worker settings update
@@ -488,18 +493,6 @@ include __DIR__ . '/../includes/navbar.php';
             <?php endif; ?>
             <?php if ($error): ?>
                 <div class="alert alert-error"><?php echo htmlspecialchars($error); ?></div>
-            <?php endif; ?>
-            <?php if ($_SERVER['REQUEST_METHOD'] === 'POST'): ?>
-                <div class="alert alert-error" style="background: #ff6b6b; color: white; padding: 10px; margin-bottom: 20px;">
-                    <strong>DEBUG:</strong> POST received. Keys: <?php echo htmlspecialchars(implode(', ', array_keys($_POST))); ?>
-                    <?php if (isset($_POST['update_game_modes'])): ?>
-                        <br><strong>update_game_modes is SET!</strong>
-                        <br>Roulette: <?php echo htmlspecialchars($_POST['roulette_mode'] ?? 'NOT SET'); ?>
-                        <br>Crash: <?php echo htmlspecialchars($_POST['crash_mode'] ?? 'NOT SET'); ?>
-                    <?php else: ?>
-                        <br><strong>update_game_modes is NOT SET</strong>
-                    <?php endif; ?>
-                </div>
             <?php endif; ?>
             
             <!-- Admin Navigation Tabs -->
@@ -1319,8 +1312,12 @@ include __DIR__ . '/../includes/navbar.php';
                 $crashRound = $db->getCurrentCrashRound();
                 // Reload settings to ensure we have the latest values
                 $settings = $db->getAllSettings();
-                $rouletteMode = getSetting('roulette_mode', 'local');
-                $crashMode = getSetting('crash_mode', 'local');
+                // Get values directly from the settings array to ensure we have the latest
+                $rouletteMode = isset($settings['roulette_mode']) ? trim($settings['roulette_mode']) : 'local';
+                $crashMode = isset($settings['crash_mode']) ? trim($settings['crash_mode']) : 'local';
+                
+                // Debug: Log what we're displaying
+                error_log('Displaying game modes - roulette=' . $rouletteMode . ', crash=' . $crashMode);
             ?>
             <div class="admin-section section">
                 <h2>🎯 Synchronized Games</h2>
@@ -1332,6 +1329,10 @@ include __DIR__ . '/../includes/navbar.php';
                 
                 <form method="POST" action="admin.php" class="admin-form game-modes-form" style="margin-bottom: 30px;">
                     <input type="hidden" name="tab" value="rounds">
+                    <input type="hidden" name="update_game_modes" value="1">
+                    <!-- Hidden inputs to ensure current values are always sent, even if selects aren't changed -->
+                    <input type="hidden" name="roulette_mode_current" value="<?php echo htmlspecialchars($rouletteMode); ?>">
+                    <input type="hidden" name="crash_mode_current" value="<?php echo htmlspecialchars($crashMode); ?>">
                     <table class="game-modes-table">
                         <thead>
                             <tr>
@@ -1399,6 +1400,7 @@ include __DIR__ . '/../includes/navbar.php';
                 <!-- Worker Interval Setting -->
                 <form method="POST" action="admin.php" class="admin-form worker-settings-form">
                     <input type="hidden" name="tab" value="rounds">
+                    <input type="hidden" name="update_worker_settings" value="1">
                     <div class="form-group" style="margin-bottom: 0;">
                         <label for="worker_interval">Worker Check Interval (seconds)</label>
                         <input type="number" id="worker_interval" name="worker_interval" min="1" max="60" step="1" 
@@ -1751,11 +1753,23 @@ include __DIR__ . '/../includes/navbar.php';
                 const $button = $form.find('button[type="submit"]');
                 const originalText = $button.text();
                 
-                $button.prop('disabled', true).text('Saving...');
+                // Debug: Log form values before submission
+                if ($form.hasClass('game-modes-form')) {
+                    const rouletteMode = $('#roulette_mode').val();
+                    const crashMode = $('#crash_mode').val();
+                    console.log('Submitting game modes - roulette=' + rouletteMode + ', crash=' + crashMode);
+                    // Also log all form data
+                    const formData = $form.serialize();
+                    console.log('Form data: ' + formData);
+                }
+                
+                // Don't disable the button - it prevents the name from being submitted
+                // Just change the text to show it's processing
+                $button.text('Saving...');
                 
                 // Re-enable after a timeout in case submission fails
                 setTimeout(function() {
-                    $button.prop('disabled', false).text(originalText);
+                    $button.text(originalText);
                 }, 5000);
             });
         });

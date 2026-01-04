@@ -11,7 +11,14 @@ function isLoggedIn() {
 
 function requireLogin() {
     if (!isLoggedIn()) {
-        header('Location: ../pages/login.php');
+        // Determine correct path based on current script location
+        $scriptPath = $_SERVER['PHP_SELF'];
+        if (strpos($scriptPath, '/pages/') !== false || strpos($scriptPath, '/games/') !== false) {
+            $loginPath = '../pages/login.php';
+        } else {
+            $loginPath = 'pages/login.php';
+        }
+        header('Location: ' . $loginPath);
         exit;
     }
 }
@@ -31,11 +38,25 @@ function isAdmin() {
 
 function requireAdmin() {
     if (!isLoggedIn()) {
-        header('Location: ../pages/login.php');
+        // Determine correct path based on current script location
+        $scriptPath = $_SERVER['PHP_SELF'];
+        if (strpos($scriptPath, '/pages/') !== false || strpos($scriptPath, '/games/') !== false) {
+            $loginPath = '../pages/login.php';
+        } else {
+            $loginPath = 'pages/login.php';
+        }
+        header('Location: ' . $loginPath);
         exit;
     }
     if (!isAdmin()) {
-        header('Location: ../index.php');
+        // Determine correct path based on current script location
+        $scriptPath = $_SERVER['PHP_SELF'];
+        if (strpos($scriptPath, '/pages/') !== false || strpos($scriptPath, '/games/') !== false) {
+            $indexPath = '../index.php';
+        } else {
+            $indexPath = 'index.php';
+        }
+        header('Location: ' . $indexPath);
         exit;
     }
 }
