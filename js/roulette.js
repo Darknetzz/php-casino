@@ -201,7 +201,7 @@ $(document).ready(function() {
     // Poll server for current round state
     function pollRoundState() {
         $.get('../api/api.php?action=getRouletteRound', function(data) {
-            if (data.success) {
+            if (data && data.success) {
                 const round = data.round;
                 
                 if (!round) {
@@ -274,8 +274,8 @@ $(document).ready(function() {
                 loadHistory();
             }
         }, 'json').fail(function(xhr, status, error) {
-            console.error('Failed to poll round state:', status, error);
-            $('#rouletteResult').html('Error connecting to server<br><small style="color: #999;">Check console for details</small>');
+            console.error('Failed to poll round state:', status, error, xhr);
+            $('#rouletteResult').html('Error connecting to server<br><small style="color: #999;">Status: ' + status + ' | Error: ' + error + '</small>');
         });
     }
     

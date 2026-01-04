@@ -241,6 +241,7 @@ switch ($action) {
     // Roulette round endpoints
     case 'getRouletteRound':
         require_once __DIR__ . '/../includes/provably_fair.php';
+        $user = getCurrentUser();
         $round = $db->getCurrentRouletteRound();
         if ($round) {
             $now = time();
@@ -325,6 +326,7 @@ switch ($action) {
     // Crash round endpoints
     case 'getCrashRound':
         require_once __DIR__ . '/../includes/provably_fair.php';
+        $user = getCurrentUser();
         $round = $db->getCurrentCrashRound();
         if ($round) {
             $now = time();
