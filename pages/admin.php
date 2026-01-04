@@ -8,8 +8,9 @@ $error = '';
 
 // Handle form submissions
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Debug: Log POST data (remove after debugging)
-    // error_log('POST data: ' . print_r($_POST, true));
+    // Debug: Log POST data
+    error_log('POST data: ' . print_r($_POST, true));
+    error_log('POST update_game_modes: ' . (isset($_POST['update_game_modes']) ? 'SET' : 'NOT SET'));
     
     if (isset($_POST['update_settings'])) {
         $errors = [];
@@ -43,9 +44,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         // Check if this is game modes update (from rounds tab)
         if (isset($_POST['update_game_modes'])) {
+            error_log('Processing update_game_modes');
             $errors = [];
             $rouletteMode = $_POST['roulette_mode'] ?? 'local';
             $crashMode = $_POST['crash_mode'] ?? 'local';
+            
+            error_log('Roulette mode: ' . $rouletteMode . ', Crash mode: ' . $crashMode);
             
             // Force stay on rounds tab
             $currentTab = 'rounds';
@@ -59,20 +63,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             if (empty($errors)) {
                 try {
+                    error_log('Attempting to save settings...');
                     $result1 = $db->setSetting('roulette_mode', $rouletteMode);
                     $result2 = $db->setSetting('crash_mode', $crashMode);
+                    error_log('setSetting results: roulette=' . ($result1 ? 'true' : 'false') . ', crash=' . ($result2 ? 'true' : 'false'));
                     if ($result1 && $result2) {
+                        error_log('Settings saved, redirecting...');
                         header('Location: admin.php?tab=rounds&success=1');
                         exit;
                     } else {
                         $error = 'Failed to save settings. setSetting returned: roulette=' . ($result1 ? 'true' : 'false') . ', crash=' . ($result2 ? 'true' : 'false');
+                        error_log('Error: ' . $error);
                     }
                 } catch (Exception $e) {
                     $error = 'Error saving settings: ' . $e->getMessage();
+                    error_log('Exception: ' . $error);
                 }
             } else {
                 $error = implode(', ', $errors);
+                error_log('Validation errors: ' . $error);
             }
+        } else {
+            error_log('update_game_modes NOT in POST. POST keys: ' . implode(', ', array_keys($_POST)));
         }
         
         // Check if this is worker settings update
@@ -476,6 +488,18 @@ include __DIR__ . '/../includes/navbar.php';
             <?php endif; ?>
             <?php if ($error): ?>
                 <div class="alert alert-error"><?php echo htmlspecialchars($error); ?></div>
+            <?php endif; ?>
+            <?php if ($_SERVER['REQUEST_METHOD'] === 'POST'): ?>
+                <div class="alert alert-error" style="background: #ff6b6b; color: white; padding: 10px; margin-bottom: 20px;">
+                    <strong>DEBUG:</strong> POST received. Keys: <?php echo htmlspecialchars(implode(', ', array_keys($_POST))); ?>
+                    <?php if (isset($_POST['update_game_modes'])): ?>
+                        <br><strong>update_game_modes is SET!</strong>
+                        <br>Roulette: <?php echo htmlspecialchars($_POST['roulette_mode'] ?? 'NOT SET'); ?>
+                        <br>Crash: <?php echo htmlspecialchars($_POST['crash_mode'] ?? 'NOT SET'); ?>
+                    <?php else: ?>
+                        <br><strong>update_game_modes is NOT SET</strong>
+                    <?php endif; ?>
+                </div>
             <?php endif; ?>
             
             <!-- Admin Navigation Tabs -->
