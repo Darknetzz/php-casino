@@ -20,6 +20,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $slotsOrange = floatval($_POST['slots_orange_multiplier'] ?? 0);
         $slotsGrape = floatval($_POST['slots_grape_multiplier'] ?? 0);
         $slotsSlot = floatval($_POST['slots_slot_multiplier'] ?? 0);
+        $slotsTwoOfKind = floatval($_POST['slots_two_of_kind_multiplier'] ?? 0);
         
         // Plinko multipliers - collect from individual inputs
         $plinkoMultipliersArray = [];
@@ -29,7 +30,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $plinkoMultipliers = implode(',', $plinkoMultipliersArray);
         
         if ($maxDeposit > 0 && $maxBet > 0 && $startingBalance > 0 && $defaultBet > 0 &&
-            $slotsCherry > 0 && $slotsLemon > 0 && $slotsOrange > 0 && $slotsGrape > 0 && $slotsSlot > 0 &&
+            $slotsCherry > 0 && $slotsLemon > 0 && $slotsOrange > 0 && $slotsGrape > 0 && $slotsSlot > 0 && $slotsTwoOfKind >= 0 &&
             count(array_filter($plinkoMultipliersArray, function($v) { return $v > 0; })) === 9) {
             $db->setSetting('max_deposit', $maxDeposit);
             $db->setSetting('max_bet', $maxBet);
@@ -42,6 +43,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $db->setSetting('slots_orange_multiplier', $slotsOrange);
             $db->setSetting('slots_grape_multiplier', $slotsGrape);
             $db->setSetting('slots_slot_multiplier', $slotsSlot);
+            $db->setSetting('slots_two_of_kind_multiplier', $slotsTwoOfKind);
             
             // Save plinko multipliers
             $db->setSetting('plinko_multipliers', $plinkoMultipliers);
@@ -193,6 +195,14 @@ $users = $db->getAllUsers();
                                 <td>
                                     <input type="number" id="slots_slot_multiplier" name="slots_slot_multiplier" 
                                            min="0.1" step="0.1" value="<?php echo htmlspecialchars($settings['slots_slot_multiplier'] ?? '10'); ?>" 
+                                           required style="width: 100px; padding: 8px;">
+                                </td>
+                            </tr>
+                            <tr style="background: #f0f0f0;">
+                                <td colspan="2" style="font-weight: 600;">Any 2 of a kind</td>
+                                <td>
+                                    <input type="number" id="slots_two_of_kind_multiplier" name="slots_two_of_kind_multiplier" 
+                                           min="0" step="0.1" value="<?php echo htmlspecialchars($settings['slots_two_of_kind_multiplier'] ?? '0.5'); ?>" 
                                            required style="width: 100px; padding: 8px;">
                                 </td>
                             </tr>

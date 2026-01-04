@@ -98,6 +98,10 @@ $user = getCurrentUser();
                             <td>🎰🎰🎰</td>
                             <td>10x bet</td>
                         </tr>
+                        <tr>
+                            <td>Any 2 matching symbols</td>
+                            <td>0.5x bet</td>
+                        </tr>
                     </tbody>
                 </table>
             </div>

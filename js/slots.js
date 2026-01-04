@@ -9,6 +9,7 @@ $(document).ready(function() {
         '🍇': 5,
         '🎰': 10
     };
+    let twoOfKindMultiplier = 0.5;
     
     // Load max bet, default bet, and multipliers from settings
     $.get('../api/api.php?action=getSettings', function(data) {
@@ -29,6 +30,7 @@ $(document).ready(function() {
                     '🍇': data.settings.slots_multipliers.grape,
                     '🎰': data.settings.slots_multipliers.slot
                 };
+                twoOfKindMultiplier = data.settings.slots_multipliers.two_of_kind || 0.5;
             }
         }
     }, 'json');
@@ -122,9 +124,16 @@ $(document).ready(function() {
     }
     
     function calculateWin(s1, s2, s3) {
+        // Check for 3 of a kind
         if (s1 === s2 && s2 === s3) {
             return multipliers[s1] || 0;
         }
+        
+        // Check for 2 of a kind (any 2 matching)
+        if (s1 === s2 || s1 === s3 || s2 === s3) {
+            return twoOfKindMultiplier;
+        }
+        
         return 0;
     }
     
@@ -178,14 +187,20 @@ $(document).ready(function() {
             
             if (multiplier > 0) {
                 const winAmount = betAmount * multiplier;
+                let winType = '';
+                if (s1 === s2 && s2 === s3) {
+                    winType = '3 of a kind';
+                } else {
+                    winType = '2 of a kind';
+                }
                 $.post('../api/api.php?action=updateBalance', {
                     amount: winAmount,
                     type: 'win',
-                    description: `Slots win: ${s1}${s2}${s3} (${multiplier}x)`
+                    description: `Slots win: ${s1}${s2}${s3} (${multiplier}x - ${winType})`
                 }, function(data) {
                     if (data.success) {
                         $('#balance').text(parseFloat(data.balance).toFixed(2));
-                        $('#result').html(`<div class="alert alert-success">🎉 You won $${winAmount.toFixed(2)}! (${multiplier}x multiplier)</div>`);
+                        $('#result').html(`<div class="alert alert-success">🎉 You won $${winAmount.toFixed(2)}! (${multiplier}x multiplier - ${winType})</div>`);
                     }
                 }, 'json');
             } else {

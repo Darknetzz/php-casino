@@ -60,7 +60,8 @@ switch ($action) {
             'lemon' => floatval(getSetting('slots_lemon_multiplier', 3)),
             'orange' => floatval(getSetting('slots_orange_multiplier', 4)),
             'grape' => floatval(getSetting('slots_grape_multiplier', 5)),
-            'slot' => floatval(getSetting('slots_slot_multiplier', 10))
+            'slot' => floatval(getSetting('slots_slot_multiplier', 10)),
+            'two_of_kind' => floatval(getSetting('slots_two_of_kind_multiplier', 0.5))
         ];
         
         // Get plinko multipliers
