@@ -121,6 +121,13 @@ $(document).ready(function() {
                 game: 'blackjack'
             }, function(data) {
                 if (data.success) {
+                    // Add beforeunload warning to prevent navigation during game
+                    $(window).on('beforeunload', function() {
+                        if (gameActive) {
+                            return 'A blackjack game is in progress. If you leave now, your bet may be lost. Are you sure you want to leave?';
+                        }
+                    });
+                    
                     $('#balance').text(formatNumber(data.balance));
                     betAmount = bet;
                     gameActive = true;
@@ -141,7 +148,7 @@ $(document).ready(function() {
                     
                     $('#gameControls').show();
                     $('#result').html('');
-                    $('#newGameBtn').prop('disabled', true);
+                    $('#newGameBtn').prop('disabled', true).text('Game in Progress...');
                     
                     // Check for blackjack
                     if (calculateHand(playerHand) === 21) {
@@ -155,6 +162,9 @@ $(document).ready(function() {
     function endGame(playerWon, isBlackjack = false) {
         gameActive = false;
         hideFirst = false;
+        
+        // Remove beforeunload warning
+        $(window).off('beforeunload');
         
         const playerScore = calculateHand(playerHand);
         
@@ -255,7 +265,7 @@ $(document).ready(function() {
         
         $('#result').html(`<div class="alert ${won ? 'alert-success' : 'alert-error'}">${message} <button class="btn btn-primary" id="newGameFromResult" style="margin-left: 10px; margin-top: 5px;">New Game</button></div>`);
         $('#gameControls').hide();
-        $('#newGameBtn').prop('disabled', false);
+        $('#newGameBtn').prop('disabled', false).text('New Game');
         
         // Add click handler for new game button in result
         $('#newGameFromResult').click(function() {

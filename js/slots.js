@@ -231,8 +231,15 @@ $(document).ready(function() {
             }
             
             isSpinning = true;
-            $('#spinBtn').prop('disabled', true);
+            $('#spinBtn').prop('disabled', true).text('SPINNING...');
             $('#result').html('');
+            
+            // Add beforeunload warning to prevent navigation during game
+            $(window).on('beforeunload', function() {
+                if (isSpinning) {
+                    return 'A slots game is in progress. If you leave now, your bet may be lost. Are you sure you want to leave?';
+                }
+            });
         
         // Determine final symbols
         const s1 = getRandomSymbol();
@@ -346,7 +353,10 @@ $(document).ready(function() {
             }, 'json');
             
             isSpinning = false;
-            $('#spinBtn').prop('disabled', false);
+            $('#spinBtn').prop('disabled', false).text('SPIN');
+            
+            // Remove beforeunload warning
+            $(window).off('beforeunload');
         }, reel3StopTime + 100); // Wait for all reels to stop
         }, 'json');
     });

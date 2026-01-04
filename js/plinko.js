@@ -108,8 +108,15 @@ $(document).ready(function() {
             }
             
             isDropping = true;
-            $('#dropBtn').prop('disabled', true);
+            $('#dropBtn').prop('disabled', true).text('DROPPING...');
             $('#result').html('');
+            
+            // Add beforeunload warning to prevent navigation during game
+            $(window).on('beforeunload', function() {
+                if (isDropping) {
+                    return 'A Plinko game is in progress. If you leave now, your bet may be lost. Are you sure you want to leave?';
+                }
+            });
             
             // Deduct total bet first
             $.post('../api/api.php?action=updateBalance', {
@@ -121,7 +128,8 @@ $(document).ready(function() {
                 if (!data.success) {
                     $('#result').html('<div class="alert alert-error">' + (data.message || 'Insufficient funds') + '</div>');
                     isDropping = false;
-                    $('#dropBtn').prop('disabled', false);
+                    $('#dropBtn').prop('disabled', false).text('DROP BALL(S)');
+                    $(window).off('beforeunload');
                     return;
                 }
                 
@@ -268,7 +276,10 @@ $(document).ready(function() {
                                     
                                     activeBalls = [];
                                     isDropping = false;
-                                    $('#dropBtn').prop('disabled', false);
+                                    $('#dropBtn').prop('disabled', false).text('DROP BALL(S)');
+                                    
+                                    // Remove beforeunload warning
+                                    $(window).off('beforeunload');
                                 }, 500);
                             }
                             return;

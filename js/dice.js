@@ -114,8 +114,15 @@ $(document).ready(function() {
             }
             
             isRolling = true;
-            $('#rollBtn').prop('disabled', true);
+            $('#rollBtn').prop('disabled', true).text('ROLLING...');
             $('#result').html('');
+            
+            // Add beforeunload warning to prevent navigation during game
+            $(window).on('beforeunload', function() {
+                if (isRolling) {
+                    return 'A dice game is in progress. If you leave now, your bet may be lost. Are you sure you want to leave?';
+                }
+            });
             
             // Generate random dice values
             const finalValues = [];
@@ -175,7 +182,10 @@ $(document).ready(function() {
                     }
                     
                     isRolling = false;
-                    $('#rollBtn').prop('disabled', false);
+                    $('#rollBtn').prop('disabled', false).text('ROLL DICE');
+                    
+                    // Remove beforeunload warning
+                    $(window).off('beforeunload');
                 }, 'json');
             }, rollDuration + (6 * staggerDelay) + 200); // Wait for all dice to finish rolling
         }, 'json');

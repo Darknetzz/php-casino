@@ -300,8 +300,15 @@ $(document).ready(function() {
             }
             
             isSpinning = true;
-            $('#spinBtn').prop('disabled', true);
+            $('#spinBtn').prop('disabled', true).text('SPINNING...');
             $('#result').html('');
+            
+            // Add beforeunload warning to prevent navigation during game
+            $(window).on('beforeunload', function() {
+                if (isSpinning) {
+                    return 'A roulette game is in progress. If you leave now, your bet may be lost. Are you sure you want to leave?';
+                }
+            });
             
             // Determine winning number
             const resultNum = Math.floor(Math.random() * 37);
@@ -511,7 +518,11 @@ $(document).ready(function() {
                 }, 'json');
                 
                 isSpinning = false;
-                $('#spinBtn').prop('disabled', false);
+                $('#spinBtn').prop('disabled', false).text('SPIN');
+                
+                // Remove beforeunload warning
+                $(window).off('beforeunload');
+                
                 // Don't clear bets - they persist
             }
         }, 100);
