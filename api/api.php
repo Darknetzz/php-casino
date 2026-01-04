@@ -71,7 +71,7 @@ switch ($action) {
         
         $slotsMultipliers = [
             'symbols' => $slotsSymbols,
-            'two_of_kind' => floatval(getSetting('slots_two_of_kind_multiplier', 0.5))
+            'two_of_kind' => floatval(getSetting('slots_two_of_kind_multiplier', 1.0))
         ];
         
         // Get plinko multipliers
