@@ -75,6 +75,7 @@ include __DIR__ . '/../includes/navbar.php';
                     <div id="totalBetAmount" class="total-bet-display" style="display: none; margin-top: 20px;">
                         <strong>Total Bet: $<span id="totalBetValue">0</span></strong>
                     </div>
+                    <div id="bettingResult" class="betting-result-message" style="margin-top: 20px;"></div>
                 </div>
                 
                 <?php if ($rouletteMode === 'central'): ?>

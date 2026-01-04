@@ -651,14 +651,16 @@ $(document).ready(function() {
     // Handle color/range bet buttons
     $('.bet-btn').click(function() {
         if (!currentRound || currentRound.status !== 'betting') {
-            $('#result').html('<div class="alert alert-error">Betting is not open</div>');
+            $('#bettingResult').html('<div class="alert alert-error">Betting is not open</div>');
+            $('#result').html('');
             return;
         }
         
         // Check if betting period has ended
         const bettingEndsIn = currentRound.time_until_betting_ends || 0;
         if (bettingEndsIn <= 0) {
-            $('#result').html('<div class="alert alert-error">Betting period has ended</div>');
+            $('#bettingResult').html('<div class="alert alert-error">Betting period has ended</div>');
+            $('#result').html('');
             return;
         }
         
@@ -667,7 +669,8 @@ $(document).ready(function() {
         const amount = parseFloat($('#betAmount').val());
         
         if (isNaN(amount) || amount < 1 || amount > maxBet) {
-            $('#result').html('<div class="alert alert-error">Bet amount must be between $1 and $' + maxBet + '</div>');
+            $('#bettingResult').html('<div class="alert alert-error">Bet amount must be between $1 and $' + maxBet + '</div>');
+            $('#result').html('');
             return;
         }
         
@@ -683,7 +686,7 @@ $(document).ready(function() {
         $(this).addClass('active');
         
         updateActiveBetsDisplay();
-        $('#result').html('');
+        $('#bettingResult').html('');
         
         // In central mode, auto-place bets
         if (currentRound && currentRound.status === 'betting') {
@@ -694,18 +697,21 @@ $(document).ready(function() {
     $('#addNumberBetBtn').click(function() {
         // Check if betting is allowed
         if (!currentRound || currentRound.status !== 'betting') {
-            $('#result').html('<div class="alert alert-error">Betting is not open</div>');
+            $('#bettingResult').html('<div class="alert alert-error">Betting is not open</div>');
+            $('#result').html('');
             return;
         }
         
         // Check if betting period has ended
         const bettingEndsIn = currentRound.time_until_betting_ends || 0;
         if (bettingEndsIn <= 0) {
-            $('#result').html('<div class="alert alert-error">Betting period has ended</div>');
+            $('#bettingResult').html('<div class="alert alert-error">Betting period has ended</div>');
+            $('#result').html('');
             return;
         }
         if (!currentRound || currentRound.status !== 'betting') {
-            $('#result').html('<div class="alert alert-error">Betting is not open</div>');
+            $('#bettingResult').html('<div class="alert alert-error">Betting is not open</div>');
+            $('#result').html('');
             return;
         }
         
@@ -713,12 +719,14 @@ $(document).ready(function() {
         const amount = parseFloat($('#betAmount').val());
         
         if (isNaN(number) || number < 0 || number > 36) {
-            $('#result').html('<div class="alert alert-error">Please enter a valid number (0-36)</div>');
+            $('#bettingResult').html('<div class="alert alert-error">Please enter a valid number (0-36)</div>');
+            $('#result').html('');
             return;
         }
         
         if (isNaN(amount) || amount < 1 || amount > maxBet) {
-            $('#result').html('<div class="alert alert-error">Bet amount must be between $1 and $' + maxBet + '</div>');
+            $('#bettingResult').html('<div class="alert alert-error">Bet amount must be between $1 and $' + maxBet + '</div>');
+            $('#result').html('');
             return;
         }
         
@@ -732,7 +740,7 @@ $(document).ready(function() {
         
         updateActiveBetsDisplay();
         $('#numberBet').val('');
-        $('#result').html('');
+        $('#bettingResult').html('');
         
         // In central mode, auto-place bets
         if (currentRound && currentRound.status === 'betting') {
@@ -754,7 +762,8 @@ $(document).ready(function() {
         }
         
         if (numberBets.length === 0 && colorBets.length === 0) {
-            $('#result').html('<div class="alert alert-error">Please add at least one bet</div>');
+            $('#bettingResult').html('<div class="alert alert-error">Please add at least one bet</div>');
+            $('#result').html('');
             return;
         }
         
@@ -786,14 +795,16 @@ $(document).ready(function() {
                               colorBets.reduce((sum, bet) => sum + bet.amount, 0);
         
         if (totalBetAmount > maxBet) {
-            $('#result').html('<div class="alert alert-error">Total bet amount ($' + totalBetAmount.toFixed(2) + ') exceeds maximum of $' + formatNumber(maxBet) + '</div>');
+            $('#bettingResult').html('<div class="alert alert-error">Total bet amount ($' + totalBetAmount.toFixed(2) + ') exceeds maximum of $' + formatNumber(maxBet) + '</div>');
+            $('#result').html('');
             return;
         }
         
         // Check balance
         $.get('../api/api.php?action=getBalance', function(data) {
             if (!data.success || parseFloat(data.balance) < totalBetAmount) {
-                $('#result').html('<div class="alert alert-error">Insufficient funds</div>');
+                $('#bettingResult').html('<div class="alert alert-error">Insufficient funds</div>');
+                $('#result').html('');
                 // Clear bets if insufficient funds
                 numberBets = [];
                 colorBets = [];
@@ -812,7 +823,8 @@ $(document).ready(function() {
                     colorBets = [];
                     updateActiveBetsDisplay();
                     updateBalance();
-                    $('#result').html('<div class="alert alert-success">All bets placed!</div>');
+                    $('#bettingResult').html('<div class="alert alert-success">All bets placed!</div>');
+                    $('#result').html('');
                     return;
                 }
                 
@@ -840,7 +852,8 @@ $(document).ready(function() {
                         betsPlaced++;
                         placeNextBet();
                     } else {
-                        $('#result').html('<div class="alert alert-error">' + (data.message || 'Failed to place bet') + '</div>');
+                        $('#bettingResult').html('<div class="alert alert-error">' + (data.message || 'Failed to place bet') + '</div>');
+                        $('#result').html('');
                         // Clear all bets if placement fails
                         numberBets = [];
                         colorBets = [];
@@ -850,7 +863,8 @@ $(document).ready(function() {
                     }
                 }, 'json').fail(function(xhr, status, error) {
                     console.error('Failed to place bet:', status, error);
-                    $('#result').html('<div class="alert alert-error">Error placing bet. Please try again.</div>');
+                    $('#bettingResult').html('<div class="alert alert-error">Error placing bet. Please try again.</div>');
+                    $('#result').html('');
                     // Clear all bets if placement fails
                     numberBets = [];
                     colorBets = [];
