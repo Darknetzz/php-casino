@@ -93,24 +93,26 @@ $(document).ready(function() {
         const anglePerNumber = 360 / rouletteNumbers.length;
         const normalizedRotation = ((rotation % 360) + 360) % 360; // Ensure 0-360
         
-        // When wheel rotates clockwise by R, a pocket at starting angle A
-        // will be at final angle (A + R) mod 360
-        // To find which pocket is at top (0°) after rotation:
-        // We need (A + R) mod 360 = 0, which means A = (360 - R) mod 360
+        // Calculate where each pocket will be after rotation and find closest to top (0°)
+        let closestIndex = 0;
+        let minDistance = 360;
         
-        // Find the starting angle that would end up at 0°
-        let targetStartingAngle = (360 - normalizedRotation) % 360;
-        if (targetStartingAngle < 0) targetStartingAngle += 360;
+        for (let i = 0; i < rouletteNumbers.length; i++) {
+            const pocketStartAngle = i * anglePerNumber;
+            // After rotating clockwise by R, pocket at angle A moves to (A + R) mod 360
+            const pocketFinalAngle = (pocketStartAngle + normalizedRotation) % 360;
+            
+            // Distance from top (0°) - check both clockwise and counter-clockwise
+            let distance = Math.min(pocketFinalAngle, 360 - pocketFinalAngle);
+            
+            if (distance < minDistance) {
+                minDistance = distance;
+                closestIndex = i;
+            }
+        }
         
-        // Find which pocket index has this starting angle
-        // Pockets are at: 0, anglePerNumber, 2*anglePerNumber, ..., (n-1)*anglePerNumber
-        // Find the index where index * anglePerNumber is closest to targetStartingAngle
-        let targetIndex = Math.floor((targetStartingAngle + anglePerNumber / 2) / anglePerNumber);
-        targetIndex = targetIndex % rouletteNumbers.length;
-        if (targetIndex < 0) targetIndex += rouletteNumbers.length;
-        
-        const result = rouletteNumbers[targetIndex].num;
-        console.log(`  getNumberAtTop(${rotation}): normalized=${normalizedRotation}, targetAngle=${targetStartingAngle}, index=${targetIndex}, number=${result}`);
+        const result = rouletteNumbers[closestIndex].num;
+        console.log(`  getNumberAtTop(${rotation}): normalized=${normalizedRotation}, closestIndex=${closestIndex}, number=${result}, minDistance=${minDistance.toFixed(2)}`);
         
         return result;
     }
@@ -318,37 +320,29 @@ $(document).ready(function() {
             console.log('Pocket start angle:', pocketStartAngle);
             console.log('Angle per number:', anglePerNumber);
             
-            // Try both rotation directions to see which one works
-            // Method 1: Rotate by (360 - A) - brings pocket to top
-            const rotation1 = (360 - pocketStartAngle) % 360;
-            const testNum1 = getNumberAtTop(rotation1);
-            console.log('Method 1 - Rotation:', rotation1, '-> Number at top:', testNum1);
+            // Calculate rotation to bring winning pocket to top
+            // When wheel rotates clockwise by R, pocket at angle A moves to (A + R) mod 360
+            // To get pocket at angle A to top (0°): (A + R) mod 360 = 0, so R = (360 - A) mod 360
+            let rotationToTop = (360 - pocketStartAngle) % 360;
             
-            // Method 2: Rotate by A - maybe this is what we need
-            const rotation2 = pocketStartAngle;
-            const testNum2 = getNumberAtTop(rotation2);
-            console.log('Method 2 - Rotation:', rotation2, '-> Number at top:', testNum2);
+            // Verify the calculation
+            const testNum = getNumberAtTop(rotationToTop);
+            console.log('Calculated rotation:', rotationToTop, '-> Expected number at top:', testNum);
             
-            // Method 3: Rotate by (A + 180) mod 360 - opposite direction
-            const rotation3 = (pocketStartAngle + 180) % 360;
-            const testNum3 = getNumberAtTop(rotation3);
-            console.log('Method 3 - Rotation:', rotation3, '-> Number at top:', testNum3);
-            
-            // Use whichever method gives the correct result
-            let rotationToTop;
-            if (testNum1 === resultNum) {
-                rotationToTop = rotation1;
-                console.log('Using Method 1');
-            } else if (testNum2 === resultNum) {
-                rotationToTop = rotation2;
-                console.log('Using Method 2');
-            } else if (testNum3 === resultNum) {
-                rotationToTop = rotation3;
-                console.log('Using Method 3');
-            } else {
-                // Fallback: use method 1
-                rotationToTop = rotation1;
-                console.log('WARNING: None of the methods worked! Using Method 1 as fallback');
+            // If verification fails, try inverted calculation
+            if (testNum !== resultNum) {
+                console.log('WARNING: Calculation failed! Trying inverted...');
+                // Try inverted: maybe rotation direction is wrong
+                const invertedRotation = pocketStartAngle;
+                const testNumInverted = getNumberAtTop(invertedRotation);
+                console.log('Inverted rotation:', invertedRotation, '-> Number at top:', testNumInverted);
+                
+                if (testNumInverted === resultNum) {
+                    rotationToTop = invertedRotation;
+                    console.log('Using inverted rotation');
+                } else {
+                    console.log('Both methods failed, using original calculation');
+                }
             }
             
             // Add full spins for animation
@@ -381,14 +375,21 @@ $(document).ready(function() {
             $('#rouletteWheel').one('transitionend', function() {
                 console.log('=== POST-ANIMATION VERIFICATION ===');
                 
-                // Find which pocket is actually closest to the top (pointer position)
+                // First, verify using calculation
+                const finalRotation = totalRotation % 360;
+                const calculatedNumber = getNumberAtTop(finalRotation);
+                console.log('Final rotation (mod 360):', finalRotation);
+                console.log('Calculated number at top:', calculatedNumber);
+                console.log('Expected number:', resultNum);
+                
+                // Also check DOM positions
                 const wheelRect = $('#rouletteWheel')[0].getBoundingClientRect();
                 const wheelCenterX = wheelRect.left + wheelRect.width / 2;
                 const wheelCenterY = wheelRect.top + wheelRect.height / 2;
-                const pointerY = wheelRect.top; // Pointer is at the top
+                const pointerY = wheelRect.top - 20; // Pointer is slightly above the wheel
                 
-                console.log('Wheel center:', wheelCenterX, wheelCenterY);
-                console.log('Pointer Y:', pointerY);
+                console.log('Wheel center:', wheelCenterX.toFixed(1), wheelCenterY.toFixed(1));
+                console.log('Pointer Y:', pointerY.toFixed(1));
                 
                 let closestPocket = null;
                 let minDistance = Infinity;
@@ -421,35 +422,35 @@ $(document).ready(function() {
                     console.log(`  Number ${p.number}: distance=${p.distance.toFixed(2)}, pos=(${p.x.toFixed(1)}, ${p.y.toFixed(1)})`);
                 });
                 
-                // Check if the closest pocket matches the result
-                if (closestPocket) {
-                    const actualNumber = parseInt(closestPocket.attr('data-number'));
-                    console.log('Closest pocket number:', actualNumber);
-                    console.log('Expected number:', resultNum);
-                    console.log('Match:', actualNumber === resultNum ? 'YES' : 'NO');
+                // Use calculated number for verification (more reliable than DOM)
+                const actualNumber = calculatedNumber;
+                console.log('Using calculated number:', actualNumber);
+                console.log('Match:', actualNumber === resultNum ? 'YES ✓' : 'NO ✗');
+                
+                if (actualNumber !== resultNum) {
+                    console.log('MISMATCH DETECTED - Attempting correction...');
+                    // Need to correct - calculate adjustment needed
+                    const actualIndex = rouletteNumbers.findIndex(n => n.num === actualNumber);
+                    const winningIndex = rouletteNumbers.findIndex(n => n.num === resultNum);
+                    let indexDiff = (winningIndex - actualIndex + rouletteNumbers.length) % rouletteNumbers.length;
+                    const angleAdjustment = indexDiff * anglePerNumber;
                     
-                    if (actualNumber !== resultNum) {
-                        console.log('MISMATCH DETECTED - Attempting correction...');
-                        // Need to correct - calculate adjustment needed
-                        const actualIndex = rouletteNumbers.findIndex(n => n.num === actualNumber);
-                        const winningIndex = rouletteNumbers.findIndex(n => n.num === resultNum);
-                        let indexDiff = (winningIndex - actualIndex + rouletteNumbers.length) % rouletteNumbers.length;
-                        const angleAdjustment = indexDiff * anglePerNumber;
-                        
-                        console.log('Actual index:', actualIndex, 'Winning index:', winningIndex);
-                        console.log('Index difference:', indexDiff);
-                        console.log('Angle adjustment:', angleAdjustment);
-                        console.log('Current total rotation:', totalRotation);
-                        console.log('New total rotation:', totalRotation + angleAdjustment);
-                        
-                        // Apply small corrective rotation
-                        $('#rouletteWheel').css({
-                            transition: 'transform 0.3s ease-out',
-                            transform: `rotate(${totalRotation + angleAdjustment}deg)`
-                        });
-                    } else {
-                        console.log('SUCCESS: Numbers match!');
-                    }
+                    console.log('Actual index:', actualIndex, 'Winning index:', winningIndex);
+                    console.log('Index difference:', indexDiff);
+                    console.log('Angle adjustment:', angleAdjustment);
+                    console.log('Current total rotation:', totalRotation);
+                    console.log('New total rotation:', totalRotation + angleAdjustment);
+                    
+                    // Update totalRotation for the correction
+                    totalRotation = totalRotation + angleAdjustment;
+                    
+                    // Apply small corrective rotation
+                    $('#rouletteWheel').css({
+                        transition: 'transform 0.3s ease-out',
+                        transform: `rotate(${totalRotation}deg)`
+                    });
+                } else {
+                    console.log('SUCCESS: Numbers match!');
                 }
                 console.log('=== END VERIFICATION ===');
             });
