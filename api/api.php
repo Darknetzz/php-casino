@@ -16,6 +16,7 @@ switch ($action) {
         $amount = floatval($_POST['amount'] ?? 0);
         $type = $_POST['type'] ?? 'bet';
         $description = $_POST['description'] ?? '';
+        $game = $_POST['game'] ?? null;
         
         $user = getCurrentUser();
         
@@ -43,7 +44,7 @@ switch ($action) {
             echo json_encode(['success' => false, 'message' => 'Insufficient funds']);
         } else {
             $db->updateBalance($user['id'], $newBalance);
-            $db->addTransaction($user['id'], $type, abs($amount), $description);
+            $db->addTransaction($user['id'], $type, abs($amount), $description, $game);
             echo json_encode(['success' => true, 'balance' => $newBalance]);
         }
         break;

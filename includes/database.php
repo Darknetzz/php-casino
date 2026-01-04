@@ -255,8 +255,8 @@ class Database {
             $gameClause = "AND game = ?";
             $params[] = $game;
         } else {
-            // For overall stats, count all transactions (including NULL game for old transactions)
-            $gameClause = "";
+            // For overall stats, count all transactions with a game value (exclude NULL for consistency)
+            $gameClause = "AND game IS NOT NULL";
         }
         
         // Get total games played (bets)
