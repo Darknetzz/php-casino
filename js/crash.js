@@ -432,3 +432,4 @@ $(document).ready(function() {
     // Initial graph draw and probability stats
     drawGraph();
     // Probability stats will be updated after settings load
+});

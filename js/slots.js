@@ -365,6 +365,9 @@ $(document).ready(function() {
             $('.game-container button, .game-container .btn').addClass('game-disabled');
             $('#result').html('');
             
+            // Clear any existing winning highlights
+            $('.reel .symbol').removeClass('winning');
+            
             // Add beforeunload warning to prevent navigation during game
             $(window).on('beforeunload', function() {
                 if (isSpinning) {
@@ -434,6 +437,11 @@ $(document).ready(function() {
                         }
                     }
                     winDescriptions.push(`Middle row: ${resultSymbols.join('')} (${multiplier}x - ${winType})`);
+                    
+                    // Highlight winning symbols (middle row, index 1)
+                    for (let i = 1; i <= numReels; i++) {
+                        $('#reel' + i + ' .symbol').eq(1).addClass('winning');
+                    }
                 }
             } else if (betRows === 3) {
                 // Check all 3 rows
@@ -472,6 +480,11 @@ $(document).ready(function() {
                         }
                         const rowName = row === 0 ? 'Top' : (row === 1 ? 'Middle' : 'Bottom');
                         winDescriptions.push(`${rowName} row: ${resultSymbols.join('')} (${multiplier}x - ${winType})`);
+                        
+                        // Highlight winning symbols for this row
+                        for (let i = 1; i <= numReels; i++) {
+                            $('#reel' + i + ' .symbol').eq(row).addClass('winning');
+                        }
                     }
                 });
             }
