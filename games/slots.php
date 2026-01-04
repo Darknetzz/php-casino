@@ -40,7 +40,7 @@ include __DIR__ . '/../includes/navbar.php';
                 <div class="slots-controls">
                     <div class="bet-controls">
                         <label>Bet Amount: $</label>
-                        <input type="number" id="betAmount" min="1" value="10" step="1">
+                        <input type="number" id="betAmount" min="1" value="10" step="1" class="bet-input-with-adjust">
                         <small>Max: $<span id="maxBet">100</span></small>
                     </div>
                     <button id="spinBtn" class="btn btn-primary btn-large">SPIN</button>

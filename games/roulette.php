@@ -32,7 +32,7 @@ include __DIR__ . '/../includes/navbar.php';
                         </div>
                         <div class="color-bet-amount">
                             <label>Amount for color/range bets: $</label>
-                            <input type="number" id="colorBetAmount" min="1" step="1" value="10">
+                            <input type="number" id="colorBetAmount" min="1" step="1" value="10" class="bet-input-with-adjust">
                             <small>Max: $<span id="maxBet">100</span></small>
                         </div>
                         <div id="activeColorBets" class="active-bets-list" style="margin-top: 15px;">
@@ -43,7 +43,7 @@ include __DIR__ . '/../includes/navbar.php';
                         <h4>Bet on specific numbers (36x payout):</h4>
                         <div class="add-number-bet">
                             <input type="number" id="numberBet" min="0" max="36" placeholder="Number (0-36)">
-                            <input type="number" id="numberBetAmount" min="1" step="1" placeholder="Amount $" value="10">
+                            <input type="number" id="numberBetAmount" min="1" step="1" placeholder="Amount $" value="10" class="bet-input-with-adjust">
                             <button id="addNumberBetBtn" class="btn btn-secondary">Add Bet</button>
                         </div>
                         <div id="activeBets" class="active-bets-list">

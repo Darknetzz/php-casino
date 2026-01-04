@@ -2075,3 +2075,12 @@ body.dark-mode .total-bet-display {
     color: #8a9eff;
     font-weight: bold;
 }
+
+body.dark-mode .bet-adjust-btn {
+    background: rgba(102, 126, 234, 0.8);
+    color: white;
+}
+
+body.dark-mode .bet-adjust-btn:hover {
+    background: rgba(102, 126, 234, 1);
+}
