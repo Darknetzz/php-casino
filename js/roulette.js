@@ -93,26 +93,23 @@ $(document).ready(function() {
         const anglePerNumber = 360 / rouletteNumbers.length;
         const normalizedRotation = ((rotation % 360) + 360) % 360; // Ensure 0-360
         
-        // Calculate where each pocket will be after rotation and find the one closest to 0° (top)
-        let closestIndex = 0;
-        let minDistance = 360;
+        // When wheel rotates clockwise by R, a pocket at starting angle A
+        // will be at final angle (A + R) mod 360
+        // To find which pocket is at top (0°) after rotation:
+        // We need (A + R) mod 360 = 0, which means A = (360 - R) mod 360
         
-        for (let i = 0; i < rouletteNumbers.length; i++) {
-            const pocketStartAngle = i * anglePerNumber;
-            // After rotation, this pocket will be at (pocketStartAngle + normalizedRotation) mod 360
-            const pocketFinalAngle = (pocketStartAngle + normalizedRotation) % 360;
-            
-            // Calculate distance from top (0°)
-            // We want the angle closest to 0°, so we check both directions
-            let distance = Math.min(pocketFinalAngle, 360 - pocketFinalAngle);
-            
-            if (distance < minDistance) {
-                minDistance = distance;
-                closestIndex = i;
-            }
-        }
+        // Find the starting angle that would end up at 0°
+        let targetStartingAngle = (360 - normalizedRotation) % 360;
+        if (targetStartingAngle < 0) targetStartingAngle += 360;
         
-        return rouletteNumbers[closestIndex].num;
+        // Find which pocket index has this starting angle
+        // Pockets are at: 0, anglePerNumber, 2*anglePerNumber, ..., (n-1)*anglePerNumber
+        // Find the index where index * anglePerNumber is closest to targetStartingAngle
+        let targetIndex = Math.floor((targetStartingAngle + anglePerNumber / 2) / anglePerNumber);
+        targetIndex = targetIndex % rouletteNumbers.length;
+        if (targetIndex < 0) targetIndex += rouletteNumbers.length;
+        
+        return rouletteNumbers[targetIndex].num;
     }
     
     function checkColorBetWin(betType, resultNum) {
@@ -307,50 +304,39 @@ $(document).ready(function() {
             const resultColor = getNumberColor(resultNum);
             
             // Calculate rotation needed to land on winning number
-            // Use brute force: test all possible final rotations to find the one that puts resultNum at top
             const anglePerNumber = 360 / rouletteNumbers.length;
             const winningIndex = rouletteNumbers.findIndex(n => n.num === resultNum);
             const pocketStartAngle = winningIndex * anglePerNumber;
             
+            // Try both rotation directions to see which one works
+            // Method 1: Rotate by (360 - A) - brings pocket to top
+            const rotation1 = (360 - pocketStartAngle) % 360;
+            const testNum1 = getNumberAtTop(rotation1);
+            
+            // Method 2: Rotate by A - maybe this is what we need
+            const rotation2 = pocketStartAngle;
+            const testNum2 = getNumberAtTop(rotation2);
+            
+            // Method 3: Rotate by (A + 180) mod 360 - opposite direction
+            const rotation3 = (pocketStartAngle + 180) % 360;
+            const testNum3 = getNumberAtTop(rotation3);
+            
+            // Use whichever method gives the correct result
+            let rotationToTop;
+            if (testNum1 === resultNum) {
+                rotationToTop = rotation1;
+            } else if (testNum2 === resultNum) {
+                rotationToTop = rotation2;
+            } else if (testNum3 === resultNum) {
+                rotationToTop = rotation3;
+            } else {
+                // Fallback: use method 1
+                rotationToTop = rotation1;
+            }
+            
             // Add full spins for animation
             const fullSpins = 5 + Math.random() * 3; // 5-8 full spins
-            
-            // Test different rotations to find the one that puts resultNum at the top
-            let bestRotation = 0;
-            let found = false;
-            let bestDistance = Infinity;
-            
-            // Test rotations more thoroughly - test at each pocket position and small offsets
-            for (let i = 0; i < rouletteNumbers.length; i++) {
-                // Test at the exact pocket angle
-                const baseRotation = i * anglePerNumber;
-                for (let offset = -2; offset <= 2; offset += 0.5) {
-                    const testRotation = (baseRotation + offset + 360) % 360;
-                    const testNumber = getNumberAtTop(testRotation);
-                    if (testNumber === resultNum) {
-                        // Calculate how close this rotation gets the pocket to the top
-                        const pocketFinalAngle = (pocketStartAngle + testRotation) % 360;
-                        const distance = Math.min(pocketFinalAngle, 360 - pocketFinalAngle);
-                        if (distance < bestDistance) {
-                            bestRotation = testRotation;
-                            bestDistance = distance;
-                            found = true;
-                        }
-                    }
-                }
-            }
-            
-            // If we found a rotation, use it; otherwise use calculated fallback
-            let totalRotation;
-            if (found) {
-                totalRotation = (fullSpins * 360) + bestRotation;
-            } else {
-                // Fallback: rotate so the winning pocket ends up at top
-                // After rotation R, pocket at angle A will be at (A + R) mod 360
-                // To get it to 0°: (A + R) mod 360 = 0, so R = (360 - A) mod 360
-                const rotationToTop = (360 - pocketStartAngle) % 360;
-                totalRotation = (fullSpins * 360) + rotationToTop;
-            }
+            let totalRotation = (fullSpins * 360) + rotationToTop;
             
             currentRotation = totalRotation % 360;
             
@@ -367,6 +353,53 @@ $(document).ready(function() {
             $('#rouletteWheel').css({
                 transition: 'transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99)',
                 transform: `rotate(${totalRotation}deg)`
+            });
+            
+            // After animation completes, verify and correct if needed
+            $('#rouletteWheel').one('transitionend', function() {
+                // Find which pocket is actually closest to the top (pointer position)
+                const wheelRect = $('#rouletteWheel')[0].getBoundingClientRect();
+                const wheelCenterX = wheelRect.left + wheelRect.width / 2;
+                const wheelCenterY = wheelRect.top + wheelRect.height / 2;
+                const pointerY = wheelRect.top; // Pointer is at the top
+                
+                let closestPocket = null;
+                let minDistance = Infinity;
+                
+                $('.roulette-pocket').each(function() {
+                    const pocketRect = this.getBoundingClientRect();
+                    const pocketCenterX = pocketRect.left + pocketRect.width / 2;
+                    const pocketCenterY = pocketRect.top + pocketRect.height / 2;
+                    
+                    // Calculate distance from pocket center to pointer position (top center)
+                    const distance = Math.sqrt(
+                        Math.pow(pocketCenterX - wheelCenterX, 2) + 
+                        Math.pow(pocketCenterY - pointerY, 2)
+                    );
+                    
+                    if (distance < minDistance) {
+                        minDistance = distance;
+                        closestPocket = $(this);
+                    }
+                });
+                
+                // Check if the closest pocket matches the result
+                if (closestPocket) {
+                    const actualNumber = parseInt(closestPocket.attr('data-number'));
+                    if (actualNumber !== resultNum) {
+                        // Need to correct - calculate adjustment needed
+                        const actualIndex = rouletteNumbers.findIndex(n => n.num === actualNumber);
+                        const winningIndex = rouletteNumbers.findIndex(n => n.num === resultNum);
+                        let indexDiff = (winningIndex - actualIndex + rouletteNumbers.length) % rouletteNumbers.length;
+                        const angleAdjustment = indexDiff * anglePerNumber;
+                        
+                        // Apply small corrective rotation
+                        $('#rouletteWheel').css({
+                            transition: 'transform 0.3s ease-out',
+                            transform: `rotate(${totalRotation + angleAdjustment}deg)`
+                        });
+                    }
+                }
             });
             
         
