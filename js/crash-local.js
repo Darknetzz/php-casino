@@ -19,6 +19,7 @@ $(document).ready(function() {
     let crashSpeed = 0.02;
     let crashMaxMultiplier = 0;
     let crashDistributionParam = 0.99;
+    let autoPayoutMultiplier = 0; // Auto cash out at this multiplier (0 = disabled)
     
     const canvas = document.getElementById('crashCanvas');
     const ctx = canvas.getContext('2d');
@@ -156,6 +157,10 @@ $(document).ready(function() {
         
         betAmount = parseFloat($('#betAmount').val());
         
+        // Get auto payout multiplier
+        const autoPayoutValue = $('#autoPayout').val();
+        autoPayoutMultiplier = autoPayoutValue && parseFloat(autoPayoutValue) >= 1.01 ? parseFloat(autoPayoutValue) : 0;
+        
         if (betAmount < 1 || betAmount > maxBet) {
             $('#result').html('<div class="alert alert-error">Bet must be between $1 and $' + maxBet + '</div>');
             return;
@@ -192,7 +197,11 @@ $(document).ready(function() {
                 $('#betAmount').prop('disabled', true);
                 $('.game-container button, .game-container .btn').not('#cashOutBtn, [onclick*="openModal"]').addClass('game-disabled');
                 $('#crashControls').show();
-                $('#result').html('');
+                if (autoPayoutMultiplier > 0) {
+                    $('#result').html('<div class="alert alert-success">Bet placed! Auto payout set at ' + autoPayoutMultiplier.toFixed(2) + 'x</div>');
+                } else {
+                    $('#result').html('');
+                }
                 
                 animate();
             }, 'json');
@@ -225,11 +234,24 @@ $(document).ready(function() {
         $('#multiplierDisplay').text(currentMultiplier.toFixed(2) + 'x');
         
         if (hasCashedOut) {
-            const winAmount = (betAmount * cashOutMultiplier).toFixed(2);
-            $('#cashOutInfo').html('<div style="color: #28a745; font-weight: bold; margin-top: 10px;">Cashed out at ' + cashOutMultiplier.toFixed(2) + 'x<br>Win: $' + winAmount + '</div>');
+            const winAmount = betAmount * cashOutMultiplier;
+            const winAmountFormatted = typeof formatNumber === 'function' ? formatNumber(winAmount) : winAmount.toFixed(2);
+            $('#cashOutInfo').html('<div style="color: #28a745; font-weight: bold; margin-top: 10px;">Cashed out at ' + cashOutMultiplier.toFixed(2) + 'x<br>Win: $' + winAmountFormatted + '</div>');
         } else {
-            const potentialWin = (betAmount * currentMultiplier).toFixed(2);
-            $('#cashOutInfo').html('<div style="color: #666; margin-top: 10px;">Potential win: $' + potentialWin + '</div>');
+            const potentialWin = betAmount * currentMultiplier;
+            const potentialWinFormatted = typeof formatNumber === 'function' ? formatNumber(potentialWin) : potentialWin.toFixed(2);
+            let infoText = '<div style="color: #666; margin-top: 10px;">Potential win: $' + potentialWinFormatted;
+            if (autoPayoutMultiplier > 0) {
+                infoText += '<br><small style="color: #28a745;">Auto payout: ' + autoPayoutMultiplier.toFixed(2) + 'x</small>';
+            }
+            infoText += '</div>';
+            $('#cashOutInfo').html(infoText);
+        }
+        
+        // Check auto payout
+        if (autoPayoutMultiplier > 0 && !hasCashedOut && currentMultiplier >= autoPayoutMultiplier) {
+            cashOut();
+            return;
         }
         
         if (currentMultiplier >= crashPoint) {
@@ -295,6 +317,7 @@ $(document).ready(function() {
             $('#cashOutInfo').html('');
             currentMultiplier = 1.00;
             graphData = [];
+            autoPayoutMultiplier = 0; // Reset auto payout
             drawGraph();
             updateBalance();
             updateStats();

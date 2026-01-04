@@ -209,7 +209,7 @@ include __DIR__ . '/../includes/navbar.php';
                 const maxDeposit = parseFloat($('#maxDeposit').text().replace(/,/g, ''));
                 
                 if (amount <= 0 || amount > maxDeposit) {
-                    $('#refillMessage').html('<div class="alert alert-error">Please enter a valid amount between $1 and $' + maxDeposit.toFixed(2) + '</div>');
+                    $('#refillMessage').html('<div class="alert alert-error">Please enter a valid amount between $1 and $' + (typeof formatNumber === 'function' ? formatNumber(maxDeposit) : maxDeposit.toFixed(2)) + '</div>');
                     return;
                 }
                 
@@ -219,7 +219,7 @@ include __DIR__ . '/../includes/navbar.php';
                     description: 'Balance refill'
                 }, function(data) {
                     if (data.success) {
-                        $('#refillMessage').html('<div class="alert alert-success">Balance refilled successfully! Added $' + amount.toFixed(2) + '</div>');
+                        $('#refillMessage').html('<div class="alert alert-success">Balance refilled successfully! Added $' + (typeof formatNumber === 'function' ? formatNumber(amount) : amount.toFixed(2)) + '</div>');
                         $('#balance').text(formatNumber(data.balance));
                         $('.balance-large').text('$' + formatNumber(data.balance));
                         $('#refill_amount').val('');
@@ -251,7 +251,8 @@ include __DIR__ . '/../includes/navbar.php';
         function loadTotalDeposits() {
             $.get(getApiPath('getTotalDeposits'), function(data) {
                 if (data.success && data.totalDeposits !== undefined) {
-                    $('#totalDeposits').text('$' + parseFloat(data.totalDeposits).toFixed(2));
+                    const totalDeposits = parseFloat(data.totalDeposits);
+                    $('#totalDeposits').text('$' + (typeof formatNumber === 'function' ? formatNumber(totalDeposits) : totalDeposits.toFixed(2)));
                 } else {
                     console.error('Failed to load total deposits:', data);
                 }
@@ -265,20 +266,24 @@ include __DIR__ . '/../includes/navbar.php';
             $.get(getApiPath('getTotalWinLoss'), function(data) {
                 if (data.success && data.winLoss) {
                     const winLoss = data.winLoss;
-                    $('#totalBets').text('$' + winLoss.totalBets.toFixed(2));
-                    $('#totalWins').text('$' + winLoss.totalWins.toFixed(2));
+                    const totalBets = parseFloat(winLoss.totalBets);
+                    const totalWins = parseFloat(winLoss.totalWins);
+                    const netAmount = parseFloat(winLoss.netWinLoss);
                     
-                    const netAmount = winLoss.netWinLoss;
+                    $('#totalBets').text('$' + (typeof formatNumber === 'function' ? formatNumber(totalBets) : totalBets.toFixed(2)));
+                    $('#totalWins').text('$' + (typeof formatNumber === 'function' ? formatNumber(totalWins) : totalWins.toFixed(2)));
+                    
                     const $netElement = $('#netWinLoss');
-                    $netElement.text('$' + Math.abs(netAmount).toFixed(2));
+                    const absNetAmount = Math.abs(netAmount);
+                    const formattedNetAmount = typeof formatNumber === 'function' ? formatNumber(absNetAmount) : absNetAmount.toFixed(2);
                     
                     // Color code the net win/loss
                     if (netAmount > 0) {
-                        $netElement.css('color', '#28a745').text('+$' + netAmount.toFixed(2));
+                        $netElement.css('color', '#28a745').text('+$' + (typeof formatNumber === 'function' ? formatNumber(netAmount) : netAmount.toFixed(2)));
                     } else if (netAmount < 0) {
-                        $netElement.css('color', '#dc3545').text('-$' + Math.abs(netAmount).toFixed(2));
+                        $netElement.css('color', '#dc3545').text('-$' + formattedNetAmount);
                     } else {
-                        $netElement.css('color', '#666');
+                        $netElement.css('color', '#666').text('$' + formattedNetAmount);
                     }
                 } else {
                     console.error('Failed to load win/loss:', data);

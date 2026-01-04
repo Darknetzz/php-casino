@@ -61,6 +61,10 @@ include __DIR__ . '/../includes/navbar.php';
                     <label>Bet Amount: $</label>
                     <input type="number" id="betAmount" min="1" value="10" step="1" class="bet-input-with-adjust">
                     <small>Max: $<span id="maxBet">100</span></small>
+                    <div style="margin-top: 10px;">
+                        <label>Auto Payout: <input type="number" id="autoPayout" min="1.01" value="" step="0.01" placeholder="e.g. 2.00" style="width: 100px; padding: 5px; margin-left: 5px;"></label>
+                        <small style="display: block; color: #666; margin-top: 5px;">Leave empty to cash out manually</small>
+                    </div>
                     <button id="placeBetBtn" class="btn btn-primary">Confirm Bet</button>
                 </div>
                 
