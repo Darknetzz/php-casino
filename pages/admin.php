@@ -29,9 +29,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         $plinkoMultipliers = implode(',', $plinkoMultipliersArray);
         
-        if ($maxDeposit > 0 && $maxBet > 0 && $startingBalance > 0 && $defaultBet > 0 &&
-            $slotsCherry > 0 && $slotsLemon > 0 && $slotsOrange > 0 && $slotsGrape > 0 && $slotsSlot > 0 && $slotsTwoOfKind >= 0 &&
-            count(array_filter($plinkoMultipliersArray, function($v) { return $v >= 0; })) === 9) {
+        // Validate all values
+        $allValid = true;
+        $errors = [];
+        
+        if ($maxDeposit <= 0) $errors[] = 'Max Deposit must be greater than 0';
+        if ($maxBet <= 0) $errors[] = 'Max Bet must be greater than 0';
+        if ($startingBalance < 0) $errors[] = 'Starting Balance must be greater than or equal to 0';
+        if ($defaultBet <= 0) $errors[] = 'Default Bet must be greater than 0';
+        if ($slotsCherry < 0) $errors[] = 'Slots Cherry multiplier must be greater than or equal to 0';
+        if ($slotsLemon < 0) $errors[] = 'Slots Lemon multiplier must be greater than or equal to 0';
+        if ($slotsOrange < 0) $errors[] = 'Slots Orange multiplier must be greater than or equal to 0';
+        if ($slotsGrape < 0) $errors[] = 'Slots Grape multiplier must be greater than or equal to 0';
+        if ($slotsSlot < 0) $errors[] = 'Slots Slot multiplier must be greater than or equal to 0';
+        if ($slotsTwoOfKind < 0) $errors[] = 'Slots Two of Kind multiplier must be greater than or equal to 0';
+        
+        // Check plinko multipliers
+        if (count($plinkoMultipliersArray) !== 9) {
+            $errors[] = 'All 9 Plinko multipliers must be provided';
+        } else {
+            foreach ($plinkoMultipliersArray as $i => $val) {
+                if ($val < 0 || !is_numeric($val)) {
+                    $errors[] = "Plinko Slot $i multiplier must be a number greater than or equal to 0";
+                }
+            }
+        }
+        
+        if (empty($errors)) {
             $db->setSetting('max_deposit', $maxDeposit);
             $db->setSetting('max_bet', $maxBet);
             $db->setSetting('starting_balance', $startingBalance);
@@ -50,7 +74,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             $message = 'Settings updated successfully!';
         } else {
-            $error = 'All values must be greater than or equal to 0.';
+            $error = implode('<br>', $errors);
         }
     } elseif (isset($_POST['update_user_balance'])) {
         $userId = intval($_POST['user_id'] ?? 0);
