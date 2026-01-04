@@ -585,6 +585,8 @@ $(document).ready(function() {
     let bettingEndsTimestamp = null;
     let resultEndsTimestamp = null;
     let countdownRoundId = null;
+    let countdownPhase = 'betting'; // 'betting' or 'spinning'
+    let spinStartedClientSide = false; // Track if we've started the spin client-side
     
     function updateBettingCountdown(bettingEndsIn, resultIn) {
         if (bettingCountdownInterval) {
@@ -602,34 +604,58 @@ $(document).ready(function() {
             bettingEndsTimestamp = now + bettingEndsInMs;
             resultEndsTimestamp = now + resultInMs;
             countdownRoundId = currentRoundId;
+            countdownPhase = 'betting';
+            spinStartedClientSide = false;
         }
         
         const updateCountdown = function() {
-            if (currentRound && currentRound.status === 'betting' && currentRound.id === countdownRoundId) {
-                const now = Date.now();
-                const bettingEnds = Math.max(0, Math.ceil((bettingEndsTimestamp - now) / 1000));
-                const resultTime = Math.max(0, Math.ceil((resultEndsTimestamp - now) / 1000));
-                
-                if (bettingEnds > 0 || resultTime > 0) {
-                    $('#rouletteResult').html(`Round #${currentRound.round_number} - Betting ends in ${bettingEnds}s`);
-                    $('#countdownText').html(`Next spin in: <span style="font-size: 1.5em; color: #667eea;">${resultTime}s</span>`);
+            const now = Date.now();
+            const bettingEnds = Math.max(0, Math.ceil((bettingEndsTimestamp - now) / 1000));
+            const spinningTime = Math.max(0, Math.ceil((resultEndTimestamp - now) / 1000));
+            
+            if (currentRound && currentRound.id === countdownRoundId) {
+                // Check if we've transitioned from betting to spinning
+                if (bettingEnds <= 0 && countdownPhase === 'betting') {
+                    countdownPhase = 'spinning';
+                    // Disable betting
+                    $('.bet-btn, #addNumberBetBtn').prop('disabled', true).addClass('disabled');
+                    $('#betAmount').prop('disabled', true);
                     
-                    // Disable betting when betting period ends
-                    if (bettingEnds <= 0) {
-                        $('.bet-btn, #addNumberBetBtn').prop('disabled', true).addClass('disabled');
-                        $('#betAmount').prop('disabled', true);
-                    } else {
+                    // Start spinning animation if not already started
+                    if (!spinStartedClientSide && !isSpinning) {
+                        spinStartedClientSide = true;
+                        // Calculate spinning duration from timestamps
+                        const spinningDurationMs = resultEndTimestamp - bettingEndsTimestamp;
+                        const spinningDurationSec = Math.max(1, Math.ceil(spinningDurationMs / 1000));
+                        
+                        // Start spinning animation
+                        if (currentRound && currentRound.id) {
+                            startSpinningAnimation(currentRound, spinningDurationSec);
+                        }
+                    }
+                }
+                
+                if (countdownPhase === 'betting') {
+                        $('#rouletteResult').html(`Round #${currentRound.round_number} - Place your bets (${bettingEnds}s)...`);
+                        $('#countdownText').html(`Place your bets (${bettingEnds}s)...`);
+                        
+                        // Enable betting
                         $('.bet-btn, #addNumberBetBtn').prop('disabled', false).removeClass('disabled');
                         $('#betAmount').prop('disabled', false);
                     }
-                } else {
-                    // Betting period has ended
+                } else if (countdownPhase === 'spinning') {
+                    // Show spinning countdown
+                    if (spinningTime > 0) {
+                        $('#rouletteResult').html(`Round #${currentRound.round_number} - Spinning...`);
+                        $('#countdownText').html(`Spinning in ${spinningTime}s...`);
+                    } else {
+                        clearInterval(bettingCountdownInterval);
+                        bettingCountdownInterval = null;
+                    }
+                    
+                    // Disable betting
                     $('.bet-btn, #addNumberBetBtn').prop('disabled', true).addClass('disabled');
                     $('#betAmount').prop('disabled', true);
-                    clearInterval(bettingCountdownInterval);
-                    bettingCountdownInterval = null;
-                    // Poll will update when status changes
-                }
             } else {
                 clearInterval(bettingCountdownInterval);
                 bettingCountdownInterval = null;
