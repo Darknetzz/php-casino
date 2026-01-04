@@ -139,33 +139,38 @@ $(document).ready(function() {
                 const multiplier = calculateWin(finalValues);
                 const winDescription = getWinDescription(finalValues);
                 
-                if (multiplier > 0) {
-                    const winAmount = betAmount * multiplier;
-                    $.post('../api/api.php?action=updateBalance', {
-                        amount: winAmount,
-                        type: 'win',
-                        description: `Dice win: ${winDescription} (${multiplier}x)`,
-                        game: 'dice'
-                    }, function(data) {
-                        if (data.success) {
-                            $('#balance').text(parseFloat(data.balance).toFixed(2));
-                            $('#result').html(`<div class="alert alert-success">🎉 You won $${winAmount.toFixed(2)}! (${winDescription} - ${multiplier}x)</div>`);
-                        }
-                    }, 'json');
-                } else {
-                    $.post('../api/api.php?action=updateBalance', {
-                        amount: -betAmount,
-                        type: 'bet',
-                        description: 'Dice bet',
-                        game: 'dice'
-                    }, function(data) {
-                        if (data.success) {
-                            $('#balance').text(parseFloat(data.balance).toFixed(2));
-                            $('#result').html(`<div class="alert alert-error">Better luck next time! Lost $${betAmount.toFixed(2)}</div>`);
+                // Always record the bet first
+                $.post('../api/api.php?action=updateBalance', {
+                    amount: -betAmount,
+                    type: 'bet',
+                    description: 'Dice bet',
+                    game: 'dice'
+                }, function(betData) {
+                    if (betData.success) {
+                        if (multiplier > 0) {
+                            const winAmount = betAmount * multiplier;
+                            // Then record the win
+                            $.post('../api/api.php?action=updateBalance', {
+                                amount: winAmount,
+                                type: 'win',
+                                description: `Dice win: ${winDescription} (${multiplier}x)`,
+                                game: 'dice'
+                            }, function(winData) {
+                                if (winData.success) {
+                                    $('#balance').text(parseFloat(winData.balance).toFixed(2));
+                                    $('#result').html(`<div class="alert alert-success">🎉 You won $${winAmount.toFixed(2)}! (${winDescription} - ${multiplier}x)</div>`);
+                                }
+                            }, 'json');
                         } else {
-                            $('#result').html(`<div class="alert alert-error">${data.message}</div>`);
+                            // Loss - bet already recorded above
+                            $('#balance').text(parseFloat(betData.balance).toFixed(2));
+                            $('#result').html(`<div class="alert alert-error">Better luck next time! Lost $${betAmount.toFixed(2)}</div>`);
                         }
-                    }, 'json');
+                    } else {
+                        $('#result').html(`<div class="alert alert-error">${betData.message}</div>`);
+                    }
+                }, 'json');
+                
                 }
                 
                 isRolling = false;

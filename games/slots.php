@@ -37,6 +37,14 @@ include __DIR__ . '/../includes/navbar.php';
                         <input type="number" id="betAmount" min="1" value="10" step="1" class="bet-input-with-adjust">
                         <small>Max: $<span id="maxBet">100</span></small>
                     </div>
+                    <div class="bet-rows-controls" style="margin-top: 15px;">
+                        <label>Bet On:</label>
+                        <select id="betRows" style="padding: 8px; border-radius: 5px; border: 2px solid #667eea; font-size: 14px; margin-left: 10px;">
+                            <option value="1">1 Row (Middle)</option>
+                            <option value="3">All 3 Rows</option>
+                        </select>
+                        <small style="display: block; margin-top: 5px; color: #666;">Betting on all 3 rows costs 3x your bet amount</small>
+                    </div>
                     <button id="spinBtn" class="btn btn-primary btn-large">SPIN</button>
                 </div>
                 
@@ -59,12 +67,18 @@ include __DIR__ . '/../includes/navbar.php';
                         <td>1. Set your bet amount</td>
                     </tr>
                     <tr>
-                        <td>2. Click SPIN to play</td>
+                        <td>2. Choose to bet on 1 row (middle) or all 3 rows</td>
                     </tr>
                     <tr>
-                        <td>3. Match 3 symbols to win!</td>
+                        <td>3. Click SPIN to play</td>
+                    </tr>
+                    <tr>
+                        <td>4. Match 3 symbols to win!</td>
                     </tr>
                 </table>
+                <p style="margin-top: 10px; color: #666; font-size: 14px;">
+                    <strong>Note:</strong> Betting on all 3 rows costs 3× your bet amount, but you can win on multiple rows!
+                </p>
                 <h4 style="margin-top: 20px; margin-bottom: 10px;">Payouts:</h4>
                 <table class="slots-payout-table">
                     <thead>

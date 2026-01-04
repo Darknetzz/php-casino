@@ -366,66 +366,66 @@ $(document).ready(function() {
                     }
                 });
                 
-                // Calculate net result
+                // Calculate net result and total bet amount
                 const netResult = totalWin - totalLoss;
                 const totalBets = numberBets.length + colorBets.length;
                 const totalWins = winningNumberBets.length + winningColorBets.length;
                 
-                if (netResult > 0) {
-                    // Overall win
-                    $.post('../api/api.php?action=updateBalance', {
-                        amount: netResult,
-                        type: 'win',
-                        description: `Roulette win: ${totalWins} winning bet(s)`,
-                        game: 'roulette'
-                    }, function(data) {
-                        if (data.success) {
-                            $('#balance').text(parseFloat(data.balance).toFixed(2));
-                            let message = `<div class="alert alert-success">🎉 You won $${netResult.toFixed(2)}!<br>`;
-                            if (winningNumberBets.length > 0) {
-                                message += `Winning number bets: `;
-                                winningNumberBets.forEach(b => message += `#${b.number} ($${b.amount.toFixed(2)} → $${b.win.toFixed(2)}), `);
-                                message = message.slice(0, -2) + '<br>';
-                            }
-                            if (winningColorBets.length > 0) {
-                                message += `Winning color/range bets: `;
-                                winningColorBets.forEach(b => {
-                                    const betName = b.type.charAt(0).toUpperCase() + b.type.slice(1);
-                                    message += `${betName} ($${b.amount.toFixed(2)} → $${b.win.toFixed(2)}), `;
-                                });
-                                message = message.slice(0, -2) + '<br>';
-                            }
-                            if (losingNumberBets.length > 0 || losingColorBets.length > 0) {
-                                message += `Lost: $${totalLoss.toFixed(2)} on ${losingNumberBets.length + losingColorBets.length} bet(s)`;
-                            }
-                            message += '</div>';
-                            $('#result').html(message);
-                        }
-                    }, 'json');
-                } else if (netResult < 0) {
-                    // Overall loss
-                    $.post('../api/api.php?action=updateBalance', {
-                        amount: netResult, // This is negative
-                        type: 'bet',
-                        description: `Roulette bet: ${totalBets} bet(s)`,
-                        game: 'roulette'
-                    }, function(data) {
-                        if (data.success) {
-                            $('#balance').text(parseFloat(data.balance).toFixed(2));
-                            let message = `<div class="alert alert-error">Lost $${Math.abs(netResult).toFixed(2)}<br>`;
-                            if (totalWins > 0) {
-                                message += `Won: $${totalWin.toFixed(2)} on ${totalWins} bet(s)<br>`;
-                            }
+                // Calculate total amount bet (sum of all bet amounts)
+                let totalBetAmount = 0;
+                numberBets.forEach(b => totalBetAmount += b.amount);
+                colorBets.forEach(b => totalBetAmount += b.amount);
+                
+                // Always record the bet first
+                $.post('../api/api.php?action=updateBalance', {
+                    amount: -totalBetAmount,
+                    type: 'bet',
+                    description: `Roulette bet: ${totalBets} bet(s)`,
+                    game: 'roulette'
+                }, function(betData) {
+                    if (betData.success) {
+                        if (totalWin > 0) {
+                            // Record the win
+                            $.post('../api/api.php?action=updateBalance', {
+                                amount: totalWin,
+                                type: 'win',
+                                description: `Roulette win: ${totalWins} winning bet(s)`,
+                                game: 'roulette'
+                            }, function(winData) {
+                                if (winData.success) {
+                                    $('#balance').text(parseFloat(winData.balance).toFixed(2));
+                                    let message = `<div class="alert alert-success">🎉 You won $${netResult.toFixed(2)}!<br>`;
+                                    if (winningNumberBets.length > 0) {
+                                        message += `Winning number bets: `;
+                                        winningNumberBets.forEach(b => message += `#${b.number} ($${b.amount.toFixed(2)} → $${b.win.toFixed(2)}), `);
+                                        message = message.slice(0, -2) + '<br>';
+                                    }
+                                    if (winningColorBets.length > 0) {
+                                        message += `Winning color/range bets: `;
+                                        winningColorBets.forEach(b => {
+                                            const betName = b.type.charAt(0).toUpperCase() + b.type.slice(1);
+                                            message += `${betName} ($${b.amount.toFixed(2)} → $${b.win.toFixed(2)}), `;
+                                        });
+                                        message = message.slice(0, -2) + '<br>';
+                                    }
+                                    if (losingNumberBets.length > 0 || losingColorBets.length > 0) {
+                                        message += `Lost: $${totalLoss.toFixed(2)} on ${losingNumberBets.length + losingColorBets.length} bet(s)`;
+                                    }
+                                    message += '</div>';
+                                    $('#result').html(message);
+                                }
+                            }, 'json');
+                        } else {
+                            // Loss - bet already recorded above
+                            $('#balance').text(parseFloat(betData.balance).toFixed(2));
+                            let message = `<div class="alert alert-error">Lost $${totalBetAmount.toFixed(2)}<br>`;
                             message += `Lost: $${totalLoss.toFixed(2)} on ${losingNumberBets.length + losingColorBets.length} bet(s)</div>`;
                             $('#result').html(message);
-                        } else {
-                            $('#result').html(`<div class="alert alert-error">${data.message}</div>`);
                         }
-                    }, 'json');
-                } else {
-                    // Break even
-                    $('#result').html('<div class="alert">Break even!</div>');
-                }
+                    } else {
+                        $('#result').html(`<div class="alert alert-error">${betData.message}</div>`);
+                    }
+                }, 'json');
                 
                 isSpinning = false;
                 $('#spinBtn').prop('disabled', false);

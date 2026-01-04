@@ -193,10 +193,15 @@ $(document).ready(function() {
             return;
         }
         
-        // Check if user has enough balance
+        // Get bet rows selection
+        const betRows = parseInt($('#betRows').val()) || 1;
+        const actualBetAmount = betRows === 3 ? betAmount * 3 : betAmount; // Betting on all 3 rows costs 3x
+        
+        // Check if user has enough balance for the actual bet amount
         $.get('../api/api.php?action=getBalance', function(data) {
-            if (!data.success || parseFloat(data.balance) < betAmount) {
-                $('#result').html('<div class="alert alert-error">Insufficient funds. Your balance is $' + (data.success ? parseFloat(data.balance).toFixed(2) : '0.00') + '</div>');
+            if (!data.success || parseFloat(data.balance) < actualBetAmount) {
+                const requiredText = betRows === 3 ? `$${actualBetAmount.toFixed(2)} ($${betAmount.toFixed(2)} × 3 rows)` : `$${actualBetAmount.toFixed(2)}`;
+                $('#result').html('<div class="alert alert-error">Insufficient funds. You need ' + requiredText + ' but your balance is $' + (data.success ? parseFloat(data.balance).toFixed(2) : '0.00') + '</div>');
                 return;
             }
             
@@ -226,28 +231,29 @@ $(document).ready(function() {
         
         setTimeout(function() {
             // Wait for all reels to stop
-            const betRows = settings.slots_bet_rows !== undefined ? settings.slots_bet_rows : 1; // 1 = middle only, 3 = all rows
+            // Get bet rows from user selection (1 = one row, 3 = all rows)
+            const betRows = parseInt($('#betRows').val()) || 1;
+            const actualBetAmount = betRows === 3 ? betAmount * 3 : betAmount; // Betting on all 3 rows costs 3x
             let totalWin = 0;
             let winDescriptions = [];
             
             if (betRows === 1) {
-                // Check only middle row
-                const winRow = settings.slots_win_row !== undefined ? settings.slots_win_row : 1;
-                const s1 = $('#reel1 .symbol').eq(winRow).text().trim();
-                const s2 = $('#reel2 .symbol').eq(winRow).text().trim();
-                const s3 = $('#reel3 .symbol').eq(winRow).text().trim();
+                // Check only middle row (row 1)
+                const s1 = $('#reel1 .symbol').eq(1).text().trim();
+                const s2 = $('#reel2 .symbol').eq(1).text().trim();
+                const s3 = $('#reel3 .symbol').eq(1).text().trim();
                 
                 const multiplier = calculateWin(s1, s2, s3);
                 
                 if (multiplier > 0) {
-                    totalWin = betAmount * multiplier;
+                    totalWin = betAmount * multiplier; // Use original bet amount, not multiplied
                     let winType = '';
                     if (s1 === s2 && s2 === s3) {
                         winType = '3 of a kind';
                     } else {
                         winType = '2 of a kind';
                     }
-                    winDescriptions.push(`${s1}${s2}${s3} (${multiplier}x - ${winType})`);
+                    winDescriptions.push(`Middle row: ${s1}${s2}${s3} (${multiplier}x - ${winType})`);
                 }
             } else if (betRows === 3) {
                 // Check all 3 rows
@@ -260,7 +266,7 @@ $(document).ready(function() {
                     const multiplier = calculateWin(s1, s2, s3);
                     
                     if (multiplier > 0) {
-                        const rowWin = betAmount * multiplier;
+                        const rowWin = betAmount * multiplier; // Use original bet amount per row
                         totalWin += rowWin;
                         let winType = '';
                         if (s1 === s2 && s2 === s3) {
@@ -274,37 +280,41 @@ $(document).ready(function() {
                 });
             }
             
-            if (totalWin > 0) {
-                const winAmount = totalWin;
-                $.post('../api/api.php?action=updateBalance', {
-                    amount: winAmount,
-                    type: 'win',
-                    description: `Slots win: ${winDescriptions.join('; ')}`,
-                    game: 'slots'
-                }, function(data) {
-                    if (data.success) {
-                        $('#balance').text(parseFloat(data.balance).toFixed(2));
-                        const winText = winDescriptions.length === 1 
-                            ? winDescriptions[0].split(' (')[1].replace(')', '')
-                            : `${winDescriptions.length} winning row(s)`;
-                        $('#result').html(`<div class="alert alert-success">🎉 You won $${winAmount.toFixed(2)}! (${winText})</div>`);
-                    }
-                }, 'json');
-            } else {
-                $.post('../api/api.php?action=updateBalance', {
-                    amount: -betAmount,
-                    type: 'bet',
-                    description: 'Slots bet',
-                    game: 'slots'
-                }, function(data) {
-                    if (data.success) {
-                        $('#balance').text(parseFloat(data.balance).toFixed(2));
-                        $('#result').html(`<div class="alert alert-error">Better luck next time! Lost $${betAmount.toFixed(2)}</div>`);
+            // Always record the bet first (use actual bet amount which may be 3x if betting on all rows)
+            $.post('../api/api.php?action=updateBalance', {
+                amount: -actualBetAmount,
+                type: 'bet',
+                description: betRows === 3 ? `Slots bet (${betAmount} × 3 rows = ${actualBetAmount})` : 'Slots bet',
+                game: 'slots'
+            }, function(betData) {
+                if (betData.success) {
+                    if (totalWin > 0) {
+                        const winAmount = totalWin;
+                        // Then record the win
+                        $.post('../api/api.php?action=updateBalance', {
+                            amount: winAmount,
+                            type: 'win',
+                            description: `Slots win: ${winDescriptions.join('; ')}`,
+                            game: 'slots'
+                        }, function(winData) {
+                            if (winData.success) {
+                                $('#balance').text(parseFloat(winData.balance).toFixed(2));
+                                const winText = winDescriptions.length === 1 
+                                    ? winDescriptions[0].split(' (')[1].replace(')', '')
+                                    : `${winDescriptions.length} winning row(s)`;
+                                $('#result').html(`<div class="alert alert-success">🎉 You won $${winAmount.toFixed(2)}! (${winText})</div>`);
+                            }
+                        }, 'json');
                     } else {
-                        $('#result').html(`<div class="alert alert-error">${data.message}</div>`);
+                        // Loss - bet already recorded above
+                        $('#balance').text(parseFloat(betData.balance).toFixed(2));
+                        const lostText = betRows === 3 ? `$${actualBetAmount.toFixed(2)} ($${betAmount.toFixed(2)} × 3 rows)` : `$${actualBetAmount.toFixed(2)}`;
+                        $('#result').html(`<div class="alert alert-error">Better luck next time! Lost ${lostText}</div>`);
                     }
-                }, 'json');
-            }
+                } else {
+                    $('#result').html(`<div class="alert alert-error">${betData.message}</div>`);
+                }
+            }, 'json');
             
             isSpinning = false;
             $('#spinBtn').prop('disabled', false);
