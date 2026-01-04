@@ -696,6 +696,31 @@ body {
 }
 
 /* Roulette multiple bets */
+.color-bets-section {
+    margin-bottom: 20px;
+}
+
+.color-bet-amount {
+    margin-top: 15px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.color-bet-amount label {
+    font-weight: 500;
+    color: #333;
+}
+
+.color-bet-amount input {
+    padding: 8px 12px;
+    border: 2px solid #667eea;
+    border-radius: 5px;
+    font-size: 14px;
+    width: 100px;
+}
+
 .number-bets-section {
     margin-top: 20px;
 }

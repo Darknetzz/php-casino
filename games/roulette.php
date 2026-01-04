@@ -26,7 +26,27 @@ $user = getCurrentUser();
                 
                 <div class="bet-options">
                     <h3>Place Your Bets:</h3>
-                    <div class="number-bets-section">
+                    <div class="color-bets-section">
+                        <h4>Color & Range Bets (2x payout):</h4>
+                        <div class="bet-buttons">
+                            <button class="bet-btn" data-bet="red" data-multiplier="2">Red (2x)</button>
+                            <button class="bet-btn" data-bet="black" data-multiplier="2">Black (2x)</button>
+                            <button class="bet-btn" data-bet="green" data-multiplier="14">Green (14x)</button>
+                            <button class="bet-btn" data-bet="even" data-multiplier="2">Even (2x)</button>
+                            <button class="bet-btn" data-bet="odd" data-multiplier="2">Odd (2x)</button>
+                            <button class="bet-btn" data-bet="low" data-multiplier="2">1-18 (2x)</button>
+                            <button class="bet-btn" data-bet="high" data-multiplier="2">19-36 (2x)</button>
+                        </div>
+                        <div class="color-bet-amount">
+                            <label>Amount for color/range bets: $</label>
+                            <input type="number" id="colorBetAmount" min="1" step="1" value="10">
+                            <small>Max: $<span id="maxBet">100</span></small>
+                        </div>
+                        <div id="activeColorBets" class="active-bets-list" style="margin-top: 15px;">
+                            <p style="color: #666; font-style: italic;">No color/range bets placed yet</p>
+                        </div>
+                    </div>
+                    <div class="number-bets-section" style="margin-top: 30px;">
                         <h4>Bet on specific numbers (36x payout):</h4>
                         <div class="add-number-bet">
                             <input type="number" id="numberBet" min="0" max="36" placeholder="Number (0-36)">
@@ -34,11 +54,11 @@ $user = getCurrentUser();
                             <button id="addNumberBetBtn" class="btn btn-secondary">Add Bet</button>
                         </div>
                         <div id="activeBets" class="active-bets-list">
-                            <p style="color: #666; font-style: italic;">No bets placed yet</p>
+                            <p style="color: #666; font-style: italic;">No number bets placed yet</p>
                         </div>
-                        <div id="totalBetAmount" class="total-bet-display" style="display: none;">
-                            <strong>Total Bet: $<span id="totalBetValue">0</span></strong>
-                        </div>
+                    </div>
+                    <div id="totalBetAmount" class="total-bet-display" style="display: none; margin-top: 20px;">
+                        <strong>Total Bet: $<span id="totalBetValue">0</span></strong>
                     </div>
                 </div>
                 
