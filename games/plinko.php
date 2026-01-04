@@ -14,57 +14,6 @@ $user = getCurrentUser();
 </head>
 <body>
     <?php include __DIR__ . '/../includes/navbar.php'; ?>
-        <div class="nav-container">
-            <h2>🎰 Casino</h2>
-            <div class="nav-center">
-                <div class="games-menu">
-                    <button class="games-menu-btn" id="gamesMenuBtn">
-                        <span>🎮</span>
-                        <span>Games</span>
-                        <span class="dropdown-arrow">▼</span>
-                    </button>
-                    <div class="games-dropdown" id="gamesDropdown">
-                        <a href="slots.php" class="dropdown-item">
-                            <span>🎰</span> Slots
-                        </a>
-                        <a href="blackjack.php" class="dropdown-item">
-                            <span>🃏</span> Blackjack
-                        </a>
-                        <a href="roulette.php" class="dropdown-item">
-                            <span>🎲</span> Roulette
-                        </a>
-                        <a href="plinko.php" class="dropdown-item">
-                            <span>⚪</span> Plinko
-                        </a>
-                    </div>
-                </div>
-            </div>
-            <div class="nav-right">
-                <span class="balance">Balance: $<span id="balance"><?php echo number_format($user['balance'], 2); ?></span></span>
-                <a href="../index.php" class="btn btn-secondary">Home</a>
-                <div class="user-menu">
-                    <button class="user-menu-btn" id="userMenuBtn">
-                        <span class="user-avatar"><?php echo strtoupper(substr($user['username'], 0, 1)); ?></span>
-                        <span class="username"><?php echo htmlspecialchars($user['username']); ?></span>
-                        <span class="dropdown-arrow">▼</span>
-                    </button>
-                    <div class="user-dropdown" id="userDropdown">
-                        <a href="../pages/profile.php" class="dropdown-item">
-                            <span>👤</span> Profile
-                        </a>
-                        <?php if (isAdmin()): ?>
-                        <a href="../pages/admin.php" class="dropdown-item">
-                            <span>⚙️</span> Admin Panel
-                        </a>
-                        <?php endif; ?>
-                        <a href="../pages/logout.php" class="dropdown-item">
-                            <span>🚪</span> Logout
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </nav>
     
     <div class="container">
         <div class="game-container">

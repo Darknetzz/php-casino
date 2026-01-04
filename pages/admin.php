@@ -203,8 +203,8 @@ $users = $db->getAllUsers();
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="../js/navbar.js"></script>
     <script>
-        $(document).ready(function() {
-            function editBalance(userId, currentBalance) {
+        // Define functions globally so they can be called from onclick handlers
+        function editBalance(userId, currentBalance) {
             $('#balance_user_id').val(userId);
             $('#new_balance').val(currentBalance);
             $('#balanceModal').show();
@@ -226,12 +226,14 @@ $users = $db->getAllUsers();
             $('#' + modalId).hide();
         }
         
-        // Close modal when clicking outside
-        window.onclick = function(event) {
-            if (event.target.classList.contains('modal')) {
-                event.target.style.display = 'none';
-            }
-        }
+        $(document).ready(function() {
+            // Close modal when clicking outside
+            window.onclick = function(event) {
+                if (event.target.classList.contains('modal')) {
+                    event.target.style.display = 'none';
+                }
+            };
+        });
     </script>
 </body>
 </html>
