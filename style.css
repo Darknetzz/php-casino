@@ -1212,6 +1212,49 @@ body {
     color: #28a745;
 }
 
+.win-rates-section {
+    margin-top: 30px;
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 8px;
+}
+
+.win-rates-section h2 {
+    margin-top: 0;
+    color: #667eea;
+}
+
+.win-rates-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+}
+
+.win-rate-card {
+    padding: 15px;
+    background: white;
+    border-radius: 8px;
+    text-align: center;
+    border: 1px solid #e0e0e0;
+}
+
+.win-rate-card h4 {
+    margin: 0 0 10px 0;
+    color: #667eea;
+}
+
+.win-rate-value {
+    font-size: 24px;
+    font-weight: bold;
+    color: #333;
+}
+
+.win-rate-games {
+    color: #666;
+    font-size: 14px;
+    margin-top: 5px;
+}
+
 .refill-section {
     margin-top: 40px;
     padding-top: 40px;
@@ -2012,8 +2055,48 @@ body.dark-mode .result-message {
     color: #e0e0e0;
 }
 
+body.dark-mode .profile-container {
+    background: #1a1a2e;
+    color: #e0e0e0;
+}
+
 body.dark-mode .profile-info {
     color: #e0e0e0;
+}
+
+body.dark-mode .win-rates-section {
+    background: #16213e;
+    border: 1px solid #2a2a3e;
+}
+
+body.dark-mode .win-rates-section h2 {
+    color: #8a9eff;
+}
+
+body.dark-mode .win-rate-card {
+    background: #0f1419;
+    border: 1px solid #2a2a3e;
+}
+
+body.dark-mode .win-rate-card h4 {
+    color: #8a9eff;
+}
+
+body.dark-mode .win-rate-value {
+    color: #e0e0e0;
+}
+
+body.dark-mode .win-rate-games {
+    color: #aaa;
+}
+
+body.dark-mode .refill-section {
+    background: #16213e;
+    border: 1px solid #2a2a3e;
+}
+
+body.dark-mode .refill-section h2 {
+    color: #8a9eff;
 }
 
 body.dark-mode .info-item {
@@ -2033,10 +2116,15 @@ body.dark-mode .balance-large {
     color: #8a9eff;
 }
 
+body.dark-mode .profile-container {
+    background: #1a1a2e;
+    color: #e0e0e0;
+}
+
 body.dark-mode .refill-section,
 body.dark-mode .win-rates-section {
-    background: rgba(40, 40, 60, 0.8);
-    border: 1px solid #555;
+    background: #16213e;
+    border: 1px solid #2a2a3e;
 }
 
 body.dark-mode .refill-section h2,
@@ -2044,21 +2132,21 @@ body.dark-mode .win-rates-section h2 {
     color: #8a9eff;
 }
 
-body.dark-mode .win-rates-section > div > div {
-    background: rgba(30, 30, 50, 0.9) !important;
-    border: 1px solid #555;
+body.dark-mode .win-rate-card {
+    background: #0f1419;
+    border: 1px solid #2a2a3e;
 }
 
-body.dark-mode .win-rates-section h4 {
+body.dark-mode .win-rate-card h4 {
     color: #8a9eff;
 }
 
-body.dark-mode .win-rates-section div[style*="font-size: 24px"] {
-    color: #8a9eff !important;
+body.dark-mode .win-rate-value {
+    color: #e0e0e0;
 }
 
-body.dark-mode .win-rates-section div[style*="font-size: 14px"] {
-    color: #aaa !important;
+body.dark-mode .win-rate-games {
+    color: #aaa;
 }
 
 body.dark-mode .games-grid {

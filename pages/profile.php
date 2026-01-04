@@ -31,33 +31,33 @@ include __DIR__ . '/../includes/navbar.php';
                 </div>
             </div>
             
-            <div class="win-rates-section" style="margin-top: 30px; padding: 20px; background: #f8f9fa; border-radius: 8px;">
-                <h2 style="margin-top: 0; color: #667eea;">📊 Win Rates</h2>
-                <div id="winRatesDisplay" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
-                    <div style="padding: 15px; background: white; border-radius: 8px; text-align: center;">
-                        <h4 style="margin: 0 0 10px 0; color: #667eea;">Overall</h4>
-                        <div style="font-size: 24px; font-weight: bold; color: #333;" id="overallRate">-</div>
-                        <div style="color: #666; font-size: 14px;" id="overallGames">- games</div>
+            <div class="win-rates-section">
+                <h2>📊 Win Rates</h2>
+                <div id="winRatesDisplay" class="win-rates-grid">
+                    <div class="win-rate-card">
+                        <h4>Overall</h4>
+                        <div class="win-rate-value" id="overallRate">-</div>
+                        <div class="win-rate-games" id="overallGames">- games</div>
                     </div>
-                    <div style="padding: 15px; background: white; border-radius: 8px; text-align: center;">
-                        <h4 style="margin: 0 0 10px 0; color: #667eea;">🎰 Slots</h4>
-                        <div style="font-size: 24px; font-weight: bold; color: #333;" id="slotsRate">-</div>
-                        <div style="color: #666; font-size: 14px;" id="slotsGames">- games</div>
+                    <div class="win-rate-card">
+                        <h4>🎰 Slots</h4>
+                        <div class="win-rate-value" id="slotsRate">-</div>
+                        <div class="win-rate-games" id="slotsGames">- games</div>
                     </div>
-                    <div style="padding: 15px; background: white; border-radius: 8px; text-align: center;">
-                        <h4 style="margin: 0 0 10px 0; color: #667eea;">🃏 Blackjack</h4>
-                        <div style="font-size: 24px; font-weight: bold; color: #333;" id="blackjackRate">-</div>
-                        <div style="color: #666; font-size: 14px;" id="blackjackGames">- games</div>
+                    <div class="win-rate-card">
+                        <h4>🃏 Blackjack</h4>
+                        <div class="win-rate-value" id="blackjackRate">-</div>
+                        <div class="win-rate-games" id="blackjackGames">- games</div>
                     </div>
-                    <div style="padding: 15px; background: white; border-radius: 8px; text-align: center;">
-                        <h4 style="margin: 0 0 10px 0; color: #667eea;">🎲 Roulette</h4>
-                        <div style="font-size: 24px; font-weight: bold; color: #333;" id="rouletteRate">-</div>
-                        <div style="color: #666; font-size: 14px;" id="rouletteGames">- games</div>
+                    <div class="win-rate-card">
+                        <h4>🎲 Roulette</h4>
+                        <div class="win-rate-value" id="rouletteRate">-</div>
+                        <div class="win-rate-games" id="rouletteGames">- games</div>
                     </div>
-                    <div style="padding: 15px; background: white; border-radius: 8px; text-align: center;">
-                        <h4 style="margin: 0 0 10px 0; color: #667eea;">⚪ Plinko</h4>
-                        <div style="font-size: 24px; font-weight: bold; color: #333;" id="plinkoRate">-</div>
-                        <div style="color: #666; font-size: 14px;" id="plinkoGames">- games</div>
+                    <div class="win-rate-card">
+                        <h4>⚪ Plinko</h4>
+                        <div class="win-rate-value" id="plinkoRate">-</div>
+                        <div class="win-rate-games" id="plinkoGames">- games</div>
                     </div>
                 </div>
             </div>
@@ -182,33 +182,58 @@ include __DIR__ . '/../includes/navbar.php';
                     if (rates.overall) {
                         $('#overallRate').text(rates.overall.rate + '%');
                         $('#overallGames').text(rates.overall.total + ' games (' + rates.overall.wins + ' wins)');
+                    } else {
+                        $('#overallRate').text('0%');
+                        $('#overallGames').text('0 games (0 wins)');
                     }
                     
                     // Slots
                     if (rates.slots) {
                         $('#slotsRate').text(rates.slots.rate + '%');
                         $('#slotsGames').text(rates.slots.total + ' games (' + rates.slots.wins + ' wins)');
+                    } else {
+                        $('#slotsRate').text('0%');
+                        $('#slotsGames').text('0 games (0 wins)');
                     }
                     
                     // Blackjack
                     if (rates.blackjack) {
                         $('#blackjackRate').text(rates.blackjack.rate + '%');
                         $('#blackjackGames').text(rates.blackjack.total + ' games (' + rates.blackjack.wins + ' wins)');
+                    } else {
+                        $('#blackjackRate').text('0%');
+                        $('#blackjackGames').text('0 games (0 wins)');
                     }
                     
                     // Roulette
                     if (rates.roulette) {
                         $('#rouletteRate').text(rates.roulette.rate + '%');
                         $('#rouletteGames').text(rates.roulette.total + ' games (' + rates.roulette.wins + ' wins)');
+                    } else {
+                        $('#rouletteRate').text('0%');
+                        $('#rouletteGames').text('0 games (0 wins)');
                     }
                     
                     // Plinko
                     if (rates.plinko) {
                         $('#plinkoRate').text(rates.plinko.rate + '%');
                         $('#plinkoGames').text(rates.plinko.total + ' games (' + rates.plinko.wins + ' wins)');
+                    } else {
+                        $('#plinkoRate').text('0%');
+                        $('#plinkoGames').text('0 games (0 wins)');
                     }
+                } else {
+                    console.error('Failed to load stats:', data);
+                    // Set all to 0
+                    $('.win-rate-value').text('0%');
+                    $('.win-rate-games').text('0 games (0 wins)');
                 }
-            }, 'json');
+            }, 'json').fail(function(xhr, status, error) {
+                console.error('Error loading stats:', status, error);
+                // Set all to 0
+                $('.win-rate-value').text('0%');
+                $('.win-rate-games').text('0 games (0 wins)');
+            });
         });
     </script>
 <?php include __DIR__ . '/../includes/footer.php'; ?>
