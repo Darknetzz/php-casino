@@ -286,7 +286,10 @@ $(document).ready(function() {
             const rowWidth = pegsInRow * 8; // Approximate width per peg
             const startOffset = (100 - rowWidth) / 2; // Center the row
             const leftPercent = startOffset + (currentCol * (rowWidth / pegsInRow)) + 4; // 4% for peg width
-            const topPercent = (currentRow * 12 + 10); // Match peg positioning
+            // Position ball slightly above the peg so it appears to hit the top of the peg
+            // Pegs are at (row * 12 + 10)%, so we position ball about 1.5% higher
+            const pegTopPercent = (currentRow * 12 + 10);
+            const topPercent = pegTopPercent - 1.5; // Position above the peg
             
             ball.element.css({
                 left: leftPercent + '%',
