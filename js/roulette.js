@@ -636,6 +636,8 @@ $(document).ready(function() {
                 }
                 
                 if (countdownPhase === 'betting') {
+                    // Show betting countdown
+                    if (bettingEnds > 0) {
                         $('#rouletteResult').html(`Round #${currentRound.round_number} - Place your bets (${bettingEnds}s)...`);
                         $('#countdownText').html(`Place your bets (${bettingEnds}s)...`);
                         
@@ -656,6 +658,7 @@ $(document).ready(function() {
                     // Disable betting
                     $('.bet-btn, #addNumberBetBtn').prop('disabled', true).addClass('disabled');
                     $('#betAmount').prop('disabled', true);
+                }
             } else {
                 clearInterval(bettingCountdownInterval);
                 bettingCountdownInterval = null;
