@@ -148,7 +148,8 @@ $(document).ready(function() {
                     
                     $('#gameControls').show();
                     $('#result').html('');
-                    $('#newGameBtn').prop('disabled', true).text('Game in Progress...');
+                    $('#newGameBtn').prop('disabled', true).text('Game in Progress...').addClass('game-disabled');
+                    $('button, .btn').addClass('game-disabled');
                     
                     // Check for blackjack
                     if (calculateHand(playerHand) === 21) {
@@ -265,7 +266,8 @@ $(document).ready(function() {
         
         $('#result').html(`<div class="alert ${won ? 'alert-success' : 'alert-error'}">${message} <button class="btn btn-primary" id="newGameFromResult" style="margin-left: 10px; margin-top: 5px;">New Game</button></div>`);
         $('#gameControls').hide();
-        $('#newGameBtn').prop('disabled', false).text('New Game');
+        $('#newGameBtn').prop('disabled', false).text('New Game').removeClass('game-disabled');
+        $('button, .btn').removeClass('game-disabled');
         
         // Add click handler for new game button in result
         $('#newGameFromResult').click(function() {

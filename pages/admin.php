@@ -180,17 +180,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $dice4OfKind = floatval($_POST['dice_4_of_kind'] ?? 0);
                 $dice5OfKind = floatval($_POST['dice_5_of_kind'] ?? 0);
                 $dice6OfKind = floatval($_POST['dice_6_of_kind'] ?? 0);
+                $diceNumDice = intval($_POST['dice_num_dice'] ?? 6);
                 
                 if ($dice3OfKind < 0) $errors[] = 'Dice 3 of a kind multiplier must be greater than or equal to 0';
                 if ($dice4OfKind < 0) $errors[] = 'Dice 4 of a kind multiplier must be greater than or equal to 0';
                 if ($dice5OfKind < 0) $errors[] = 'Dice 5 of a kind multiplier must be greater than or equal to 0';
                 if ($dice6OfKind < 0) $errors[] = 'Dice 6 of a kind multiplier must be greater than or equal to 0';
+                if ($diceNumDice < 1 || $diceNumDice > 20) $errors[] = 'Number of dice must be between 1 and 20';
                 
                 if (empty($errors)) {
                     $db->setSetting('dice_3_of_kind_multiplier', $dice3OfKind);
                     $db->setSetting('dice_4_of_kind_multiplier', $dice4OfKind);
                     $db->setSetting('dice_5_of_kind_multiplier', $dice5OfKind);
                     $db->setSetting('dice_6_of_kind_multiplier', $dice6OfKind);
+                    $db->setSetting('dice_num_dice', $diceNumDice);
                 }
             }
             
@@ -198,6 +201,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (isset($_POST['crash_speed'])) {
                 $crashSpeed = floatval($_POST['crash_speed'] ?? 0.02);
                 $crashMaxMultiplier = floatval($_POST['crash_max_multiplier'] ?? 0);
+                $crashDistributionParam = floatval($_POST['crash_distribution_param'] ?? 0.99);
                 
                 if ($crashSpeed <= 0 || $crashSpeed > 1) {
                     $errors[] = 'Crash speed must be between 0 and 1';
@@ -205,10 +209,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if ($crashMaxMultiplier < 0) {
                     $errors[] = 'Crash max multiplier must be greater than or equal to 0 (0 = unlimited)';
                 }
+                if ($crashDistributionParam <= 0 || $crashDistributionParam >= 1) {
+                    $errors[] = 'Crash distribution parameter must be between 0 and 1 (exclusive)';
+                }
                 
                 if (empty($errors)) {
                     $db->setSetting('crash_speed', $crashSpeed);
                     $db->setSetting('crash_max_multiplier', $crashMaxMultiplier);
+                    $db->setSetting('crash_distribution_param', $crashDistributionParam);
                 }
             }
             
@@ -704,7 +712,17 @@ include __DIR__ . '/../includes/navbar.php';
                             </tr>
                         </tbody>
                     </table>
-                    <button type="submit" name="update_settings" class="btn btn-primary" style="margin-top: 20px;">Update Dice Multipliers</button>
+                    
+                    <h4 style="margin-top: 30px; margin-bottom: 15px; color: #667eea;">Dice Settings</h4>
+                    <div class="form-group">
+                        <label for="dice_num_dice">Number of Dice:</label>
+                        <input type="number" id="dice_num_dice" name="dice_num_dice" min="1" max="20" 
+                               value="<?php echo htmlspecialchars($settings['dice_num_dice'] ?? '6'); ?>" 
+                               required style="width: 100px; padding: 8px;">
+                        <small style="display: block; margin-top: 5px; color: #666;">Number of dice to roll (1-20)</small>
+                    </div>
+                    
+                    <button type="submit" name="update_settings" class="btn btn-primary" style="margin-top: 20px;">Update Dice Settings</button>
                 </form>
                 <?php endif; ?>
                 
@@ -742,8 +760,30 @@ include __DIR__ . '/../includes/navbar.php';
                                 </td>
                                 <td>Maximum multiplier before auto-crash (0 = unlimited). Default: 0 (unlimited)</td>
                             </tr>
+                            <tr>
+                                <td>Distribution Curve</td>
+                                <td>
+                                    <input type="number" id="crash_distribution_param" name="crash_distribution_param"
+                                           min="0.01" max="0.999" step="0.001" 
+                                           value="<?php echo htmlspecialchars($settings['crash_distribution_param'] ?? '0.99'); ?>"
+                                           required style="width: 100px; padding: 8px;">
+                                </td>
+                                <td>Distribution curve parameter (0.01-0.999). Lower = more high multipliers, Higher = more low multipliers. Default: 0.99</td>
+                            </tr>
                         </tbody>
                     </table>
+                    <div style="margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 5px;">
+                        <h4 style="margin-top: 0; color: #667eea;">Distribution Curve Explanation</h4>
+                        <p style="margin-bottom: 10px; color: #666; font-size: 14px;">
+                            The distribution parameter controls how likely high multipliers are:
+                        </p>
+                        <ul style="margin: 0; padding-left: 20px; color: #666; font-size: 14px;">
+                            <li><strong>0.99</strong> (default): Heavy bias toward low multipliers (~50% crash before 2x)</li>
+                            <li><strong>0.95</strong>: More balanced, higher chance of big multipliers</li>
+                            <li><strong>0.90</strong>: Even more balanced, more frequent high multipliers</li>
+                            <li><strong>0.50</strong>: Very balanced, many high multipliers possible</li>
+                        </ul>
+                    </div>
                     <button type="submit" name="update_settings" class="btn btn-primary" style="margin-top: 20px;">Update Crash Settings</button>
                 </form>
                 <?php endif; ?>

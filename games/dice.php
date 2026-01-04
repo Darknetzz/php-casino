@@ -4,6 +4,7 @@ requireLogin();
 
 $user = getCurrentUser();
 $pageTitle = 'Dice';
+$diceNumDice = intval(getSetting('dice_num_dice', 6));
 include __DIR__ . '/../includes/header.php';
 include __DIR__ . '/../includes/navbar.php';
 ?>
@@ -15,24 +16,11 @@ include __DIR__ . '/../includes/navbar.php';
             <div class="dice-game">
                 <div class="dice-container">
                     <div class="dice-grid">
-                        <div class="dice" id="dice1">
+                        <?php for ($i = 1; $i <= $diceNumDice; $i++): ?>
+                        <div class="dice" id="dice<?php echo $i; ?>">
                             <div class="dice-face">⚀</div>
                         </div>
-                        <div class="dice" id="dice2">
-                            <div class="dice-face">⚁</div>
-                        </div>
-                        <div class="dice" id="dice3">
-                            <div class="dice-face">⚂</div>
-                        </div>
-                        <div class="dice" id="dice4">
-                            <div class="dice-face">⚃</div>
-                        </div>
-                        <div class="dice" id="dice5">
-                            <div class="dice-face">⚄</div>
-                        </div>
-                        <div class="dice" id="dice6">
-                            <div class="dice-face">⚅</div>
-                        </div>
+                        <?php endfor; ?>
                     </div>
                 </div>
                 
@@ -100,7 +88,7 @@ include __DIR__ . '/../includes/navbar.php';
                     <td>1. Set your bet amount</td>
                 </tr>
                 <tr>
-                    <td>2. Click ROLL DICE to roll 6 dice</td>
+                    <td>2. Click ROLL DICE to roll <?php echo $diceNumDice; ?> dice</td>
                 </tr>
                 <tr>
                     <td>3. Match dice to win!</td>

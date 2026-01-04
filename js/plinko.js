@@ -108,7 +108,8 @@ $(document).ready(function() {
             }
             
             isDropping = true;
-            $('#dropBtn').prop('disabled', true).text('DROPPING...');
+            $('#dropBtn').prop('disabled', true).text('DROPPING...').addClass('game-disabled');
+            $('button, .btn').addClass('game-disabled');
             $('#result').html('');
             
             // Add beforeunload warning to prevent navigation during game
@@ -128,7 +129,8 @@ $(document).ready(function() {
                 if (!data.success) {
                     $('#result').html('<div class="alert alert-error">' + (data.message || 'Insufficient funds') + '</div>');
                     isDropping = false;
-                    $('#dropBtn').prop('disabled', false).text('DROP BALL(S)');
+                    $('#dropBtn').prop('disabled', false).text('DROP BALL(S)').removeClass('game-disabled');
+                    $('button, .btn').removeClass('game-disabled');
                     $(window).off('beforeunload');
                     return;
                 }
@@ -276,7 +278,8 @@ $(document).ready(function() {
                                     
                                     activeBalls = [];
                                     isDropping = false;
-                                    $('#dropBtn').prop('disabled', false).text('DROP BALL(S)');
+                                    $('#dropBtn').prop('disabled', false).text('DROP BALL(S)').removeClass('game-disabled');
+                                    $('button, .btn').removeClass('game-disabled');
                                     
                                     // Remove beforeunload warning
                                     $(window).off('beforeunload');

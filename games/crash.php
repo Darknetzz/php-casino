@@ -36,6 +36,39 @@ include __DIR__ . '/../includes/navbar.php';
                     <div id="historyList">No history yet</div>
                 </div>
                 
+                <div class="crash-probability-section section" style="margin: 20px 0; background: #f8f9fa; border-radius: 8px; padding: 20px;">
+                    <h4 style="margin: 0 0 15px 0; color: #667eea;">📈 Crash Probability Statistics</h4>
+                    <div id="probabilityStats" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px;">
+                        <div class="prob-stat-card">
+                            <div class="prob-label">Before 1.50x</div>
+                            <div class="prob-value" id="prob1_5">-</div>
+                        </div>
+                        <div class="prob-stat-card">
+                            <div class="prob-label">Before 2.00x</div>
+                            <div class="prob-value" id="prob2_0">-</div>
+                        </div>
+                        <div class="prob-stat-card">
+                            <div class="prob-label">Before 5.00x</div>
+                            <div class="prob-value" id="prob5_0">-</div>
+                        </div>
+                        <div class="prob-stat-card">
+                            <div class="prob-label">Before 10.00x</div>
+                            <div class="prob-value" id="prob10_0">-</div>
+                        </div>
+                        <div class="prob-stat-card">
+                            <div class="prob-label">Before 50.00x</div>
+                            <div class="prob-value" id="prob50_0">-</div>
+                        </div>
+                        <div class="prob-stat-card">
+                            <div class="prob-label">Before 100.00x</div>
+                            <div class="prob-value" id="prob100_0">-</div>
+                        </div>
+                    </div>
+                    <p style="margin-top: 15px; color: #666; font-size: 13px; text-align: center;">
+                        These percentages show the probability of crashing before reaching each multiplier
+                    </p>
+                </div>
+                
                 <div id="result" class="result-message"></div>
             </div>
             

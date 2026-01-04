@@ -109,9 +109,13 @@ switch ($action) {
             6 => floatval(getSetting('dice_6_of_kind_multiplier', 20))
         ];
         
+        // Get number of dice
+        $diceNumDice = intval(getSetting('dice_num_dice', 6));
+        
         // Get crash settings
         $crashSpeed = floatval(getSetting('crash_speed', 0.02));
         $crashMaxMultiplier = floatval(getSetting('crash_max_multiplier', 0));
+        $crashDistributionParam = floatval(getSetting('crash_distribution_param', 0.99));
         
         $settings = [
             'max_bet' => floatval(getSetting('max_bet', 100)),
@@ -125,8 +129,10 @@ switch ($action) {
             'plinko_multipliers' => $plinkoMultipliers,
             'plinko_duration' => intval(getSetting('plinko_duration', 350)),
             'dice_multipliers' => $diceMultipliers,
+            'dice_num_dice' => $diceNumDice,
             'crash_speed' => $crashSpeed,
-            'crash_max_multiplier' => $crashMaxMultiplier
+            'crash_max_multiplier' => $crashMaxMultiplier,
+            'crash_distribution_param' => $crashDistributionParam
         ];
         echo json_encode(['success' => true, 'settings' => $settings]);
         break;

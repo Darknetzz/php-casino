@@ -13,7 +13,10 @@ $(document).ready(function() {
         6: 20  // 6 of a kind
     };
     
-    // Load max bet, default bet, and multipliers from settings
+    // Number of dice (will be set from settings)
+    let numDice = 6;
+    
+    // Load max bet, default bet, multipliers, and number of dice from settings
     $.get('../api/api.php?action=getSettings', function(data) {
         if (data.success) {
             settings = data.settings;
@@ -32,6 +35,9 @@ $(document).ready(function() {
                     5: data.settings.dice_multipliers[5] || 10,
                     6: data.settings.dice_multipliers[6] || 20
                 };
+            }
+            if (data.settings.dice_num_dice) {
+                numDice = parseInt(data.settings.dice_num_dice) || 6;
             }
         }
     }, 'json');
@@ -114,7 +120,8 @@ $(document).ready(function() {
             }
             
             isRolling = true;
-            $('#rollBtn').prop('disabled', true).text('ROLLING...');
+            $('#rollBtn').prop('disabled', true).text('ROLLING...').addClass('game-disabled');
+            $('.game-container button, .game-container .btn').addClass('game-disabled');
             $('#result').html('');
             
             // Add beforeunload warning to prevent navigation during game
@@ -126,7 +133,7 @@ $(document).ready(function() {
             
             // Generate random dice values
             const finalValues = [];
-            for (let i = 0; i < 6; i++) {
+            for (let i = 0; i < numDice; i++) {
                 finalValues.push(Math.floor(Math.random() * 6) + 1);
             }
             
@@ -135,7 +142,7 @@ $(document).ready(function() {
             const staggerDelay = 100; // Stagger each dice roll slightly
             
             // Roll all dice with slight stagger
-            for (let i = 0; i < 6; i++) {
+            for (let i = 0; i < numDice; i++) {
                 setTimeout(() => {
                     rollDice('#dice' + (i + 1), rollDuration, finalValues[i]);
                 }, i * staggerDelay);
@@ -182,12 +189,13 @@ $(document).ready(function() {
                     }
                     
                     isRolling = false;
-                    $('#rollBtn').prop('disabled', false).text('ROLL DICE');
+                    $('#rollBtn').prop('disabled', false).text('ROLL DICE').removeClass('game-disabled');
+                    $('button, .btn').removeClass('game-disabled');
                     
                     // Remove beforeunload warning
                     $(window).off('beforeunload');
                 }, 'json');
-            }, rollDuration + (6 * staggerDelay) + 200); // Wait for all dice to finish rolling
+            }, rollDuration + (numDice * staggerDelay) + 200); // Wait for all dice to finish rolling
         }, 'json');
     });
     

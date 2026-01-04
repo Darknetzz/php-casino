@@ -317,6 +317,35 @@ body {
     box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
 }
 
+.btn-primary:disabled,
+button:disabled,
+.btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background: #9ca3af !important;
+    color: #6b7280 !important;
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+.btn-primary:disabled:hover,
+button:disabled:hover,
+.btn:disabled:hover {
+    background: #9ca3af !important;
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+/* Grey out buttons when game is in progress */
+button.game-disabled,
+.btn.game-disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background: #9ca3af !important;
+    color: #6b7280 !important;
+    pointer-events: none;
+}
+
 .btn-secondary {
     background: #6c757d;
     color: white;
@@ -1730,6 +1759,40 @@ body {
     color: #667eea;
 }
 
+.crash-probability-section {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 20px;
+}
+
+.prob-stat-card {
+    background: white;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    padding: 15px;
+    text-align: center;
+    transition: all 0.3s;
+}
+
+.prob-stat-card:hover {
+    border-color: #667eea;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(102, 126, 234, 0.2);
+}
+
+.prob-label {
+    font-size: 13px;
+    color: #666;
+    margin-bottom: 8px;
+    font-weight: 500;
+}
+
+.prob-value {
+    font-size: 24px;
+    font-weight: bold;
+    color: #667eea;
+}
+
 /* Admin Panel */
 .admin-panel {
     background: white;
@@ -2304,6 +2367,25 @@ body.dark-mode .btn-success {
 
 body.dark-mode .btn-success:hover {
     background: rgba(40, 167, 69, 1);
+}
+
+body.dark-mode .crash-probability-section {
+    background: rgba(40, 40, 60, 0.8);
+    border: 1px solid #555;
+}
+
+body.dark-mode .prob-stat-card {
+    background: rgba(30, 30, 50, 0.9);
+    border-color: #555;
+    color: #e0e0e0;
+}
+
+body.dark-mode .prob-label {
+    color: #aaa;
+}
+
+body.dark-mode .prob-value {
+    color: #8a9eff;
 }
 
 body.dark-mode .transactions-table {

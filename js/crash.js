@@ -11,6 +11,7 @@ $(document).ready(function() {
     const maxHistoryItems = 10;
     let crashSpeed = 0.02; // Default speed
     let crashMaxMultiplier = 0; // 0 = unlimited
+    let crashDistributionParam = 0.99; // Distribution curve parameter
     
     const canvas = document.getElementById('crashCanvas');
     const ctx = canvas.getContext('2d');
@@ -45,18 +46,44 @@ $(document).ready(function() {
             if (data.settings.crash_max_multiplier !== undefined) {
                 crashMaxMultiplier = parseFloat(data.settings.crash_max_multiplier) || 0;
             }
+            if (data.settings.crash_distribution_param !== undefined) {
+                crashDistributionParam = parseFloat(data.settings.crash_distribution_param) || 0.99;
+            }
+            
+            // Update probability stats after loading settings
+            if (typeof updateProbabilityStats === 'function') {
+                updateProbabilityStats();
+            }
         }
     }, 'json');
     
-    // Generate crash point using a realistic distribution
+    // Generate crash point using a configurable distribution
     // This formula makes lower multipliers more likely, but allows for high multipliers
+    // The distribution parameter controls the curve (higher = more low multipliers)
     function generateCrashPoint() {
         // Generate a random number between 0 and 1
         const r = Math.random();
-        // Use a formula that heavily favors lower multipliers
-        // This creates a realistic crash distribution
-        const crash = Math.max(1.00, 1 + (r * 0.99) / (1 - r * 0.99));
+        // Use a configurable formula that favors lower multipliers based on distribution param
+        // Formula: crash = 1 + (r * param) / (1 - r * param)
+        // When param is close to 1, lower multipliers are much more likely
+        // When param is lower, higher multipliers become more common
+        const param = Math.max(0.01, Math.min(0.999, crashDistributionParam));
+        const crash = Math.max(1.00, 1 + (r * param) / (1 - r * param));
         return Math.round(crash * 100) / 100; // Round to 2 decimal places
+    }
+    
+    // Calculate probability of crashing before a given multiplier
+    // This is the inverse of the distribution function
+    // Original: crash = 1 + (r * param) / (1 - r * param)
+    // Solving for r: r = (crash - 1) / (param * crash)
+    function calculateCrashProbability(beforeMultiplier) {
+        const param = Math.max(0.01, Math.min(0.999, crashDistributionParam));
+        if (beforeMultiplier <= 1.00) return 0;
+        // Inverse formula: r = (multiplier - 1) / (param * multiplier)
+        // This gives us the random value r that would produce this multiplier
+        // The probability is simply this r value (since r is uniform 0-1)
+        const r = (beforeMultiplier - 1) / (param * beforeMultiplier);
+        return Math.min(1, Math.max(0, r)) * 100; // Return as percentage
     }
     
     // Draw the crash graph
@@ -187,8 +214,9 @@ $(document).ready(function() {
                 console.log('Crash point:', crashPoint);
                 
                 // Update UI
-                $('#placeBetBtn').prop('disabled', true).text('Game In Progress...');
+                $('#placeBetBtn').prop('disabled', true).text('Game In Progress...').addClass('game-disabled');
                 $('#betAmount').prop('disabled', true);
+                $('button, .btn').addClass('game-disabled');
                 $('#crashControls').show();
                 $('#result').html('');
                 
@@ -317,10 +345,11 @@ $(document).ready(function() {
         
         // Reset UI
         setTimeout(function() {
-            $('#placeBetBtn').prop('disabled', false).text('Place Bet');
+            $('#placeBetBtn').prop('disabled', false).text('Place Bet').removeClass('game-disabled');
             $('#betAmount').prop('disabled', false);
             $('#crashControls').hide();
             $('#cashOutBtn').prop('disabled', false);
+            $('button, .btn').removeClass('game-disabled');
             $('#cashOutInfo').html('');
             currentMultiplier = 1.00;
             graphData = [];
@@ -388,6 +417,18 @@ $(document).ready(function() {
         }
     });
     
-    // Initial graph draw
+    // Update probability statistics
+    function updateProbabilityStats() {
+        if ($('#prob1_5').length) {
+            $('#prob1_5').text(calculateCrashProbability(1.5).toFixed(1) + '%');
+            $('#prob2_0').text(calculateCrashProbability(2.0).toFixed(1) + '%');
+            $('#prob5_0').text(calculateCrashProbability(5.0).toFixed(1) + '%');
+            $('#prob10_0').text(calculateCrashProbability(10.0).toFixed(1) + '%');
+            $('#prob50_0').text(calculateCrashProbability(50.0).toFixed(1) + '%');
+            $('#prob100_0').text(calculateCrashProbability(100.0).toFixed(1) + '%');
+        }
+    }
+    
+    // Initial graph draw and probability stats
     drawGraph();
-});
+    // Probability stats will be updated after settings load
