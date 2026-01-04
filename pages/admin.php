@@ -47,7 +47,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         
         // Check if this is multipliers update
-        if (isset($_POST['slots_symbols']) || isset($_POST['plinko_multiplier_0']) || isset($_POST['dice_num_dice']) || isset($_POST['crash_speed']) || isset($_POST['blackjack_regular_multiplier'])) {
+        if (isset($_POST['slots_symbols']) || isset($_POST['plinko_multiplier_0']) || isset($_POST['dice_num_dice']) || isset($_POST['crash_speed']) || isset($_POST['roulette_betting_duration']) || isset($_POST['blackjack_regular_multiplier'])) {
             // Slots multipliers (dynamic symbols)
             if (isset($_POST['slots_symbols'])) {
                 $slotsSymbolsJson = $_POST['slots_symbols'];
@@ -1156,7 +1156,7 @@ include __DIR__ . '/../includes/navbar.php';
                     } elseif (in_array($number, $redNumbers)) {
                         return '#dc3545'; // Red
                     } else {
-                        return '#000000'; // Black
+                        return '#333333'; // Black (darker for better visibility)
                     }
                 }
             ?>
@@ -1863,12 +1863,14 @@ include __DIR__ . '/../includes/navbar.php';
             // Function to get roulette number color
             function getRouletteNumberColor(number) {
                 const redNumbers = [1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36];
+                // Check if dark mode is active
+                const isDarkMode = document.body.classList.contains('dark-mode');
                 if (number == 0) {
                     return '#28a745'; // Green
                 } else if (redNumbers.includes(parseInt(number))) {
                     return '#dc3545'; // Red
                 } else {
-                    return '#000000'; // Black
+                    return isDarkMode ? '#e0e0e0' : '#333333'; // Light gray in dark mode, dark gray in light mode
                 }
             }
             
