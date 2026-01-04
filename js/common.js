@@ -79,6 +79,14 @@ function addBetAdjustButtons(inputSelector) {
         const $btn = $('<button type="button" class="bet-adjust-btn"></button>');
         $btn.text(adjust > 0 ? '+' + adjust : adjust);
         $btn.attr('data-adjust', adjust);
+        
+        // Add class for positive/negative buttons
+        if (adjust > 0) {
+            $btn.addClass('bet-adjust-positive');
+        } else {
+            $btn.addClass('bet-adjust-negative');
+        }
+        
         $btn.on('click', function(e) {
             e.preventDefault();
             const current = parseFloat($input.val()) || 0;

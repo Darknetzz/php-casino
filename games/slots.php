@@ -16,23 +16,17 @@ include __DIR__ . '/../includes/navbar.php';
                 <div class="slots-reels">
                     <div class="reel-container">
                         <div class="reel" id="reel1">
-                            <div class="symbol">🍋</div>
-                            <div class="symbol">🍒</div>
-                            <div class="symbol">🍊</div>
+                            <!-- Symbols will be dynamically loaded -->
                         </div>
                     </div>
                     <div class="reel-container">
                         <div class="reel" id="reel2">
-                            <div class="symbol">🍇</div>
-                            <div class="symbol">🍋</div>
-                            <div class="symbol">🎰</div>
+                            <!-- Symbols will be dynamically loaded -->
                         </div>
                     </div>
                     <div class="reel-container">
                         <div class="reel" id="reel3">
-                            <div class="symbol">🍊</div>
-                            <div class="symbol">🍇</div>
-                            <div class="symbol">🍒</div>
+                            <!-- Symbols will be dynamically loaded -->
                         </div>
                     </div>
                 </div>
@@ -80,30 +74,8 @@ include __DIR__ . '/../includes/navbar.php';
                         </tr>
                     </thead>
                     <tbody>
-                        <tr>
-                            <td>🍒🍒🍒</td>
-                            <td>2x bet</td>
-                        </tr>
-                        <tr>
-                            <td>🍋🍋🍋</td>
-                            <td>3x bet</td>
-                        </tr>
-                        <tr>
-                            <td>🍊🍊🍊</td>
-                            <td>4x bet</td>
-                        </tr>
-                        <tr>
-                            <td>🍇🍇🍇</td>
-                            <td>5x bet</td>
-                        </tr>
-                        <tr>
-                            <td>🎰🎰🎰</td>
-                            <td>10x bet</td>
-                        </tr>
-                        <tr>
-                            <td>Any 2 matching symbols</td>
-                            <td>0.5x bet</td>
-                        </tr>
+                        <!-- Payouts will be dynamically loaded by slots.js -->
+                        <tr><td colspan="2" style="text-align: center; color: #999;">Loading payouts...</td></tr>
                     </tbody>
                 </table>
             </div>

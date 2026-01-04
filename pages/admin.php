@@ -34,31 +34,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         
         // Check if this is multipliers update
-        if (isset($_POST['slots_cherry_multiplier']) || isset($_POST['plinko_multiplier_0']) || isset($_POST['dice_3_of_kind'])) {
-            // Slots multipliers
-            if (isset($_POST['slots_cherry_multiplier'])) {
-                $slotsCherry = floatval($_POST['slots_cherry_multiplier'] ?? 0);
-                $slotsLemon = floatval($_POST['slots_lemon_multiplier'] ?? 0);
-                $slotsOrange = floatval($_POST['slots_orange_multiplier'] ?? 0);
-                $slotsGrape = floatval($_POST['slots_grape_multiplier'] ?? 0);
-                $slotsSlot = floatval($_POST['slots_slot_multiplier'] ?? 0);
+        if (isset($_POST['slots_symbols']) || isset($_POST['plinko_multiplier_0']) || isset($_POST['dice_3_of_kind'])) {
+            // Slots multipliers (dynamic symbols)
+            if (isset($_POST['slots_symbols'])) {
+                $slotsSymbolsJson = $_POST['slots_symbols'];
+                $slotsSymbols = json_decode($slotsSymbolsJson, true);
                 $slotsTwoOfKind = floatval($_POST['slots_two_of_kind_multiplier'] ?? 0);
                 $slotsWinRow = isset($_POST['slots_win_row']) ? intval($_POST['slots_win_row']) : 1;
                 $slotsBetRows = isset($_POST['slots_bet_rows']) ? intval($_POST['slots_bet_rows']) : 1;
                 
-                if ($slotsCherry < 0) $errors[] = 'Slots Cherry multiplier must be greater than or equal to 0';
-                if ($slotsLemon < 0) $errors[] = 'Slots Lemon multiplier must be greater than or equal to 0';
-                if ($slotsOrange < 0) $errors[] = 'Slots Orange multiplier must be greater than or equal to 0';
-                if ($slotsGrape < 0) $errors[] = 'Slots Grape multiplier must be greater than or equal to 0';
-                if ($slotsSlot < 0) $errors[] = 'Slots Slot multiplier must be greater than or equal to 0';
+                if (!is_array($slotsSymbols) || empty($slotsSymbols)) {
+                    $errors[] = 'At least one slot symbol must be defined';
+                } else {
+                    foreach ($slotsSymbols as $index => $symbol) {
+                        if (empty($symbol['emoji'])) {
+                            $errors[] = "Symbol #" . ($index + 1) . " emoji cannot be empty";
+                        }
+                        if (!isset($symbol['multiplier']) || floatval($symbol['multiplier']) < 0) {
+                            $errors[] = "Symbol #" . ($index + 1) . " multiplier must be greater than or equal to 0";
+                        }
+                    }
+                }
+                
                 if ($slotsTwoOfKind < 0) $errors[] = 'Slots Two of Kind multiplier must be greater than or equal to 0';
                 
                 if (empty($errors)) {
-                    $db->setSetting('slots_cherry_multiplier', $slotsCherry);
-                    $db->setSetting('slots_lemon_multiplier', $slotsLemon);
-                    $db->setSetting('slots_orange_multiplier', $slotsOrange);
-                    $db->setSetting('slots_grape_multiplier', $slotsGrape);
-                    $db->setSetting('slots_slot_multiplier', $slotsSlot);
+                    $db->setSetting('slots_symbols', json_encode($slotsSymbols));
                     $db->setSetting('slots_two_of_kind_multiplier', $slotsTwoOfKind);
                     $db->setSetting('slots_win_row', $slotsWinRow);
                     $db->setSetting('slots_bet_rows', $slotsBetRows);
@@ -232,71 +233,70 @@ include __DIR__ . '/../includes/navbar.php';
             <div class="admin-section">
                 <h2>🎰 Game Multipliers</h2>
                 <form method="POST" action="admin.php?tab=multipliers" class="admin-form">
-                    <h3 style="margin-top: 20px; margin-bottom: 15px; color: #667eea;">Slot Machine Multipliers</h3>
-                    <table class="multiplier-table">
-                        <thead>
-                            <tr>
-                                <th>Symbol</th>
-                                <th>Combination</th>
-                                <th>Multiplier</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>🍒</td>
-                                <td>🍒🍒🍒</td>
-                                <td>
-                                    <input type="number" id="slots_cherry_multiplier" name="slots_cherry_multiplier" 
-                                           min="0.1" step="0.1" value="<?php echo htmlspecialchars($settings['slots_cherry_multiplier'] ?? '2'); ?>" 
-                                           required style="width: 100px; padding: 8px;">
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>🍋</td>
-                                <td>🍋🍋🍋</td>
-                                <td>
-                                    <input type="number" id="slots_lemon_multiplier" name="slots_lemon_multiplier" 
-                                           min="0.1" step="0.1" value="<?php echo htmlspecialchars($settings['slots_lemon_multiplier'] ?? '3'); ?>" 
-                                           required style="width: 100px; padding: 8px;">
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>🍊</td>
-                                <td>🍊🍊🍊</td>
-                                <td>
-                                    <input type="number" id="slots_orange_multiplier" name="slots_orange_multiplier" 
-                                           min="0.1" step="0.1" value="<?php echo htmlspecialchars($settings['slots_orange_multiplier'] ?? '4'); ?>" 
-                                           required style="width: 100px; padding: 8px;">
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>🍇</td>
-                                <td>🍇🍇🍇</td>
-                                <td>
-                                    <input type="number" id="slots_grape_multiplier" name="slots_grape_multiplier" 
-                                           min="0.1" step="0.1" value="<?php echo htmlspecialchars($settings['slots_grape_multiplier'] ?? '5'); ?>" 
-                                           required style="width: 100px; padding: 8px;">
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>🎰</td>
-                                <td>🎰🎰🎰</td>
-                                <td>
-                                    <input type="number" id="slots_slot_multiplier" name="slots_slot_multiplier" 
-                                           min="0.1" step="0.1" value="<?php echo htmlspecialchars($settings['slots_slot_multiplier'] ?? '10'); ?>" 
-                                           required style="width: 100px; padding: 8px;">
-                                </td>
-                            </tr>
-                            <tr style="background: #f0f0f0;">
-                                <td colspan="2" style="font-weight: 600;">Any 2 of a kind</td>
-                                <td>
-                                    <input type="number" id="slots_two_of_kind_multiplier" name="slots_two_of_kind_multiplier" 
-                                           min="0" step="0.1" value="<?php echo htmlspecialchars($settings['slots_two_of_kind_multiplier'] ?? '0.5'); ?>" 
-                                           required style="width: 100px; padding: 8px;">
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
+                    <h3 style="margin-top: 20px; margin-bottom: 15px; color: #667eea;">Slot Machine Symbols</h3>
+                    <p style="margin-bottom: 15px; color: #666;">Add, edit, or remove slot symbols. Each symbol needs an emoji and a multiplier for 3-of-a-kind wins.</p>
+                    <div id="slotsSymbolsContainer">
+                        <table class="multiplier-table" id="slotsSymbolsTable">
+                            <thead>
+                                <tr>
+                                    <th>Emoji</th>
+                                    <th>Combination</th>
+                                    <th>Multiplier (3 of a kind)</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="slotsSymbolsBody">
+                                <?php
+                                $slotsSymbolsJson = $settings['slots_symbols'] ?? '[]';
+                                $slotsSymbols = json_decode($slotsSymbolsJson, true);
+                                if (empty($slotsSymbols) || !is_array($slotsSymbols)) {
+                                    // Default symbols if none exist
+                                    $slotsSymbols = [
+                                        ['emoji' => '🍒', 'multiplier' => 2.0],
+                                        ['emoji' => '🍋', 'multiplier' => 3.0],
+                                        ['emoji' => '🍊', 'multiplier' => 4.0],
+                                        ['emoji' => '🍇', 'multiplier' => 5.0],
+                                        ['emoji' => '🎰', 'multiplier' => 10.0]
+                                    ];
+                                }
+                                foreach ($slotsSymbols as $index => $symbol):
+                                ?>
+                                <tr data-index="<?php echo $index; ?>">
+                                    <td>
+                                        <input type="text" class="slots-emoji-input" 
+                                               value="<?php echo htmlspecialchars($symbol['emoji'] ?? ''); ?>" 
+                                               maxlength="2" style="width: 80px; padding: 8px; font-size: 20px; text-align: center;" 
+                                               placeholder="🎰" required oninput="updateSlotsCombination(this)">
+                                    </td>
+                                    <td class="slots-combination-display" style="font-size: 20px; text-align: center;">
+                                        <?php 
+                                        $emoji = htmlspecialchars($symbol['emoji'] ?? '');
+                                        echo $emoji . $emoji . $emoji;
+                                        ?>
+                                    </td>
+                                    <td>
+                                        <input type="number" class="slots-multiplier-input" 
+                                               value="<?php echo htmlspecialchars($symbol['multiplier'] ?? '1'); ?>" 
+                                               min="0" step="0.1" style="width: 100px; padding: 8px;" required>
+                                    </td>
+                                    <td>
+                                        <button type="button" class="btn btn-secondary" onclick="removeSlotsSymbol(this)" style="padding: 5px 10px; font-size: 12px;">Remove</button>
+                                    </td>
+                                </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                        <button type="button" class="btn btn-secondary" onclick="addSlotsSymbol()" style="margin-top: 10px;">+ Add Symbol</button>
+                        <input type="hidden" id="slots_symbols_json" name="slots_symbols" value="">
+                    </div>
+                    
+                    <h4 style="margin-top: 30px; margin-bottom: 15px; color: #667eea;">2 of a Kind Multiplier</h4>
+                    <div class="form-group">
+                        <label for="slots_two_of_kind_multiplier">Multiplier for any 2 matching symbols:</label>
+                        <input type="number" id="slots_two_of_kind_multiplier" name="slots_two_of_kind_multiplier" 
+                               min="0" step="0.1" value="<?php echo htmlspecialchars($settings['slots_two_of_kind_multiplier'] ?? '0.5'); ?>" 
+                               required style="width: 100px; padding: 8px;">
+                    </div>
                     
                     <h3 style="margin-top: 30px; margin-bottom: 15px; color: #667eea;">Slots Settings</h3>
                     <div class="form-group">
@@ -533,6 +533,72 @@ include __DIR__ . '/../includes/navbar.php';
         function closeModal(modalId) {
             $('#' + modalId).hide();
         }
+        
+        // Slots symbols management
+        function addSlotsSymbol() {
+            const tbody = document.getElementById('slotsSymbolsBody');
+            const index = tbody.children.length;
+            const row = document.createElement('tr');
+            row.setAttribute('data-index', index);
+            row.innerHTML = `
+                <td>
+                    <input type="text" class="slots-emoji-input" 
+                           value="🎰" maxlength="2" 
+                           style="width: 80px; padding: 8px; font-size: 20px; text-align: center;" 
+                           placeholder="🎰" required oninput="updateSlotsCombination(this)">
+                </td>
+                <td class="slots-combination-display" style="font-size: 20px; text-align: center;">🎰🎰🎰</td>
+                <td>
+                    <input type="number" class="slots-multiplier-input" 
+                           value="1" min="0" step="0.1" 
+                           style="width: 100px; padding: 8px;" required>
+                </td>
+                <td>
+                    <button type="button" class="btn btn-secondary" onclick="removeSlotsSymbol(this)" style="padding: 5px 10px; font-size: 12px;">Remove</button>
+                </td>
+            `;
+            tbody.appendChild(row);
+        }
+        
+        function removeSlotsSymbol(button) {
+            const row = button.closest('tr');
+            row.remove();
+            updateSlotsSymbolsIndices();
+        }
+        
+        function updateSlotsCombination(input) {
+            const row = input.closest('tr');
+            const emoji = input.value || '🎰';
+            const combinationCell = row.querySelector('.slots-combination-display');
+            combinationCell.textContent = emoji + emoji + emoji;
+        }
+        
+        function updateSlotsSymbolsIndices() {
+            const tbody = document.getElementById('slotsSymbolsBody');
+            Array.from(tbody.children).forEach((row, index) => {
+                row.setAttribute('data-index', index);
+            });
+        }
+        
+        // Update combination display when emoji changes
+        $(document).on('input', '.slots-emoji-input', function() {
+            updateSlotsCombination(this);
+        });
+        
+        // Serialize slots symbols to JSON before form submission
+        $('form').on('submit', function(e) {
+            if ($(this).find('#slotsSymbolsTable').length > 0) {
+                const symbols = [];
+                $('#slotsSymbolsBody tr').each(function() {
+                    const emoji = $(this).find('.slots-emoji-input').val().trim();
+                    const multiplier = parseFloat($(this).find('.slots-multiplier-input').val()) || 0;
+                    if (emoji) {
+                        symbols.push({emoji: emoji, multiplier: multiplier});
+                    }
+                });
+                $('#slots_symbols_json').val(JSON.stringify(symbols));
+            }
+        });
         
         $(document).ready(function() {
             // Close modal when clicking outside

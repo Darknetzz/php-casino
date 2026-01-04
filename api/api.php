@@ -54,13 +54,22 @@ switch ($action) {
         $userDefaultBet = isset($user['default_bet']) && $user['default_bet'] !== null ? floatval($user['default_bet']) : null;
         $defaultBet = $userDefaultBet !== null ? $userDefaultBet : $globalDefaultBet;
         
-        // Get slots multipliers
+        // Get slots symbols (dynamic)
+        $slotsSymbolsJson = getSetting('slots_symbols', '[]');
+        $slotsSymbols = json_decode($slotsSymbolsJson, true);
+        if (empty($slotsSymbols) || !is_array($slotsSymbols)) {
+            // Default symbols if none exist
+            $slotsSymbols = [
+                ['emoji' => '🍒', 'multiplier' => 2.0],
+                ['emoji' => '🍋', 'multiplier' => 3.0],
+                ['emoji' => '🍊', 'multiplier' => 4.0],
+                ['emoji' => '🍇', 'multiplier' => 5.0],
+                ['emoji' => '🎰', 'multiplier' => 10.0]
+            ];
+        }
+        
         $slotsMultipliers = [
-            'cherry' => floatval(getSetting('slots_cherry_multiplier', 2)),
-            'lemon' => floatval(getSetting('slots_lemon_multiplier', 3)),
-            'orange' => floatval(getSetting('slots_orange_multiplier', 4)),
-            'grape' => floatval(getSetting('slots_grape_multiplier', 5)),
-            'slot' => floatval(getSetting('slots_slot_multiplier', 10)),
+            'symbols' => $slotsSymbols,
             'two_of_kind' => floatval(getSetting('slots_two_of_kind_multiplier', 0.5))
         ];
         

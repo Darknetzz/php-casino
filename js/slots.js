@@ -1,15 +1,9 @@
 $(document).ready(function() {
-    const symbols = ['🍒', '🍋', '🍊', '🍇', '🎰'];
+    let symbols = [];
     let isSpinning = false;
     let maxBet = 100;
     let settings = {};
-    let multipliers = {
-        '🍒': 2,
-        '🍋': 3,
-        '🍊': 4,
-        '🍇': 5,
-        '🎰': 10
-    };
+    let multipliers = {};
     let twoOfKindMultiplier = 0.5;
     
     // Load max bet, default bet, and multipliers from settings
@@ -24,18 +18,62 @@ $(document).ready(function() {
             if (data.settings.default_bet) {
                 $('#betAmount').val(data.settings.default_bet);
             }
-            if (data.settings.slots_multipliers) {
-                multipliers = {
-                    '🍒': data.settings.slots_multipliers.cherry,
-                    '🍋': data.settings.slots_multipliers.lemon,
-                    '🍊': data.settings.slots_multipliers.orange,
-                    '🍇': data.settings.slots_multipliers.grape,
-                    '🎰': data.settings.slots_multipliers.slot
-                };
+            if (data.settings.slots_multipliers && data.settings.slots_multipliers.symbols) {
+                // Build symbols array and multipliers map from dynamic configuration
+                symbols = [];
+                multipliers = {};
+                data.settings.slots_multipliers.symbols.forEach(function(symbol) {
+                    symbols.push(symbol.emoji);
+                    multipliers[symbol.emoji] = parseFloat(symbol.multiplier) || 0;
+                });
                 twoOfKindMultiplier = data.settings.slots_multipliers.two_of_kind || 0.5;
+                
+                // Initialize reels with symbols
+                initializeReels();
+                
+                // Update payouts table
+                updatePayoutsTable();
             }
         }
     }, 'json');
+    
+    function initializeReels() {
+        // Initialize each reel with 3 different symbols
+        ['#reel1', '#reel2', '#reel3'].forEach(function(reelId) {
+            const $reel = $(reelId);
+            $reel.empty();
+            const threeSymbols = getThreeDifferentSymbols();
+            for (let i = 0; i < 3; i++) {
+                $reel.append($('<div class="symbol">' + threeSymbols[i] + '</div>'));
+            }
+        });
+    }
+    
+    function updatePayoutsTable() {
+        const tbody = $('.slots-payout-table tbody');
+        tbody.empty();
+        
+        // Add 3-of-a-kind payouts
+        symbols.forEach(function(emoji) {
+            const multiplier = multipliers[emoji] || 0;
+            tbody.append(
+                $('<tr>').append(
+                    $('<td>').text(emoji + emoji + emoji)
+                ).append(
+                    $('<td>').text(multiplier + 'x bet')
+                )
+            );
+        });
+        
+        // Add 2-of-a-kind payout
+        tbody.append(
+            $('<tr>').append(
+                $('<td>').text('Any 2 matching symbols')
+            ).append(
+                $('<td>').text(twoOfKindMultiplier + 'x bet')
+            )
+        );
+    }
     
     function spinReel(reelId, duration, finalSymbol) {
         const $reel = $(reelId);
