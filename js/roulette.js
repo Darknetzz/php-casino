@@ -581,24 +581,34 @@ $(document).ready(function() {
         });
     }
     
+    // Store end timestamps for smooth countdown
+    let bettingEndsTimestamp = null;
+    let resultEndsTimestamp = null;
+    let countdownRoundId = null;
+    
     function updateBettingCountdown(bettingEndsIn, resultIn) {
         if (bettingCountdownInterval) {
             clearInterval(bettingCountdownInterval);
         }
         
-        // Use the provided values or recalculate from currentRound
-        let bettingEnds = Math.ceil(bettingEndsIn || 0);
-        let resultTime = Math.ceil(resultIn || (bettingEnds + 4));
+        // Only update timestamps if round changed or we're starting fresh
+        const currentRoundId = currentRound ? currentRound.id : null;
+        if (countdownRoundId !== currentRoundId || bettingEndsTimestamp === null) {
+            // Calculate end timestamps from current time + remaining seconds
+            const now = Date.now();
+            const bettingEndsInMs = Math.max(0, (bettingEndsIn || 0) * 1000);
+            const resultInMs = Math.max(0, (resultIn || (bettingEndsIn || 0) + 4) * 1000);
+            
+            bettingEndsTimestamp = now + bettingEndsInMs;
+            resultEndsTimestamp = now + resultInMs;
+            countdownRoundId = currentRoundId;
+        }
         
         const updateCountdown = function() {
-            if (currentRound && currentRound.status === 'betting') {
-                // Recalculate from currentRound if available (in case it was updated)
-                if (currentRound.time_until_betting_ends !== undefined) {
-                    bettingEnds = Math.ceil(currentRound.time_until_betting_ends || 0);
-                }
-                if (currentRound.time_until_result !== undefined) {
-                    resultTime = Math.ceil(currentRound.time_until_result || (bettingEnds + 4));
-                }
+            if (currentRound && currentRound.status === 'betting' && currentRound.id === countdownRoundId) {
+                const now = Date.now();
+                const bettingEnds = Math.max(0, Math.ceil((bettingEndsTimestamp - now) / 1000));
+                const resultTime = Math.max(0, Math.ceil((resultEndsTimestamp - now) / 1000));
                 
                 if (bettingEnds > 0 || resultTime > 0) {
                     $('#rouletteResult').html(`Round #${currentRound.round_number} - Betting ends in ${bettingEnds}s`);
@@ -612,9 +622,6 @@ $(document).ready(function() {
                         $('.bet-btn, #addNumberBetBtn').prop('disabled', false).removeClass('disabled');
                         $('#betAmount').prop('disabled', false);
                     }
-                    
-                    bettingEnds = Math.max(0, bettingEnds - 1);
-                    resultTime = Math.max(0, resultTime - 1);
                 } else {
                     // Betting period has ended
                     $('.bet-btn, #addNumberBetBtn').prop('disabled', true).addClass('disabled');
@@ -628,6 +635,13 @@ $(document).ready(function() {
                 bettingCountdownInterval = null;
                 if (currentRound && currentRound.status === 'spinning') {
                     $('#countdownText').html('Spinning...');
+                }
+                // Reset timestamps when round changes
+                const currentRoundIdCheck = currentRound ? currentRound.id : null;
+                if (currentRoundIdCheck !== countdownRoundId) {
+                    bettingEndsTimestamp = null;
+                    resultEndsTimestamp = null;
+                    countdownRoundId = null;
                 }
             }
         };
@@ -1128,6 +1142,9 @@ $(document).ready(function() {
     }
     
     let statusCountdownInterval = null;
+    let statusEndTimestamp = null;
+    let statusCountdownRoundId = null;
+    let statusCountdownType = null; // 'betting' or 'spinning'
     
     // Use centralized function from utils.js - getRouletteNumberColors() is available globally
     
@@ -1144,6 +1161,9 @@ $(document).ready(function() {
             $('#currentRoundNumber').text('-');
             $('#roundStatusText').text('Waiting for next round...');
             $('#countdownValue').text('Waiting...');
+            statusEndTimestamp = null;
+            statusCountdownRoundId = null;
+            statusCountdownType = null;
             return;
         }
         
@@ -1153,36 +1173,53 @@ $(document).ready(function() {
         
         if (round.status === 'betting') {
             statusText = 'Betting Phase';
-            // Show time until result is revealed (betting ends + spinning duration)
-            let timeLeft = Math.ceil(round.time_until_result || round.time_until_betting_ends || 0);
+            // Only update timestamp if round changed or we're starting fresh
+            if (statusCountdownRoundId !== round.id || statusCountdownType !== 'betting' || statusEndTimestamp === null) {
+                const now = Date.now();
+                const resultIn = round.time_until_result || round.time_until_betting_ends || 0;
+                statusEndTimestamp = now + (resultIn * 1000);
+                statusCountdownRoundId = round.id;
+                statusCountdownType = 'betting';
+            }
+            
             const updateCountdown = function() {
                 if (currentRound && currentRound.status === 'betting' && currentRound.id === round.id) {
-                    // Recalculate in case round data was updated
-                    const bettingEnds = Math.ceil(currentRound.time_until_betting_ends || 0);
-                    const resultTime = Math.ceil(currentRound.time_until_result || (bettingEnds + 4)); // fallback to +4 if not provided
-                    timeLeft = resultTime;
+                    const now = Date.now();
+                    const timeLeft = Math.max(0, Math.ceil((statusEndTimestamp - now) / 1000));
                     $('#countdownValue').text(`Next spin in: ${timeLeft}s`);
-                    if (timeLeft > 0) {
-                        timeLeft--;
-                    } else {
+                    if (timeLeft <= 0) {
                         clearInterval(statusCountdownInterval);
                         statusCountdownInterval = null;
                     }
                 } else {
                     clearInterval(statusCountdownInterval);
                     statusCountdownInterval = null;
+                    if (statusCountdownRoundId !== round.id) {
+                        statusEndTimestamp = null;
+                        statusCountdownRoundId = null;
+                        statusCountdownType = null;
+                    }
                 }
             };
             updateCountdown();
             statusCountdownInterval = setInterval(updateCountdown, 1000);
         } else if (round.status === 'spinning') {
             statusText = 'Spinning';
-            let timeLeft = Math.ceil(round.time_until_finish || 0);
+            // Only update timestamp if round changed or we're starting fresh
+            if (statusCountdownRoundId !== round.id || statusCountdownType !== 'spinning' || statusEndTimestamp === null) {
+                const now = Date.now();
+                const finishIn = round.time_until_finish || 0;
+                statusEndTimestamp = now + (finishIn * 1000);
+                statusCountdownRoundId = round.id;
+                statusCountdownType = 'spinning';
+            }
+            
             const updateCountdown = function() {
                 if (currentRound && currentRound.status === 'spinning' && currentRound.id === round.id) {
+                    const now = Date.now();
+                    const timeLeft = Math.max(0, Math.ceil((statusEndTimestamp - now) / 1000));
                     if (timeLeft > 0) {
                         $('#countdownValue').text(`Result in: ${timeLeft}s`);
-                        timeLeft--;
                     } else {
                         $('#countdownValue').text('Spinning...');
                         clearInterval(statusCountdownInterval);
@@ -1191,12 +1228,20 @@ $(document).ready(function() {
                 } else {
                     clearInterval(statusCountdownInterval);
                     statusCountdownInterval = null;
+                    if (statusCountdownRoundId !== round.id) {
+                        statusEndTimestamp = null;
+                        statusCountdownRoundId = null;
+                        statusCountdownType = null;
+                    }
                 }
             };
             updateCountdown();
             statusCountdownInterval = setInterval(updateCountdown, 1000);
         } else if (round.status === 'finished') {
             statusText = 'Finished';
+            statusEndTimestamp = null;
+            statusCountdownRoundId = null;
+            statusCountdownType = null;
             if (round.result_number !== null) {
                 $('#countdownValue').text(`Result: ${round.result_number}`);
             } else {
