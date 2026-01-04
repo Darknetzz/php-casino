@@ -324,6 +324,24 @@ include __DIR__ . '/../includes/navbar.php';
                 </a>
             </div>
             
+            <!-- Game Settings Subnav -->
+            <?php if ($currentTab === 'multipliers'): ?>
+            <div class="admin-subnav-tabs">
+                <a href="admin.php?tab=multipliers&game=slots" class="admin-subtab <?php echo $currentGame === 'slots' ? 'active' : ''; ?>">
+                    <span>🎰</span> Slots
+                </a>
+                <a href="admin.php?tab=multipliers&game=plinko" class="admin-subtab <?php echo $currentGame === 'plinko' ? 'active' : ''; ?>">
+                    <span>⚪</span> Plinko
+                </a>
+                <a href="admin.php?tab=multipliers&game=dice" class="admin-subtab <?php echo $currentGame === 'dice' ? 'active' : ''; ?>">
+                    <span>🎲</span> Dice Roll
+                </a>
+                <a href="admin.php?tab=multipliers&game=crash" class="admin-subtab <?php echo $currentGame === 'crash' ? 'active' : ''; ?>">
+                    <span>🚀</span> Crash
+                </a>
+            </div>
+            <?php endif; ?>
+            
             <!-- Settings Section -->
             <?php if ($currentTab === 'settings'): ?>
             <div class="admin-section section">
@@ -359,22 +377,6 @@ include __DIR__ . '/../includes/navbar.php';
             <?php if ($currentTab === 'multipliers'): ?>
             <div class="admin-section section">
                 <h2>🎰 Game Settings</h2>
-                
-                <!-- Game Subnav -->
-                <div class="admin-subnav-tabs">
-                    <a href="admin.php?tab=multipliers&game=slots" class="admin-subtab <?php echo $currentGame === 'slots' ? 'active' : ''; ?>">
-                        <span>🎰</span> Slots
-                    </a>
-                    <a href="admin.php?tab=multipliers&game=plinko" class="admin-subtab <?php echo $currentGame === 'plinko' ? 'active' : ''; ?>">
-                        <span>⚪</span> Plinko
-                    </a>
-                    <a href="admin.php?tab=multipliers&game=dice" class="admin-subtab <?php echo $currentGame === 'dice' ? 'active' : ''; ?>">
-                        <span>🎲</span> Dice Roll
-                    </a>
-                    <a href="admin.php?tab=multipliers&game=crash" class="admin-subtab <?php echo $currentGame === 'crash' ? 'active' : ''; ?>">
-                        <span>🚀</span> Crash
-                    </a>
-                </div>
                 
                 <!-- Slots Multipliers -->
                 <?php if ($currentGame === 'slots'): ?>

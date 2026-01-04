@@ -124,7 +124,7 @@ $(document).ready(function() {
             
             isRolling = true;
             $('#rollBtn').prop('disabled', true).text('ROLLING...').addClass('game-disabled');
-            $('.game-container button, .game-container .btn').addClass('game-disabled');
+            $('.game-container button, .game-container .btn').not('[onclick*="openModal"]').addClass('game-disabled');
             $('#result').html('');
             
             // Add beforeunload warning to prevent navigation during game
@@ -193,7 +193,7 @@ $(document).ready(function() {
                     
                     isRolling = false;
                     $('#rollBtn').prop('disabled', false).text('ROLL DICE').removeClass('game-disabled');
-                    $('.game-container button, .game-container .btn').removeClass('game-disabled');
+                    $('.game-container button, .game-container .btn').not('[onclick*="openModal"]').removeClass('game-disabled');
                     
                     // Remove beforeunload warning
                     $(window).off('beforeunload');
