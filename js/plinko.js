@@ -171,16 +171,22 @@ $(document).ready(function() {
                         }
                         ball.stepDelay = 0;
                         
-                        // Check if ball reached the bottom
-                        if (ball.currentRow >= rows) {
-                            // Ball reached bottom, determine final slot
-                            // Map the column position from the last peg row to slot index (0 to cols-1)
-                            // At row (rows-1), there are 'rows' pegs (columns 0 to rows-1)
-                            // We need to map to cols slots (0 to cols-1)
-                            const lastPegRow = rows - 1;
-                            const colRatio = ball.currentCol / Math.max(1, lastPegRow);
+                        // Check if ball reached the last row of pegs (should stop here, not go to row 8)
+                        // rows = 8 means pegs are at rows 0-7, so we stop when we reach row 7
+                        if (ball.currentRow >= rows - 1) {
+                            // Ball reached the last row of pegs, determine final slot
+                            // The ball is at row (rows-1) which is the last row of pegs
+                            // Map the column position directly to slot index (0 to cols-1)
+                            const lastPegRow = rows - 1; // Row 7 (last row of pegs)
+                            const ballCol = Math.round(ball.currentCol);
+                            
+                            // Map column from last peg row (0 to 7) to slots (0 to 8)
+                            // Row 7 has 8 pegs (cols 0-7), we have 9 slots (0-8)
+                            const colRatio = ballCol / Math.max(1, lastPegRow);
                             const finalSlot = Math.round(colRatio * (cols - 1));
                             const finalSlotClamped = Math.max(0, Math.min(cols - 1, finalSlot));
+                            
+                            console.log(`[Plinko Debug] Ball reached last peg row (${lastPegRow}) at col ${ballCol} -> slot ${finalSlotClamped}`);
                             const multiplier = multipliers[finalSlotClamped];
                             const winAmount = betAmount * multiplier;
                             
@@ -337,21 +343,22 @@ $(document).ready(function() {
         const currentRow = ball.currentRow;
         const currentCol = ball.currentCol;
         
-        if (currentRow >= rows) {
-            // Ball reached bottom, map to final slot position
+        // Check if ball is at or past the last peg row (rows - 1 = row 7)
+        if (currentRow >= rows - 1) {
+            // Ball reached last peg row, map to final slot position
             // Use the same calculation as slot positioning for alignment
-            const lastPegRow = rows - 1;
-            const bottomPegsInRow = lastPegRow + 1;
+            const lastPegRow = rows - 1; // Row 7 (last row of pegs)
+            const bottomPegsInRow = lastPegRow + 1; // 8 pegs in last row
             const bottomRowWidth = bottomPegsInRow * 10; // Matches wider spacing
             const bottomStartOffset = (100 - bottomRowWidth) / 2;
             const slotAreaStart = bottomStartOffset - 2;
             const slotAreaEnd = bottomStartOffset + bottomRowWidth + 2;
             const slotAreaWidth = slotAreaEnd - slotAreaStart;
             
-            // Map column position to slot area
+            // Map column position from last peg row (0 to 7) to slot area
             const colRatio = currentCol / Math.max(1, lastPegRow);
             const slotPosition = slotAreaStart + (colRatio * slotAreaWidth);
-            const topPercent = 100; // At the bottom
+            const topPercent = (lastPegRow * 14 + 10) + 3; // Position at last peg row, slightly below pegs
             ball.element.css({
                 left: slotPosition + '%',
                 top: topPercent + '%',
