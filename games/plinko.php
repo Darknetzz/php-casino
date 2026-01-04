@@ -58,30 +58,15 @@ include __DIR__ . '/../includes/navbar.php';
                     </tr>
                 </table>
                 <h4 style="margin-top: 20px; margin-bottom: 10px;">Multipliers:</h4>
-                <table class="slots-payout-table">
+                <table class="slots-payout-table" id="plinkoMultipliersTable">
                     <thead>
                         <tr>
                             <th>Slot Position</th>
                             <th>Multiplier</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        <tr>
-                            <td>Left/Right edges</td>
-                            <td>0.2x</td>
-                        </tr>
-                        <tr>
-                            <td>Near edges</td>
-                            <td>0.5x</td>
-                        </tr>
-                        <tr>
-                            <td>Middle</td>
-                            <td>1x</td>
-                        </tr>
-                        <tr>
-                            <td>Center</td>
-                            <td>2x</td>
-                        </tr>
+                    <tbody id="plinkoMultipliersBody">
+                        <tr><td colspan="2">Loading...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -97,6 +82,23 @@ include __DIR__ . '/../includes/navbar.php';
                     $('#winRate').text(data.winRate.rate);
                     $('#gamesPlayed').text(data.winRate.total);
                     $('#wins').text(data.winRate.wins);
+                }
+            }, 'json');
+            
+            // Load and display multipliers
+            $.get(getApiPath('getSettings'), function(data) {
+                if (data.success && data.settings.plinko_multipliers && Array.isArray(data.settings.plinko_multipliers)) {
+                    const multipliers = data.settings.plinko_multipliers;
+                    const slotNames = ['Left Edge', 'Near Left', 'Left-Mid', 'Left-Center', 'Center', 'Right-Center', 'Right-Mid', 'Near Right', 'Right Edge'];
+                    
+                    let html = '';
+                    for (let i = 0; i < multipliers.length; i++) {
+                        html += `<tr>
+                            <td>Slot ${i} (${slotNames[i]})</td>
+                            <td>${multipliers[i].toFixed(1)}x</td>
+                        </tr>`;
+                    }
+                    $('#plinkoMultipliersBody').html(html);
                 }
             }, 'json');
         });
