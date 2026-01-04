@@ -17,6 +17,7 @@ if (strpos($_SERVER['PHP_SELF'], '/games/') !== false) {
     <title><?php echo isset($pageTitle) ? htmlspecialchars($pageTitle) : 'Casino'; ?> - Casino</title>
     <link rel="stylesheet" href="<?php echo $basePath; ?>style.css">
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="<?php echo $basePath; ?>js/utils.js"></script>
     <script src="<?php echo $basePath; ?>js/common.js"></script>
     <script src="<?php echo $basePath; ?>js/navbar.js"></script>
 </head>

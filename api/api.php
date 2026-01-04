@@ -256,13 +256,18 @@ switch ($action) {
             // Calculate time until round starts/finishes
             $timeUntilStart = 0;
             $timeUntilFinish = 0;
+            $timeUntilResult = 0; // Time until result is revealed (betting ends + spinning duration)
+            $spinningDuration = intval(getSetting('roulette_spinning_duration', 4));
+            
             if ($round['status'] === 'betting') {
                 $timeUntilStart = $timeUntilBettingEnds;
+                // Time until result = betting ends + spinning duration
+                $timeUntilResult = $timeUntilBettingEnds + $spinningDuration;
             } elseif ($round['status'] === 'spinning' && $round['started_at']) {
-                $spinningDuration = intval(getSetting('roulette_spinning_duration', 4));
                 $startedAt = strtotime($round['started_at']);
                 $finishesAt = $startedAt + $spinningDuration;
                 $timeUntilFinish = max(0, $finishesAt - $now);
+                $timeUntilResult = $timeUntilFinish;
             }
             
             // Get user's bets for this round
@@ -271,6 +276,7 @@ switch ($action) {
             $round['time_until_betting_ends'] = $timeUntilBettingEnds;
             $round['time_until_start'] = $timeUntilStart;
             $round['time_until_finish'] = $timeUntilFinish;
+            $round['time_until_result'] = $timeUntilResult;
             $round['user_bets'] = $userBets;
             
             // Don't reveal server seed until round is finished (for provably fair)
@@ -455,18 +461,24 @@ switch ($action) {
             // Calculate time until round starts/finishes
             $timeUntilStart = 0;
             $timeUntilFinish = 0;
+            $timeUntilResult = 0; // Time until result is revealed (betting ends + spinning duration)
+            $spinningDuration = intval(getSetting('roulette_spinning_duration', 4));
+            
             if ($round['status'] === 'betting') {
                 $timeUntilStart = $timeUntilBettingEnds;
+                // Time until result = betting ends + spinning duration
+                $timeUntilResult = $timeUntilBettingEnds + $spinningDuration;
             } elseif ($round['status'] === 'spinning' && $round['started_at']) {
-                $spinningDuration = intval(getSetting('roulette_spinning_duration', 4));
                 $startedAt = strtotime($round['started_at']);
                 $finishesAt = $startedAt + $spinningDuration;
                 $timeUntilFinish = max(0, $finishesAt - $now);
+                $timeUntilResult = $timeUntilFinish;
             }
             
             $round['time_until_betting_ends'] = $timeUntilBettingEnds;
             $round['time_until_start'] = $timeUntilStart;
             $round['time_until_finish'] = $timeUntilFinish;
+            $round['time_until_result'] = $timeUntilResult;
             
             // Admins can see the server seed and predict the result
             if ($round['status'] === 'betting' || $round['status'] === 'spinning') {

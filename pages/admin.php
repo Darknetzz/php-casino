@@ -1143,24 +1143,11 @@ include __DIR__ . '/../includes/navbar.php';
             <!-- Game Rounds Section -->
             <?php if ($currentTab === 'rounds'): 
                 require_once __DIR__ . '/../includes/provably_fair.php';
+                require_once __DIR__ . '/../includes/functions.php';
                 $rouletteRound = $db->getCurrentRouletteRound();
                 $crashRound = $db->getCurrentCrashRound();
                 $rouletteMode = getSetting('roulette_mode', 'local');
                 $crashMode = getSetting('crash_mode', 'local');
-                
-                // Function to get roulette number color
-                // Red numbers match the actual roulette wheel: 1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36
-                function getRouletteNumberColor($number) {
-                    $number = intval($number); // Ensure it's an integer
-                    $redNumbers = [1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36];
-                    if ($number === 0) {
-                        return '#28a745'; // Green
-                    } elseif (in_array($number, $redNumbers, true)) {
-                        return '#dc3545'; // Red
-                    } else {
-                        return '#333333'; // Black (darker for better visibility)
-                    }
-                }
             ?>
             <div class="admin-section section">
                 <h2>🎯 Game Rounds Monitor</h2>
@@ -1184,14 +1171,17 @@ include __DIR__ . '/../includes/navbar.php';
                                 $now = time();
                                 if ($rouletteRound['status'] === 'betting'): 
                                     $bettingEndsAt = strtotime($rouletteRound['betting_ends_at']);
-                                    $timeLeft = max(0, $bettingEndsAt - $now);
+                                    $bettingEndsIn = max(0, $bettingEndsAt - $now);
+                                    $spinningDuration = intval(getSetting('roulette_spinning_duration', 4));
+                                    // Time until result = betting ends + spinning duration
+                                    $resultIn = $bettingEndsIn + $spinningDuration;
                                     $predictedResult = ProvablyFair::generateRouletteResult($rouletteRound['server_seed'], $rouletteRound['client_seed'] ?? '');
                                 ?>
                                     <p style="font-weight: bold; margin-top: 10px;">
                                         🔮 Predicted Result: <span style="font-size: 1.2em; color: <?php echo getRouletteNumberColor($predictedResult); ?>;"><?php echo $predictedResult; ?></span>
                                     </p>
                                     <p style="margin-top: 10px; font-size: 1.1em; color: #667eea;">
-                                        Next spin in: <strong><?php echo ceil($timeLeft); ?>s</strong>
+                                        Next spin in: <strong><?php echo ceil($resultIn); ?>s</strong>
                                     </p>
                                 <?php elseif ($rouletteRound['status'] === 'spinning'): 
                                     $predictedResult = ProvablyFair::generateRouletteResult($rouletteRound['server_seed'], $rouletteRound['client_seed'] ?? '');
@@ -1300,11 +1290,18 @@ include __DIR__ . '/../includes/navbar.php';
                                         </thead>
                                         <tbody>
                                             <?php foreach ($rouletteUpcoming as $prediction): 
-                                                $numberColor = getRouletteNumberColor($prediction['predicted_result']);
+                                                $number = intval($prediction['predicted_result']);
+                                                $colors = getRouletteNumberColors($number, false);
                                             ?>
                                             <tr>
                                                 <td>#<?php echo $prediction['round_number']; ?></td>
-                                                <td><strong style="color: <?php echo $numberColor; ?>;"><?php echo $prediction['predicted_result']; ?></strong></td>
+                                                <td>
+                                                    <div style="display: inline-flex; align-items: center; gap: 8px;">
+                                                        <div style="width: 30px; height: 30px; border-radius: 50%; background-color: <?php echo $colors['bg']; ?>; color: <?php echo $colors['text']; ?>; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.2);">
+                                                            <?php echo $number; ?>
+                                                        </div>
+                                                    </div>
+                                                </td>
                                             </tr>
                                             <?php endforeach; ?>
                                         </tbody>
@@ -1862,12 +1859,11 @@ include __DIR__ . '/../includes/navbar.php';
             const rouletteMode = '<?php echo $rouletteMode; ?>';
             const crashMode = '<?php echo $crashMode; ?>';
             
-            // Function to get roulette number color
+            // Function to get roulette number color (matches PHP function in includes/functions.php)
             // Red numbers match the actual roulette wheel: 1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36
             function getRouletteNumberColor(number) {
-                const num = parseInt(number, 10); // Ensure it's an integer
+                const num = parseInt(number, 10);
                 const redNumbers = [1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36];
-                // Check if dark mode is active
                 const isDarkMode = document.body.classList.contains('dark-mode');
                 if (num === 0) {
                     return '#28a745'; // Green
@@ -1875,6 +1871,23 @@ include __DIR__ . '/../includes/navbar.php';
                     return '#dc3545'; // Red
                 } else {
                     return isDarkMode ? '#e0e0e0' : '#333333'; // Light gray in dark mode, dark gray in light mode
+                }
+            }
+            
+            // Function to get roulette number colors for circles (matches PHP getRouletteNumberColors)
+            function getRouletteNumberColors(number) {
+                const num = parseInt(number, 10);
+                const redNumbers = [1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36];
+                const isDarkMode = document.body.classList.contains('dark-mode');
+                if (num === 0) {
+                    return { bg: '#28a745', text: '#ffffff' }; // Green
+                } else if (redNumbers.includes(num)) {
+                    return { bg: '#dc3545', text: '#ffffff' }; // Red
+                } else {
+                    return {
+                        bg: isDarkMode ? '#2c2c2c' : '#1a1a1a',
+                        text: '#ffffff'
+                    }; // Black
                 }
             }
             
@@ -1889,7 +1902,8 @@ include __DIR__ . '/../includes/navbar.php';
                                 let html = '';
                                 
                                 if (round.status === 'betting') {
-                                    const timeLeft = round.time_until_betting_ends || 0;
+                                    const bettingEnds = round.time_until_betting_ends || 0;
+                                    const resultTime = round.time_until_result || (bettingEnds + 4); // fallback to +4 if not provided
                                     
                                     html = '<p><strong>Round #' + round.round_number + '</strong></p>';
                                     html += '<p>Status: <strong>Betting</strong></p>';
@@ -1899,7 +1913,7 @@ include __DIR__ . '/../includes/navbar.php';
                                         html += '🔮 Predicted Result: <span style="font-size: 1.2em; color: ' + numberColor + ';">' + round.predicted_result + '</span></p>';
                                     }
                                     html += '<p style="margin-top: 10px; font-size: 1.1em; color: #667eea;">';
-                                    html += 'Next spin in: <strong>' + Math.ceil(timeLeft) + 's</strong></p>';
+                                    html += 'Next spin in: <strong>' + Math.ceil(resultTime) + 's</strong></p>';
                                 } else if (round.status === 'spinning') {
                                     const timeLeft = round.time_until_finish || 0;
                                     
@@ -2030,8 +2044,13 @@ include __DIR__ . '/../includes/navbar.php';
                             } else {
                                 let html = '<table class="admin-table" style="font-size: 0.9em; width: 100%;"><thead><tr><th>Round</th><th>Predicted Result</th></tr></thead><tbody>';
                                 data.predictions.forEach(function(pred) {
-                                    const numberColor = getRouletteNumberColor(pred.predicted_result);
-                                    html += '<tr><td>#' + pred.round_number + '</td><td><strong style="color: ' + numberColor + ';">' + pred.predicted_result + '</strong></td></tr>';
+                                    const num = parseInt(pred.predicted_result, 10);
+                                    const colors = getRouletteNumberColors(num);
+                                    html += '<tr><td>#' + pred.round_number + '</td>';
+                                    html += '<td><div style="display: inline-flex; align-items: center; gap: 8px;">';
+                                    html += '<div style="width: 30px; height: 30px; border-radius: 50%; background-color: ' + colors.bg + '; color: ' + colors.text + '; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.2);">';
+                                    html += num;
+                                    html += '</div></div></td></tr>';
                                 });
                                 html += '</tbody></table>';
                                 $('#rouletteUpcomingTable').html(html);
@@ -2075,8 +2094,13 @@ include __DIR__ . '/../includes/navbar.php';
                         } else {
                             let html = '<table class="admin-table" style="font-size: 0.9em; width: 100%;"><thead><tr><th>Round</th><th>Predicted Result</th></tr></thead><tbody>';
                                 data.predictions.forEach(function(pred) {
-                                    const numberColor = getRouletteNumberColor(pred.predicted_result);
-                                    html += '<tr><td>#' + pred.round_number + '</td><td><strong style="color: ' + numberColor + ';">' + pred.predicted_result + '</strong></td></tr>';
+                                    const num = parseInt(pred.predicted_result, 10);
+                                    const colors = getRouletteNumberColors(num);
+                                    html += '<tr><td>#' + pred.round_number + '</td>';
+                                    html += '<td><div style="display: inline-flex; align-items: center; gap: 8px;">';
+                                    html += '<div style="width: 30px; height: 30px; border-radius: 50%; background-color: ' + colors.bg + '; color: ' + colors.text + '; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.2);">';
+                                    html += num;
+                                    html += '</div></div></td></tr>';
                                 });
                                 html += '</tbody></table>';
                                 $('#rouletteUpcomingTable').html(html);

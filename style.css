@@ -3182,6 +3182,15 @@ body.dark-mode .round-history-section [style*="border-radius: 50%"] {
     }
 }
 
+/* Admin panel prediction circles */
+.admin-table td [style*="border-radius: 50%"] {
+    flex-shrink: 0;
+}
+
+body.dark-mode .admin-table td [style*="border-radius: 50%"] {
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4) !important;
+}
+
 body.dark-mode .crash-probability-section .prob-stat-card {
     background: rgba(30, 30, 50, 0.8) !important;
     color: #e0e0e0 !important;

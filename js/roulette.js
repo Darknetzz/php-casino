@@ -243,12 +243,14 @@ $(document).ready(function() {
                 if (round.status === 'betting') {
                     // Clear last result when new round starts
                     lastRoundResult = null;
-                    const timeLeft = round.time_until_betting_ends || 0;
-                    $('#rouletteResult').html(`Round #${round.round_number} - Betting ends in ${Math.ceil(timeLeft)}s`);
+                    const bettingEndsIn = round.time_until_betting_ends || 0;
+                    const resultIn = round.time_until_result || (bettingEndsIn + 4); // fallback to +4 if not provided
+                    $('#rouletteResult').html(`Round #${round.round_number} - Betting ends in ${Math.ceil(bettingEndsIn)}s`);
                     // Hide spin button, show countdown in central mode
                     $('#spinBtn').hide();
                     $('#roundCountdown').show();
-                    updateBettingCountdown(timeLeft);
+                    // For the main countdown, show time until result (betting ends + spinning duration)
+                    updateBettingCountdown(bettingEndsIn, resultIn);
                     // Reset spinning state when entering betting
                     if (isSpinning) {
                         isSpinning = false;
@@ -298,18 +300,30 @@ $(document).ready(function() {
         });
     }
     
-    function updateBettingCountdown(seconds) {
+    function updateBettingCountdown(bettingEndsIn, resultIn) {
         if (bettingCountdownInterval) {
             clearInterval(bettingCountdownInterval);
         }
         
-        let timeLeft = Math.ceil(seconds);
+        // Use the provided values or recalculate from currentRound
+        let bettingEnds = Math.ceil(bettingEndsIn || 0);
+        let resultTime = Math.ceil(resultIn || (bettingEnds + 4));
+        
         const updateCountdown = function() {
             if (currentRound && currentRound.status === 'betting') {
-                if (timeLeft > 0) {
-                    $('#rouletteResult').html(`Round #${currentRound.round_number} - Betting ends in ${timeLeft}s`);
-                    $('#countdownText').html(`Next spin in: <span style="font-size: 1.5em; color: #667eea;">${timeLeft}s</span>`);
-                    timeLeft--;
+                // Recalculate from currentRound if available (in case it was updated)
+                if (currentRound.time_until_betting_ends !== undefined) {
+                    bettingEnds = Math.ceil(currentRound.time_until_betting_ends || 0);
+                }
+                if (currentRound.time_until_result !== undefined) {
+                    resultTime = Math.ceil(currentRound.time_until_result || (bettingEnds + 4));
+                }
+                
+                if (bettingEnds > 0 || resultTime > 0) {
+                    $('#rouletteResult').html(`Round #${currentRound.round_number} - Betting ends in ${bettingEnds}s`);
+                    $('#countdownText').html(`Next spin in: <span style="font-size: 1.5em; color: #667eea;">${resultTime}s</span>`);
+                    bettingEnds = Math.max(0, bettingEnds - 1);
+                    resultTime = Math.max(0, resultTime - 1);
                 } else {
                     clearInterval(bettingCountdownInterval);
                     bettingCountdownInterval = null;
@@ -495,19 +509,7 @@ $(document).ready(function() {
         updateBalance();
     }
     
-    // Function to get roulette number color (matching the wheel)
-    function getRouletteNumberColorJS(number) {
-        const num = parseInt(number, 10);
-        const redNumbers = [1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36];
-        const isDarkMode = document.body.classList.contains('dark-mode');
-        if (num === 0) {
-            return { bg: '#28a745', text: '#ffffff' }; // Green
-        } else if (redNumbers.includes(num)) {
-            return { bg: '#dc3545', text: '#ffffff' }; // Red
-        } else {
-            return { bg: isDarkMode ? '#2c2c2c' : '#1a1a1a', text: '#ffffff' }; // Black
-        }
-    }
+    // Use centralized function from utils.js - getRouletteNumberColors() is available globally
     
     function loadHistory() {
         if (!$('#roundHistoryList').length) return; // Section doesn't exist (local mode)
@@ -526,7 +528,7 @@ $(document).ready(function() {
                     const result = round.result_number !== null ? round.result_number : '-';
                     if (result === '-') return; // Skip rounds without results
                     
-                    const colors = getRouletteNumberColorJS(result);
+                    const colors = getRouletteNumberColors(result);
                     html += '<div style="';
                     html += 'width: 50px; height: 50px; ';
                     html += 'border-radius: 50%; ';
@@ -750,19 +752,7 @@ $(document).ready(function() {
     
     let statusCountdownInterval = null;
     
-    // Function to get roulette number color (matching the wheel) - for status display
-    function getRouletteNumberColorJS(number) {
-        const num = parseInt(number, 10);
-        const redNumbers = [1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36];
-        const isDarkMode = document.body.classList.contains('dark-mode');
-        if (num === 0) {
-            return { bg: '#28a745', text: '#ffffff' }; // Green
-        } else if (redNumbers.includes(num)) {
-            return { bg: '#dc3545', text: '#ffffff' }; // Red
-        } else {
-            return { bg: isDarkMode ? '#2c2c2c' : '#1a1a1a', text: '#ffffff' }; // Black
-        }
-    }
+    // Use centralized function from utils.js - getRouletteNumberColors() is available globally
     
     function updateRoundStatusDisplay(round) {
         if (!$('#roundStatusDisplay').length) return; // Section doesn't exist (local mode)
@@ -786,9 +776,14 @@ $(document).ready(function() {
         
         if (round.status === 'betting') {
             statusText = 'Betting Phase';
-            let timeLeft = Math.ceil(round.time_until_betting_ends || 0);
+            // Show time until result is revealed (betting ends + spinning duration)
+            let timeLeft = Math.ceil(round.time_until_result || round.time_until_betting_ends || 0);
             const updateCountdown = function() {
                 if (currentRound && currentRound.status === 'betting' && currentRound.id === round.id) {
+                    // Recalculate in case round data was updated
+                    const bettingEnds = Math.ceil(currentRound.time_until_betting_ends || 0);
+                    const resultTime = Math.ceil(currentRound.time_until_result || (bettingEnds + 4)); // fallback to +4 if not provided
+                    timeLeft = resultTime;
                     $('#countdownValue').text(`Next spin in: ${timeLeft}s`);
                     if (timeLeft > 0) {
                         timeLeft--;
@@ -852,7 +847,7 @@ $(document).ready(function() {
                     const result = round.result_number !== null ? round.result_number : '-';
                     if (result === '-') return; // Skip rounds without results
                     
-                    const colors = getRouletteNumberColorJS(result);
+                    const colors = getRouletteNumberColors(result);
                     html += '<div style="';
                     html += 'width: 50px; height: 50px; ';
                     html += 'border-radius: 50%; ';

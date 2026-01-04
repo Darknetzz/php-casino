@@ -44,4 +44,7 @@ function getSetting($key, $default = null) {
     global $db;
     return $db->getSetting($key, $default);
 }
+
+// Include utility functions
+require_once __DIR__ . '/functions.php';
 ?>
