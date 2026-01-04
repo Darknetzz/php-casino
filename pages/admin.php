@@ -167,6 +167,12 @@ $users = $db->getAllUsers();
             <div class="admin-section">
                 <h2>🎰 Game Multipliers</h2>
                 <form method="POST" action="admin.php" class="admin-form">
+                    <!-- Hidden fields to preserve casino settings when updating multipliers -->
+                    <input type="hidden" name="max_deposit" value="<?php echo htmlspecialchars($settings['max_deposit'] ?? '10000'); ?>">
+                    <input type="hidden" name="max_bet" value="<?php echo htmlspecialchars($settings['max_bet'] ?? '100'); ?>">
+                    <input type="hidden" name="starting_balance" value="<?php echo htmlspecialchars($settings['starting_balance'] ?? '1000'); ?>">
+                    <input type="hidden" name="default_bet" value="<?php echo htmlspecialchars($settings['default_bet'] ?? '10'); ?>">
+                    
                     <h3 style="margin-top: 20px; margin-bottom: 15px; color: #667eea;">Slot Machine Multipliers</h3>
                     <table class="multiplier-table">
                         <thead>
