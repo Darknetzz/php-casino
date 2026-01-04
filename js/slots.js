@@ -126,13 +126,20 @@ $(document).ready(function() {
     }
     
     function calculateWin(s1, s2, s3) {
+        // Trim whitespace and ensure we have valid symbols
+        s1 = (s1 || '').trim();
+        s2 = (s2 || '').trim();
+        s3 = (s3 || '').trim();
+        
         // Check for 3 of a kind
-        if (s1 === s2 && s2 === s3) {
+        if (s1 === s2 && s2 === s3 && s1 !== '') {
             return multipliers[s1] || 0;
         }
         
-        // Check for 2 of a kind (any 2 matching)
-        if (s1 === s2 || s1 === s3 || s2 === s3) {
+        // Check for 2 of a kind (exactly 2 matching, not all 3)
+        if ((s1 === s2 && s1 !== s3 && s1 !== '') || 
+            (s1 === s3 && s1 !== s2 && s1 !== '') || 
+            (s2 === s3 && s2 !== s1 && s2 !== '')) {
             return twoOfKindMultiplier;
         }
         
@@ -180,31 +187,69 @@ $(document).ready(function() {
         setTimeout(() => spinReel('#reel3', reel3StopTime, s3), reel3Delay);
         
         setTimeout(function() {
-            // Get symbols from the winning row - wait for all reels to stop
-            const winRow = settings.slots_win_row !== undefined ? settings.slots_win_row : 1; // Default to middle row (1)
-            const s1 = $('#reel1 .symbol').eq(winRow).text();
-            const s2 = $('#reel2 .symbol').eq(winRow).text();
-            const s3 = $('#reel3 .symbol').eq(winRow).text();
+            // Wait for all reels to stop
+            const betRows = settings.slots_bet_rows !== undefined ? settings.slots_bet_rows : 1; // 1 = middle only, 3 = all rows
+            let totalWin = 0;
+            let winDescriptions = [];
             
-            const multiplier = calculateWin(s1, s2, s3);
-            
-            if (multiplier > 0) {
-                const winAmount = betAmount * multiplier;
-                let winType = '';
-                if (s1 === s2 && s2 === s3) {
-                    winType = '3 of a kind';
-                } else {
-                    winType = '2 of a kind';
+            if (betRows === 1) {
+                // Check only middle row
+                const winRow = settings.slots_win_row !== undefined ? settings.slots_win_row : 1;
+                const s1 = $('#reel1 .symbol').eq(winRow).text().trim();
+                const s2 = $('#reel2 .symbol').eq(winRow).text().trim();
+                const s3 = $('#reel3 .symbol').eq(winRow).text().trim();
+                
+                const multiplier = calculateWin(s1, s2, s3);
+                
+                if (multiplier > 0) {
+                    totalWin = betAmount * multiplier;
+                    let winType = '';
+                    if (s1 === s2 && s2 === s3) {
+                        winType = '3 of a kind';
+                    } else {
+                        winType = '2 of a kind';
+                    }
+                    winDescriptions.push(`${s1}${s2}${s3} (${multiplier}x - ${winType})`);
                 }
+            } else if (betRows === 3) {
+                // Check all 3 rows
+                const rows = [0, 1, 2]; // top, middle, bottom
+                rows.forEach(function(row) {
+                    const s1 = $('#reel1 .symbol').eq(row).text().trim();
+                    const s2 = $('#reel2 .symbol').eq(row).text().trim();
+                    const s3 = $('#reel3 .symbol').eq(row).text().trim();
+                    
+                    const multiplier = calculateWin(s1, s2, s3);
+                    
+                    if (multiplier > 0) {
+                        const rowWin = betAmount * multiplier;
+                        totalWin += rowWin;
+                        let winType = '';
+                        if (s1 === s2 && s2 === s3) {
+                            winType = '3 of a kind';
+                        } else {
+                            winType = '2 of a kind';
+                        }
+                        const rowName = row === 0 ? 'Top' : (row === 1 ? 'Middle' : 'Bottom');
+                        winDescriptions.push(`${rowName} row: ${s1}${s2}${s3} (${multiplier}x - ${winType})`);
+                    }
+                });
+            }
+            
+            if (totalWin > 0) {
+                const winAmount = totalWin;
                 $.post('../api/api.php?action=updateBalance', {
                     amount: winAmount,
                     type: 'win',
-                    description: `Slots win: ${s1}${s2}${s3} (${multiplier}x - ${winType})`,
+                    description: `Slots win: ${winDescriptions.join('; ')}`,
                     game: 'slots'
                 }, function(data) {
                     if (data.success) {
                         $('#balance').text(parseFloat(data.balance).toFixed(2));
-                        $('#result').html(`<div class="alert alert-success">🎉 You won $${winAmount.toFixed(2)}! (${multiplier}x multiplier - ${winType})</div>`);
+                        const winText = winDescriptions.length === 1 
+                            ? winDescriptions[0].split(' (')[1].replace(')', '')
+                            : `${winDescriptions.length} winning row(s)`;
+                        $('#result').html(`<div class="alert alert-success">🎉 You won $${winAmount.toFixed(2)}! (${winText})</div>`);
                     }
                 }, 'json');
             } else {

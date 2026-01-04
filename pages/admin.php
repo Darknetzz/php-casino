@@ -69,6 +69,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $db->setSetting('slots_slot_multiplier', $slotsSlot);
                 $db->setSetting('slots_two_of_kind_multiplier', $slotsTwoOfKind);
                 $db->setSetting('slots_win_row', $slotsWinRow);
+                $db->setSetting('slots_bet_rows', $slotsBetRows);
             
             // Save plinko multipliers
             $db->setSetting('plinko_multipliers', $plinkoMultipliers);
@@ -260,13 +261,21 @@ include __DIR__ . '/../includes/navbar.php';
                     
                     <h3 style="margin-top: 30px; margin-bottom: 15px; color: #667eea;">Slots Settings</h3>
                     <div class="form-group">
-                        <label for="slots_win_row">Winning Row:</label>
+                        <label for="slots_bet_rows">Bet Rows:</label>
+                        <select id="slots_bet_rows" name="slots_bet_rows" required style="width: 200px; padding: 8px;">
+                            <option value="1" <?php echo (($settings['slots_bet_rows'] ?? '1') == '1') ? 'selected' : ''; ?>>Middle Row Only (1)</option>
+                            <option value="3" <?php echo (($settings['slots_bet_rows'] ?? '1') == '3') ? 'selected' : ''; ?>>All Rows (3)</option>
+                        </select>
+                        <small style="display: block; margin-top: 5px; color: #666;">Which rows to check for winning combinations</small>
+                    </div>
+                    <div class="form-group" style="margin-top: 15px;">
+                        <label for="slots_win_row">Winning Row (when Bet Rows = 1):</label>
                         <select id="slots_win_row" name="slots_win_row" required style="width: 200px; padding: 8px;">
                             <option value="0" <?php echo (($settings['slots_win_row'] ?? '1') == '0') ? 'selected' : ''; ?>>Top Row (0)</option>
                             <option value="1" <?php echo (($settings['slots_win_row'] ?? '1') == '1') ? 'selected' : ''; ?>>Middle Row (1) - Default</option>
                             <option value="2" <?php echo (($settings['slots_win_row'] ?? '1') == '2') ? 'selected' : ''; ?>>Bottom Row (2)</option>
                         </select>
-                        <small style="display: block; margin-top: 5px; color: #666;">Which row to check for winning combinations</small>
+                        <small style="display: block; margin-top: 5px; color: #666;">Which single row to check when Bet Rows is set to 1</small>
                     </div>
                     
                     <h3 style="margin-top: 30px; margin-bottom: 15px; color: #667eea;">Plinko Multipliers</h3>

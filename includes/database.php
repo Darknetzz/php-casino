@@ -119,6 +119,8 @@ class Database {
             'slots_two_of_kind_multiplier' => '0.5',
             // Slots win row (0 = top, 1 = middle, 2 = bottom)
             'slots_win_row' => '1',
+            // Slots bet rows (1 = middle row only, 3 = all rows)
+            'slots_bet_rows' => '1',
             // Plinko multipliers (9 slots, comma-separated)
             'plinko_multipliers' => '0.2,0.5,0.8,1.0,2.0,1.0,0.8,0.5,0.2'
         ];

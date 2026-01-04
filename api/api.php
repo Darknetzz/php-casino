@@ -74,6 +74,7 @@ switch ($action) {
             'default_bet' => $defaultBet,
             'slots_multipliers' => $slotsMultipliers,
             'slots_win_row' => intval(getSetting('slots_win_row', 1)),
+            'slots_bet_rows' => intval(getSetting('slots_bet_rows', 1)),
             'plinko_multipliers' => $plinkoMultipliers
         ];
         echo json_encode(['success' => true, 'settings' => $settings]);
