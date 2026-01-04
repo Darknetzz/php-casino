@@ -31,7 +31,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         if ($maxDeposit > 0 && $maxBet > 0 && $startingBalance > 0 && $defaultBet > 0 &&
             $slotsCherry > 0 && $slotsLemon > 0 && $slotsOrange > 0 && $slotsGrape > 0 && $slotsSlot > 0 && $slotsTwoOfKind >= 0 &&
-            count(array_filter($plinkoMultipliersArray, function($v) { return $v > 0; })) === 9) {
+            count(array_filter($plinkoMultipliersArray, function($v) { return $v >= 0; })) === 9) {
             $db->setSetting('max_deposit', $maxDeposit);
             $db->setSetting('max_bet', $maxBet);
             $db->setSetting('starting_balance', $startingBalance);
@@ -50,7 +50,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             $message = 'Settings updated successfully!';
         } else {
-            $error = 'All values must be greater than 0.';
+            $error = 'All values must be greater than or equal to 0.';
         }
     } elseif (isset($_POST['update_user_balance'])) {
         $userId = intval($_POST['user_id'] ?? 0);
@@ -210,29 +210,53 @@ $users = $db->getAllUsers();
                     </table>
                     
                     <h3 style="margin-top: 30px; margin-bottom: 15px; color: #667eea;">Plinko Multipliers</h3>
-                    <p style="margin-bottom: 15px; color: #666;">Configure multipliers for each slot (left to right):</p>
+                    <p style="margin-bottom: 15px; color: #666;">Configure multipliers for each slot (symmetric pairs):</p>
                     <table class="multiplier-table">
                         <thead>
                             <tr>
                                 <th>Slot Position</th>
-                                <th>Multiplier</th>
+                                <th>Left Multiplier</th>
+                                <th>Right Multiplier</th>
                             </tr>
                         </thead>
                         <tbody>
                             <?php 
                             $plinkoMultipliers = explode(',', $settings['plinko_multipliers'] ?? '0.2,0.5,0.8,1.0,2.0,1.0,0.8,0.5,0.2');
                             $slotNames = ['Left Edge', 'Near Left', 'Left-Mid', 'Left-Center', 'Center', 'Right-Center', 'Right-Mid', 'Near Right', 'Right Edge'];
-                            for ($i = 0; $i < 9; $i++): 
+                            // Pair symmetric slots: (0,8), (1,7), (2,6), (3,5), and center (4) alone
+                            $pairs = [
+                                [0, 8, 'Edge'],
+                                [1, 7, 'Near Edge'],
+                                [2, 6, 'Mid'],
+                                [3, 5, 'Center'],
+                            ];
+                            foreach ($pairs as $pair): 
+                                $leftIdx = $pair[0];
+                                $rightIdx = $pair[1];
+                                $pairName = $pair[2];
                             ?>
                             <tr>
-                                <td><?php echo $slotNames[$i]; ?> (Slot <?php echo $i; ?>)</td>
+                                <td><?php echo $slotNames[$leftIdx]; ?> (<?php echo $leftIdx; ?>) / <?php echo $slotNames[$rightIdx]; ?> (<?php echo $rightIdx; ?>)</td>
                                 <td>
-                                    <input type="number" name="plinko_multiplier_<?php echo $i; ?>" 
-                                           min="0.1" step="0.1" value="<?php echo htmlspecialchars($plinkoMultipliers[$i] ?? '0.2'); ?>" 
+                                    <input type="number" name="plinko_multiplier_<?php echo $leftIdx; ?>" 
+                                           min="0" step="0.1" value="<?php echo htmlspecialchars($plinkoMultipliers[$leftIdx] ?? '0.2'); ?>" 
+                                           required style="width: 100px; padding: 8px;">
+                                </td>
+                                <td>
+                                    <input type="number" name="plinko_multiplier_<?php echo $rightIdx; ?>" 
+                                           min="0" step="0.1" value="<?php echo htmlspecialchars($plinkoMultipliers[$rightIdx] ?? '0.2'); ?>" 
                                            required style="width: 100px; padding: 8px;">
                                 </td>
                             </tr>
-                            <?php endfor; ?>
+                            <?php endforeach; ?>
+                            <tr>
+                                <td><?php echo $slotNames[4]; ?> (<?php echo 4; ?>)</td>
+                                <td colspan="2">
+                                    <input type="number" name="plinko_multiplier_4" 
+                                           min="0" step="0.1" value="<?php echo htmlspecialchars($plinkoMultipliers[4] ?? '2.0'); ?>" 
+                                           required style="width: 100px; padding: 8px;">
+                                </td>
+                            </tr>
                         </tbody>
                     </table>
                     

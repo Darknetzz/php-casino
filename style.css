@@ -1348,11 +1348,12 @@ body {
 }
 
 .multiplier-table th:first-child {
-    width: 60%;
+    width: 50%;
 }
 
-.multiplier-table th:last-child {
-    width: 40%;
+.multiplier-table th:nth-child(2),
+.multiplier-table th:nth-child(3) {
+    width: 25%;
 }
 
 .multiplier-table td {
