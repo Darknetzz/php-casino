@@ -248,6 +248,12 @@ switch ($action) {
         require_once __DIR__ . '/../includes/provably_fair.php';
         $user = getCurrentUser();
         $round = $db->getCurrentRouletteRound();
+        
+        // If no active round, check for recently finished round with user bets (for notifications)
+        if (!$round) {
+            $round = $db->getRecentFinishedRouletteRoundWithUserBet($user['id'], 5);
+        }
+        
         if ($round) {
             $now = time();
             $bettingEndsAt = strtotime($round['betting_ends_at']);
@@ -354,6 +360,12 @@ switch ($action) {
         require_once __DIR__ . '/../includes/provably_fair.php';
         $user = getCurrentUser();
         $round = $db->getCurrentCrashRound();
+        
+        // If no active round, check for recently finished round with user bets (for notifications)
+        if (!$round) {
+            $round = $db->getRecentFinishedCrashRoundWithUserBet($user['id'], 5);
+        }
+        
         if ($round) {
             $now = time();
             $bettingEndsAt = strtotime($round['betting_ends_at']);

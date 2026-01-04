@@ -498,6 +498,22 @@ class Database {
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
     
+    public function getRecentFinishedRouletteRoundWithUserBet($userId, $minutesAgo = 5) {
+        // Get the most recent finished round that has user bets and finished within the last N minutes
+        $stmt = $this->db->prepare("
+            SELECT DISTINCT rr.* 
+            FROM roulette_rounds rr
+            INNER JOIN roulette_bets rb ON rr.id = rb.round_id
+            WHERE rr.status = 'finished' 
+            AND rb.user_id = ?
+            AND rr.finished_at >= datetime('now', '-' || ? || ' minutes')
+            ORDER BY rr.round_number DESC
+            LIMIT 1
+        ");
+        $stmt->execute([$userId, $minutesAgo]);
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+    
     public function createRouletteRound($roundNumber, $serverSeed, $serverSeedHash, $bettingEndsAt) {
         $stmt = $this->db->prepare("INSERT INTO roulette_rounds (round_number, server_seed, server_seed_hash, betting_ends_at) VALUES (?, ?, ?, ?)");
         $stmt->execute([$roundNumber, $serverSeed, $serverSeedHash, $bettingEndsAt]);
@@ -565,6 +581,22 @@ class Database {
     public function getCurrentCrashRound() {
         $stmt = $this->db->prepare("SELECT * FROM crash_rounds WHERE status IN ('betting', 'running') ORDER BY round_number DESC LIMIT 1");
         $stmt->execute();
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+    
+    public function getRecentFinishedCrashRoundWithUserBet($userId, $minutesAgo = 5) {
+        // Get the most recent finished round that has user bets and finished within the last N minutes
+        $stmt = $this->db->prepare("
+            SELECT DISTINCT cr.* 
+            FROM crash_rounds cr
+            INNER JOIN crash_bets cb ON cr.id = cb.round_id
+            WHERE cr.status = 'finished' 
+            AND cb.user_id = ?
+            AND cr.finished_at >= datetime('now', '-' || ? || ' minutes')
+            ORDER BY cr.round_number DESC
+            LIMIT 1
+        ");
+        $stmt->execute([$userId, $minutesAgo]);
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
     

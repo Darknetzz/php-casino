@@ -20,5 +20,6 @@ if (strpos($_SERVER['PHP_SELF'], '/games/') !== false) {
     <script src="<?php echo $basePath; ?>js/utils.js"></script>
     <script src="<?php echo $basePath; ?>js/common.js"></script>
     <script src="<?php echo $basePath; ?>js/navbar.js"></script>
+    <script src="<?php echo $basePath; ?>js/notifications.js"></script>
 </head>
 <body>
