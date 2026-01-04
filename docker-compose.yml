@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  casino:
+    build:
+      context: .
+      dockerfile: Dockerfile.ssh
+      ssh:
+        - default
+      args:
+        GIT_REPO: git@github.com:Darknetzz/php-casino.git
+        GIT_BRANCH: main
+    container_name: casino-app
+    ports:
+      - "8080:80"
+    volumes:
+      # Persist database data
+      - ./data:/var/www/html/data
+      # Optional: Mount source code for development (comment out in production)
+      # - .:/var/www/html
+    environment:
+      - PHP_INI_SCAN_DIR=/usr/local/etc/php/conf.d
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+
+  # Optional: Worker service for game rounds (uncomment if needed)
+  # casino-worker:
+  #   build: .
+  #   container_name: casino-worker
+  #   command: php /var/www/html/workers/game_rounds_worker.php
+  #   volumes:
+  #     - ./data:/var/www/html/data
+  #   depends_on:
+  #     - casino
+  #   restart: unless-stopped

@@ -35,12 +35,48 @@ A fun, fake-money casino web application built with PHP, JavaScript/jQuery, and 
 
 ## Requirements
 
+### For Docker:
+- Docker and Docker Compose
+
+### For Manual Installation:
 - PHP 7.4 or higher
 - PHP PDO SQLite extension
 - Web server (Apache, Nginx, or PHP built-in server)
 - jQuery (loaded via CDN)
 
 ## Installation
+
+### Option 1: Docker (Recommended)
+
+1. **Clone or download the repository**
+   ```bash
+   git clone https://github.com/Darknetzz/php-casino.git
+   cd php-casino
+   ```
+
+2. **Build and run with Docker Compose**
+   ```bash
+   docker-compose up -d
+   ```
+
+3. **Access the application**
+   
+   Open your browser and navigate to:
+   - `http://localhost:8080`
+
+4. **Create an account**
+   
+   Visit the sign-up page and create your account. You'll start with $1,000 in fake money!
+
+**Docker Commands:**
+- Start: `docker-compose up -d`
+- Stop: `docker-compose down`
+- View logs: `docker-compose logs -f`
+- Rebuild: `docker-compose up -d --build`
+
+**Note:** The database is persisted in the `./data` directory, so your data will be preserved when restarting the container.
+
+### Option 2: Manual Installation
 
 1. **Clone or download the repository**
    ```bash
