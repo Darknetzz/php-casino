@@ -413,6 +413,8 @@ $(document).ready(function() {
                                     }
                                     message += '</div>';
                                     $('#result').html(message);
+                                    // Update stats after win
+                                    updateWinRateStats('roulette');
                                 }
                             }, 'json');
                         } else {
@@ -421,6 +423,8 @@ $(document).ready(function() {
                             let message = `<div class="alert alert-error">Lost $${totalBetAmount.toFixed(2)}<br>`;
                             message += `Lost: $${totalLoss.toFixed(2)} on ${losingNumberBets.length + losingColorBets.length} bet(s)</div>`;
                             $('#result').html(message);
+                            // Update stats after loss
+                            updateWinRateStats('roulette');
                         }
                     } else {
                         $('#result').html(`<div class="alert alert-error">${betData.message}</div>`);

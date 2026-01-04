@@ -324,6 +324,8 @@ $(document).ready(function() {
                                     ? winDescriptions[0].split(' (')[1].replace(')', '')
                                     : `${winDescriptions.length} winning row(s)`;
                                 $('#result').html(`<div class="alert alert-success">🎉 You won $${winAmount.toFixed(2)}! (${winText})</div>`);
+                                // Update stats after win
+                                updateWinRateStats('slots');
                             }
                         }, 'json');
                     } else {
@@ -331,6 +333,8 @@ $(document).ready(function() {
                         $('#balance').text(parseFloat(betData.balance).toFixed(2));
                         const lostText = betRows === 3 ? `$${actualBetAmount.toFixed(2)} ($${betAmount.toFixed(2)} × 3 rows)` : `$${actualBetAmount.toFixed(2)}`;
                         $('#result').html(`<div class="alert alert-error">Better luck next time! Lost ${lostText}</div>`);
+                        // Update stats after loss
+                        updateWinRateStats('slots');
                     }
                 } else {
                     $('#result').html(`<div class="alert alert-error">${betData.message}</div>`);

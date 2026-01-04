@@ -236,10 +236,14 @@ $(document).ready(function() {
                                                 } else {
                                                     $('#result').html(`<div class="alert">Break even! Won $${totalWins.toFixed(2)}</div>`);
                                                 }
+                                                // Update stats after win
+                                                updateWinRateStats('plinko');
                                             }
                                         }, 'json');
                                     } else {
                                         $('#result').html(`<div class="alert alert-error">Better luck next time! Lost $${totalBet.toFixed(2)}</div>`);
+                                        // Update stats after loss
+                                        updateWinRateStats('plinko');
                                     }
                                     
                                     activeBalls = [];

@@ -197,6 +197,8 @@ $(document).ready(function() {
             }, function(data) {
                 if (data.success) {
                     $('#balance').text(parseFloat(data.balance).toFixed(2));
+                    // Update stats after win
+                    updateWinRateStats('blackjack');
                 }
             }, 'json');
         } else if (isBlackjack) {
@@ -211,6 +213,8 @@ $(document).ready(function() {
             }, function(data) {
                 if (data.success) {
                     $('#balance').text(parseFloat(data.balance).toFixed(2));
+                    // Update stats after win
+                    updateWinRateStats('blackjack');
                 }
             }, 'json');
         } else if (playerScore > dealerScore) {
@@ -225,10 +229,14 @@ $(document).ready(function() {
             }, function(data) {
                 if (data.success) {
                     $('#balance').text(parseFloat(data.balance).toFixed(2));
+                    // Update stats after win
+                    updateWinRateStats('blackjack');
                 }
             }, 'json');
         } else if (playerScore < dealerScore) {
             message = `Dealer wins! You lost $${betAmount.toFixed(2)}`;
+            // Update stats after loss
+            updateWinRateStats('blackjack');
         } else {
             message = `Push! Your bet is returned.`;
             $.post('../api/api.php?action=updateBalance', {
@@ -239,6 +247,8 @@ $(document).ready(function() {
             }, function(data) {
                 if (data.success) {
                     $('#balance').text(parseFloat(data.balance).toFixed(2));
+                    // Update stats after push (counts as a game played)
+                    updateWinRateStats('blackjack');
                 }
             }, 'json');
         }

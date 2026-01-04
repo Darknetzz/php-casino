@@ -26,6 +26,36 @@ function startBalanceUpdates() {
     }, 5000);
 }
 
+// Update win rate stats for a specific game
+function updateWinRateStats(gameName) {
+    // Only update if the stats elements exist on the page
+    if ($('#winRate').length === 0) {
+        return;
+    }
+    
+    $.get(getApiPath('getWinRates') + '&game=' + gameName, function(data) {
+        if (data.success && data.winRate) {
+            $('#winRate').text(data.winRate.rate || 0);
+            $('#gamesPlayed').text(data.winRate.total || 0);
+            $('#wins').text(data.winRate.wins || 0);
+        } else {
+            // On error, keep current values or set to 0 if not set
+            if ($('#winRate').text() === '-') {
+                $('#winRate').text('0');
+                $('#gamesPlayed').text('0');
+                $('#wins').text('0');
+            }
+        }
+    }, 'json').fail(function() {
+        // On failure, keep current values
+        if ($('#winRate').text() === '-') {
+            $('#winRate').text('0');
+            $('#gamesPlayed').text('0');
+            $('#wins').text('0');
+        }
+    });
+}
+
 // Dark mode functions
 function applyDarkMode(isDark) {
     if (isDark) {

@@ -159,12 +159,16 @@ $(document).ready(function() {
                                 if (winData.success) {
                                     $('#balance').text(parseFloat(winData.balance).toFixed(2));
                                     $('#result').html(`<div class="alert alert-success">🎉 You won $${winAmount.toFixed(2)}! (${winDescription} - ${multiplier}x)</div>`);
+                                    // Update stats after win
+                                    updateWinRateStats('dice');
                                 }
                             }, 'json');
                         } else {
                             // Loss - bet already recorded above
                             $('#balance').text(parseFloat(betData.balance).toFixed(2));
                             $('#result').html(`<div class="alert alert-error">Better luck next time! Lost $${betAmount.toFixed(2)}</div>`);
+                            // Update stats after loss
+                            updateWinRateStats('dice');
                         }
                     } else {
                         $('#result').html(`<div class="alert alert-error">${betData.message}</div>`);
