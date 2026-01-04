@@ -80,5 +80,52 @@ class ProvablyFair {
         $maxRound = intval($result['max_round'] ?? 0);
         return $maxRound + 1;
     }
+    
+    /**
+     * Generate a deterministic server seed for prediction purposes
+     * This uses a predictable method based on round number for admin previews
+     * Note: Actual rounds use random seeds, but this allows admins to preview what results would be
+     */
+    public static function generatePredictedServerSeed($roundNumber, $game) {
+        // Use a deterministic method: hash of round number + game name + a constant
+        // This ensures predictions are consistent but different from actual random seeds
+        $base = "prediction_{$game}_round_{$roundNumber}_admin_preview";
+        return hash('sha256', $base);
+    }
+    
+    /**
+     * Get predicted results for upcoming rounds
+     * Returns array of predictions for the next N rounds
+     */
+    public static function getUpcomingPredictions($db, $game, $count = 10) {
+        $currentRound = $game === 'roulette' ? $db->getCurrentRouletteRound() : $db->getCurrentCrashRound();
+        $currentRoundNumber = $currentRound ? intval($currentRound['round_number']) : 0;
+        
+        $predictions = [];
+        $distributionParam = $game === 'crash' ? floatval(getSetting('crash_distribution_param', 0.99)) : null;
+        
+        for ($i = 1; $i <= $count; $i++) {
+            $roundNumber = $currentRoundNumber + $i;
+            $predictedSeed = self::generatePredictedServerSeed($roundNumber, $game);
+            
+            if ($game === 'roulette') {
+                $predictedResult = self::generateRouletteResult($predictedSeed, '');
+                $predictions[] = [
+                    'round_number' => $roundNumber,
+                    'predicted_result' => $predictedResult,
+                    'server_seed_hash' => self::hashServerSeed($predictedSeed)
+                ];
+            } else { // crash
+                $predictedCrashPoint = self::generateCrashPoint($predictedSeed, '', $distributionParam);
+                $predictions[] = [
+                    'round_number' => $roundNumber,
+                    'predicted_crash_point' => $predictedCrashPoint,
+                    'server_seed_hash' => self::hashServerSeed($predictedSeed)
+                ];
+            }
+        }
+        
+        return $predictions;
+    }
 }
 ?>

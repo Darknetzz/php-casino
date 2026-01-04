@@ -1251,6 +1251,86 @@ include __DIR__ . '/../includes/navbar.php';
                     </div>
                 </div>
                 
+                <?php 
+                // Get upcoming predictions
+                $rouletteUpcoming = [];
+                $crashUpcoming = [];
+                if ($rouletteMode === 'central') {
+                    $rouletteUpcoming = ProvablyFair::getUpcomingPredictions($db, 'roulette', 10);
+                }
+                if ($crashMode === 'central') {
+                    $crashUpcoming = ProvablyFair::getUpcomingPredictions($db, 'crash', 10);
+                }
+                ?>
+                
+                <div class="section rounds-card" style="padding: 20px; border-radius: 8px; margin-top: 20px;">
+                    <h3 style="margin-top: 0;" class="rounds-card-title">🔮 Upcoming Predictions (Next 10)</h3>
+                    <p style="margin-bottom: 15px; font-size: 0.9em; color: #666;" class="admin-description">
+                        <strong>Note:</strong> These are predictions based on deterministic seed generation for preview purposes. Actual rounds use random seeds, so these predictions are for reference only.
+                    </p>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                        <div>
+                            <h4>Roulette Predictions</h4>
+                            <div id="rouletteUpcomingTable">
+                                <?php if ($rouletteMode === 'local'): ?>
+                                    <p style="color: #999; text-align: center;">Local mode - no predictions</p>
+                                <?php elseif (empty($rouletteUpcoming)): ?>
+                                    <p style="color: #999; text-align: center;">No predictions available</p>
+                                <?php else: ?>
+                                    <table class="admin-table" style="font-size: 0.9em;">
+                                        <thead>
+                                            <tr>
+                                                <th>Round</th>
+                                                <th>Predicted Result</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <?php foreach ($rouletteUpcoming as $prediction): ?>
+                                            <tr>
+                                                <td>#<?php echo $prediction['round_number']; ?></td>
+                                                <td><strong style="color: #28a745;"><?php echo $prediction['predicted_result']; ?></strong></td>
+                                            </tr>
+                                            <?php endforeach; ?>
+                                        </tbody>
+                                    </table>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                        <div>
+                            <h4>Crash Predictions</h4>
+                            <div id="crashUpcomingTable">
+                                <?php if ($crashMode === 'local'): ?>
+                                    <p style="color: #999; text-align: center;">Local mode - no predictions</p>
+                                <?php elseif (empty($crashUpcoming)): ?>
+                                    <p style="color: #999; text-align: center;">No predictions available</p>
+                                <?php else: ?>
+                                    <table class="admin-table" style="font-size: 0.9em;">
+                                        <thead>
+                                            <tr>
+                                                <th>Round</th>
+                                                <th>Predicted Crash</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <?php foreach ($crashUpcoming as $prediction): 
+                                                $multValue = floatval($prediction['predicted_crash_point']);
+                                                $color = '#dc3545'; // Red for low
+                                                if ($multValue >= 5) $color = '#ffc107'; // Yellow for medium
+                                                if ($multValue >= 10) $color = '#28a745'; // Green for high
+                                            ?>
+                                            <tr>
+                                                <td>#<?php echo $prediction['round_number']; ?></td>
+                                                <td><strong style="color: <?php echo $color; ?>;"><?php echo number_format($prediction['predicted_crash_point'], 2); ?>x</strong></td>
+                                            </tr>
+                                            <?php endforeach; ?>
+                                        </tbody>
+                                    </table>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
                 <div class="section rounds-card" style="padding: 20px; border-radius: 8px; margin-top: 20px;">
                     <h3 style="margin-top: 0;" class="rounds-card-title">📋 Recent History</h3>
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
@@ -1906,6 +1986,45 @@ include __DIR__ . '/../includes/navbar.php';
                         $('#crashHistoryTable').html(html);
                     }
                 }, 'json');
+                
+                // Update upcoming predictions
+                if (rouletteMode === 'central') {
+                    $.get('../api/api.php?action=getUpcomingPredictions&game=roulette&count=10', function(data) {
+                        if (data.success && data.predictions) {
+                            if (data.predictions.length === 0) {
+                                $('#rouletteUpcomingTable').html('<p style="color: #999; text-align: center;">No predictions available</p>');
+                            } else {
+                                let html = '<table class="admin-table" style="font-size: 0.9em; width: 100%;"><thead><tr><th>Round</th><th>Predicted Result</th></tr></thead><tbody>';
+                                data.predictions.forEach(function(pred) {
+                                    html += '<tr><td>#' + pred.round_number + '</td><td><strong style="color: #28a745;">' + pred.predicted_result + '</strong></td></tr>';
+                                });
+                                html += '</tbody></table>';
+                                $('#rouletteUpcomingTable').html(html);
+                            }
+                        }
+                    }, 'json');
+                }
+                
+                if (crashMode === 'central') {
+                    $.get('../api/api.php?action=getUpcomingPredictions&game=crash&count=10', function(data) {
+                        if (data.success && data.predictions) {
+                            if (data.predictions.length === 0) {
+                                $('#crashUpcomingTable').html('<p style="color: #999; text-align: center;">No predictions available</p>');
+                            } else {
+                                let html = '<table class="admin-table" style="font-size: 0.9em; width: 100%;"><thead><tr><th>Round</th><th>Predicted Crash</th></tr></thead><tbody>';
+                                data.predictions.forEach(function(pred) {
+                                    const multValue = parseFloat(pred.predicted_crash_point);
+                                    let color = '#dc3545'; // Red for low
+                                    if (multValue >= 5) color = '#ffc107'; // Yellow for medium
+                                    if (multValue >= 10) color = '#28a745'; // Green for high
+                                    html += '<tr><td>#' + pred.round_number + '</td><td><strong style="color: ' + color + ';">' + parseFloat(pred.predicted_crash_point).toFixed(2) + 'x</strong></td></tr>';
+                                });
+                                html += '</tbody></table>';
+                                $('#crashUpcomingTable').html(html);
+                            }
+                        }
+                    }, 'json');
+                }
             }
             
             // Start polling
