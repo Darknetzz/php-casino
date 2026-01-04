@@ -10,6 +10,13 @@ $(document).ready(function() {
     let bettingCountdownInterval = null;
     let spinningDuration = 4; // Default spinning duration in seconds
     
+    // Store end timestamps for smooth countdown
+    let bettingEndsTimestamp = null;
+    let resultEndTimestamp = null;
+    let countdownRoundId = null;
+    let countdownPhase = 'betting'; // 'betting' or 'spinning'
+    let spinStartedClientSide = false; // Track if we've started the spin client-side
+    
     // Load max bet, default bet, and spinning duration from settings
     $.get('../api/api.php?action=getSettings', function(data) {
         if (data.success) {
@@ -581,18 +588,6 @@ $(document).ready(function() {
         });
     }
     
-    // Store end timestamps for smooth countdown
-    let bettingEndsTimestamp = null;
-    let resultEndsTimestamp = null;
-    let countdownRoundId = null;
-    let countdownPhase = 'betting'; // 'betting' or 'spinning'
-    let spinStartedClientSide = false; // Track if we've started the spin client-side
-    
-    function updateBettingCountdown(bettingEndsIn, resultIn) {
-        if (bettingCountdownInterval) {
-            clearInterval(bettingCountdownInterval);
-        }
-        
         // Only update timestamps if round changed or we're starting fresh
         const currentRoundId = currentRound ? currentRound.id : null;
         if (countdownRoundId !== currentRoundId || bettingEndsTimestamp === null) {
