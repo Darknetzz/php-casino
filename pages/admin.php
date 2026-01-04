@@ -617,7 +617,7 @@ include __DIR__ . '/../includes/navbar.php';
                     <hr style="border: none; border-top: 2px solid #e0e0e0; margin: 30px 0 20px 0;">
                     
                     <h4 style="margin-top: 20px; margin-bottom: 15px; color: #667eea;">Custom Combinations</h4>
-                    <p style="margin-bottom: 15px; color: #666;">Define custom winning combinations with exact order (e.g., 🔥🔥❤️). Symbols are matched in order from left to right. Empty positions (leave blank) match any symbol. <strong>Adding a symbol above will automatically suggest an all-of-a-kind combination here.</strong></p>
+                    <p style="margin-bottom: 15px; color: #666;">Define custom winning combinations with exact order (e.g., 🔥🔥❤️). Symbols are matched in order from left to right. Select symbols from the Slot Machine Symbols list above, or leave empty to match any symbol. <strong>Adding a symbol above will automatically suggest an all-of-a-kind combination here.</strong></p>
                     <div id="slotsCustomCombinationsContainer">
                         <table class="multiplier-table" id="slotsCustomCombinationsTable" style="max-width: 100%;">
                             <thead>
