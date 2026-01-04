@@ -8,8 +8,9 @@ $(document).ready(function() {
     let lastRoundResult = null; // Store the last round result
     let pollInterval = null;
     let bettingCountdownInterval = null;
+    let spinningDuration = 4; // Default spinning duration in seconds
     
-    // Load max bet and default bet from settings
+    // Load max bet, default bet, and spinning duration from settings
     $.get('../api/api.php?action=getSettings', function(data) {
         if (data.success) {
             if (data.settings.max_bet) {
@@ -19,6 +20,9 @@ $(document).ready(function() {
             }
             if (data.settings.default_bet) {
                 $('#betAmount').val(data.settings.default_bet);
+            }
+            if (data.settings.roulette_spinning_duration) {
+                spinningDuration = parseInt(data.settings.roulette_spinning_duration) || 4;
             }
         }
     }, 'json');
@@ -320,8 +324,9 @@ $(document).ready(function() {
                         $('#countdownText').html('Spinning...');
                     }
                     // Start spinning animation when entering spinning state
+                    // The animation duration will match the spinning duration setting
                     if (roundChanged || !isSpinning) {
-                        startSpinningAnimation(round);
+                        startSpinningAnimation(round, timeLeft);
                     }
                     // Check if result is available
                     if (round.result_number !== null && round.result_number !== undefined) {
@@ -408,7 +413,7 @@ $(document).ready(function() {
     
     let spinAnimationInterval = null;
     
-    function startSpinningAnimation(round) {
+    function startSpinningAnimation(round, timeUntilFinish) {
         if (isSpinning && spinAnimationInterval) return;
         
         // Hide center circle during spinning
@@ -421,6 +426,10 @@ $(document).ready(function() {
         if (spinAnimationInterval) {
             clearInterval(spinAnimationInterval);
         }
+        
+        // Use the actual time until finish (spinning duration) for the animation
+        // This ensures the wheel animation matches the server timer
+        const actualSpinningDuration = timeUntilFinish > 0 ? timeUntilFinish : spinningDuration;
         
         // Start wheel rotation animation
         const fullSpins = 5 + Math.random() * 3;
@@ -436,15 +445,15 @@ $(document).ready(function() {
         // Force reflow
         $('#rouletteWheel')[0].offsetHeight;
         
-        // Animate wheel
+        // Animate wheel - use actual time until finish to match the timer
         $('#rouletteWheel').css({
-            transition: 'transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99)',
+            transition: `transform ${actualSpinningDuration}s cubic-bezier(0.17, 0.67, 0.12, 0.99)`,
             transform: `rotate(${totalRotation}deg)`
         });
         
-        // Show spinning numbers in result display
+        // Show spinning numbers in result display - match the actual spinning duration
         let spinCount = 0;
-        const maxSpins = 40;
+        const maxSpins = Math.ceil(actualSpinningDuration * 10); // 10 updates per second
         spinAnimationInterval = setInterval(function() {
             const randomNum = Math.floor(Math.random() * 37);
             const color = getNumberColor(randomNum);
@@ -522,8 +531,9 @@ $(document).ready(function() {
         
         $('#rouletteWheel')[0].offsetHeight;
         
+        // Use actual spinning duration from settings
         $('#rouletteWheel').css({
-            transition: 'transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99)',
+            transition: `transform ${spinningDuration}s cubic-bezier(0.17, 0.67, 0.12, 0.99)`,
             transform: `rotate(${totalRotation}deg)`
         });
     }
