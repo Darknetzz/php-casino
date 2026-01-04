@@ -1826,3 +1826,248 @@ body.dark-mode .modal-header {
 body.dark-mode .modal-footer {
     border-top-color: #555;
 }
+
+/* Additional Dark Mode Styles for Missing Elements */
+body.dark-mode .welcome-section {
+    color: #e0e0e0;
+}
+
+body.dark-mode .welcome-section h1 {
+    color: #ffffff;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+body.dark-mode .subtitle {
+    color: #d0d0d0;
+}
+
+body.dark-mode .game-card {
+    background: rgba(40, 40, 60, 0.9);
+    color: #e0e0e0;
+    border: 1px solid #555;
+}
+
+body.dark-mode .game-card:hover {
+    background: rgba(50, 50, 70, 0.95);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+    border-color: #667eea;
+}
+
+body.dark-mode .game-card h3 {
+    color: #8a9eff;
+}
+
+body.dark-mode .game-card p {
+    color: #c0c0c0;
+}
+
+body.dark-mode .transactions-section {
+    background: rgba(30, 30, 50, 0.9);
+    color: #e0e0e0;
+    border: 1px solid #555;
+}
+
+body.dark-mode .transactions-section h2 {
+    color: #8a9eff;
+}
+
+body.dark-mode .transactions-table {
+    background: rgba(40, 40, 60, 0.8);
+}
+
+body.dark-mode .transactions-table th {
+    background: rgba(102, 126, 234, 0.3);
+    color: #e0e0e0;
+    border-bottom-color: #555;
+}
+
+body.dark-mode .transactions-table td {
+    color: #e0e0e0;
+    border-bottom-color: #555;
+}
+
+body.dark-mode .transactions-table tr:hover {
+    background: rgba(102, 126, 234, 0.2);
+}
+
+body.dark-mode .dealer-section,
+body.dark-mode .player-section {
+    background: rgba(40, 40, 60, 0.8);
+    border: 1px solid #555;
+}
+
+body.dark-mode .dealer-section h3,
+body.dark-mode .player-section h3 {
+    color: #8a9eff;
+}
+
+body.dark-mode .card {
+    background: rgba(50, 50, 70, 0.9);
+    border-color: #666;
+    color: #e0e0e0;
+}
+
+body.dark-mode .card-black {
+    color: #fff;
+}
+
+body.dark-mode .card-red {
+    color: #ff6b6b;
+}
+
+body.dark-mode .card-hidden {
+    background: #667eea;
+    color: white;
+}
+
+body.dark-mode .score {
+    color: #e0e0e0;
+}
+
+body.dark-mode .bet-controls {
+    color: #e0e0e0;
+}
+
+body.dark-mode .bet-controls label {
+    color: #e0e0e0;
+}
+
+body.dark-mode .bet-controls small {
+    color: #aaa;
+}
+
+body.dark-mode .result-message {
+    color: #e0e0e0;
+}
+
+body.dark-mode .profile-info {
+    color: #e0e0e0;
+}
+
+body.dark-mode .info-item {
+    color: #e0e0e0;
+    border-bottom-color: #555;
+}
+
+body.dark-mode .info-item label {
+    color: #aaa;
+}
+
+body.dark-mode .info-item span {
+    color: #e0e0e0;
+}
+
+body.dark-mode .balance-large {
+    color: #8a9eff;
+}
+
+body.dark-mode .refill-section,
+body.dark-mode .win-rates-section {
+    background: rgba(40, 40, 60, 0.8);
+    border: 1px solid #555;
+}
+
+body.dark-mode .refill-section h2,
+body.dark-mode .win-rates-section h2 {
+    color: #8a9eff;
+}
+
+body.dark-mode .win-rates-section > div > div {
+    background: rgba(30, 30, 50, 0.9) !important;
+    border: 1px solid #555;
+}
+
+body.dark-mode .win-rates-section h4 {
+    color: #8a9eff;
+}
+
+body.dark-mode .win-rates-section div[style*="font-size: 24px"] {
+    color: #8a9eff !important;
+}
+
+body.dark-mode .win-rates-section div[style*="font-size: 14px"] {
+    color: #aaa !important;
+}
+
+body.dark-mode .games-grid {
+    color: #e0e0e0;
+}
+
+body.dark-mode .auth-link {
+    color: #aaa;
+}
+
+body.dark-mode .auth-link a {
+    color: #8a9eff;
+}
+
+body.dark-mode .auth-link a:hover {
+    color: #a0b0ff;
+}
+
+body.dark-mode .admin-table {
+    background: rgba(40, 40, 60, 0.8);
+    color: #e0e0e0;
+}
+
+body.dark-mode .admin-table th {
+    background: rgba(102, 126, 234, 0.3);
+    color: #e0e0e0;
+    border-color: #555;
+}
+
+body.dark-mode .admin-table td {
+    color: #e0e0e0;
+    border-color: #555;
+}
+
+body.dark-mode .admin-table tr:hover {
+    background: rgba(102, 126, 234, 0.2);
+}
+
+body.dark-mode .btn-small {
+    background: rgba(102, 126, 234, 0.8);
+    color: white;
+}
+
+body.dark-mode .btn-small:hover {
+    background: rgba(102, 126, 234, 1);
+}
+
+body.dark-mode .btn-danger {
+    background: rgba(220, 53, 69, 0.8);
+    color: white;
+}
+
+body.dark-mode .btn-danger:hover {
+    background: rgba(220, 53, 69, 1);
+}
+
+body.dark-mode .users-table-container {
+    background: rgba(40, 40, 60, 0.8);
+}
+
+body.dark-mode .action-buttons {
+    color: #e0e0e0;
+}
+
+body.dark-mode .bet-item {
+    background: rgba(40, 40, 60, 0.8);
+    border-color: #555;
+    color: #e0e0e0;
+}
+
+body.dark-mode .active-bets-display {
+    background: rgba(40, 40, 60, 0.8);
+    border-color: #555;
+    color: #e0e0e0;
+}
+
+body.dark-mode .active-bets-display h4 {
+    color: #8a9eff;
+}
+
+body.dark-mode .total-bet-display {
+    color: #8a9eff;
+    font-weight: bold;
+}

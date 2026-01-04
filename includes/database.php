@@ -242,12 +242,15 @@ class Database {
     
     // Win rate functions
     public function getWinRate($userId, $game = null) {
-        $whereClause = "user_id = ? AND (type = 'win' OR type = 'bet')";
         $params = [$userId];
         
         if ($game !== null) {
-            $whereClause .= " AND game = ?";
+            // For specific game, only count transactions with that game
+            $whereClause = "user_id = ? AND (type = 'win' OR type = 'bet') AND game = ?";
             $params[] = $game;
+        } else {
+            // For overall stats, count all transactions (including NULL game for old transactions)
+            $whereClause = "user_id = ? AND (type = 'win' OR type = 'bet')";
         }
         
         // Get total games played (bets)
