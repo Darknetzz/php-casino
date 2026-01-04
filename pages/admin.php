@@ -23,11 +23,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($startingBalance < 0) $errors[] = 'Starting Balance must be greater than or equal to 0';
             if ($defaultBet <= 0) $errors[] = 'Default Bet must be greater than 0';
             
+            // Handle game mode settings
+            $rouletteMode = $_POST['roulette_mode'] ?? 'local';
+            $crashMode = $_POST['crash_mode'] ?? 'local';
+            
+            if (!in_array($rouletteMode, ['local', 'central'])) {
+                $errors[] = 'Invalid roulette mode';
+            }
+            if (!in_array($crashMode, ['local', 'central'])) {
+                $errors[] = 'Invalid crash mode';
+            }
+            
             if (empty($errors)) {
                 $db->setSetting('max_deposit', $maxDeposit);
                 $db->setSetting('max_bet', $maxBet);
                 $db->setSetting('starting_balance', $startingBalance);
                 $db->setSetting('default_bet', $defaultBet);
+                $db->setSetting('roulette_mode', $rouletteMode);
+                $db->setSetting('crash_mode', $crashMode);
                 header('Location: admin.php?tab=settings&success=1');
                 exit;
             }
@@ -399,6 +412,28 @@ include __DIR__ . '/../includes/navbar.php';
                                value="<?php echo htmlspecialchars($settings['default_bet'] ?? '10'); ?>" required>
                         <small>Default bet amount for all users (can be overridden in user profile)</small>
                     </div>
+                    
+                    <h3 style="margin-top: 30px; margin-bottom: 15px; color: #667eea;">Game Modes</h3>
+                    <p style="margin-bottom: 15px; color: #666;">Choose whether games run locally (client-side) or centrally (synchronized for all users).</p>
+                    
+                    <div class="form-group">
+                        <label for="roulette_mode">Roulette Mode</label>
+                        <select id="roulette_mode" name="roulette_mode" required>
+                            <option value="local" <?php echo ($settings['roulette_mode'] ?? 'local') === 'local' ? 'selected' : ''; ?>>Local (Client-side)</option>
+                            <option value="central" <?php echo ($settings['roulette_mode'] ?? 'local') === 'central' ? 'selected' : ''; ?>>Central (Synchronized)</option>
+                        </select>
+                        <small>Local: Users spin individually. Central: All users see the same synchronized rounds (requires worker).</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="crash_mode">Crash Mode</label>
+                        <select id="crash_mode" name="crash_mode" required>
+                            <option value="local" <?php echo ($settings['crash_mode'] ?? 'local') === 'local' ? 'selected' : ''; ?>>Local (Client-side)</option>
+                            <option value="central" <?php echo ($settings['crash_mode'] ?? 'local') === 'central' ? 'selected' : ''; ?>>Central (Synchronized)</option>
+                        </select>
+                        <small>Local: Users start games individually. Central: All users see the same synchronized rounds (requires worker).</small>
+                    </div>
+                    
                     <button type="submit" name="update_settings" class="btn btn-primary">Update Settings</button>
                 </form>
             </div>
@@ -985,24 +1020,52 @@ include __DIR__ . '/../includes/navbar.php';
                 require_once __DIR__ . '/../includes/provably_fair.php';
                 $rouletteRound = $db->getCurrentRouletteRound();
                 $crashRound = $db->getCurrentCrashRound();
+                $rouletteMode = getSetting('roulette_mode', 'local');
+                $crashMode = getSetting('crash_mode', 'local');
             ?>
             <div class="admin-section section">
                 <h2>🎯 Game Rounds Monitor</h2>
                 <p style="margin-bottom: 20px;" class="admin-description">Monitor current game rounds and predict upcoming results (admin only).</p>
+                <p style="margin-bottom: 20px; padding: 10px; background: rgba(102, 126, 234, 0.1); border-radius: 5px;" class="admin-description">
+                    <strong>Current Modes:</strong> Roulette: <strong><?php echo ucfirst($rouletteMode); ?></strong> | Crash: <strong><?php echo ucfirst($crashMode); ?></strong><br>
+                    <small>Central mode requires the game rounds worker to be running. Change modes in Casino Settings.</small>
+                </p>
                 
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px;">
                     <!-- Roulette Round -->
                     <div class="section rounds-card" style="padding: 20px; border-radius: 8px;">
                         <h3 style="margin-top: 0;" class="rounds-card-title">🛞 Roulette</h3>
                         <div id="rouletteRoundInfo" class="rounds-card-content">
-                            <?php if ($rouletteRound): ?>
+                            <?php if ($rouletteMode === 'local'): ?>
+                                <p style="color: #999;">Local mode - no synchronized rounds</p>
+                            <?php elseif ($rouletteRound): ?>
                                 <p><strong>Round #<?php echo $rouletteRound['round_number']; ?></strong></p>
                                 <p>Status: <strong><?php echo ucfirst($rouletteRound['status']); ?></strong></p>
-                                <?php if ($rouletteRound['status'] === 'betting' || $rouletteRound['status'] === 'spinning'): 
+                                <?php 
+                                $now = time();
+                                if ($rouletteRound['status'] === 'betting'): 
+                                    $bettingEndsAt = strtotime($rouletteRound['betting_ends_at']);
+                                    $timeLeft = max(0, $bettingEndsAt - $now);
                                     $predictedResult = ProvablyFair::generateRouletteResult($rouletteRound['server_seed'], $rouletteRound['client_seed'] ?? '');
                                 ?>
                                     <p style="color: #28a745; font-weight: bold; margin-top: 10px;">
                                         🔮 Predicted Result: <span style="font-size: 1.2em;"><?php echo $predictedResult; ?></span>
+                                    </p>
+                                    <p style="margin-top: 10px; font-size: 1.1em; color: #667eea;">
+                                        Next spin in: <strong><?php echo ceil($timeLeft); ?>s</strong>
+                                    </p>
+                                <?php elseif ($rouletteRound['status'] === 'spinning'): 
+                                    $predictedResult = ProvablyFair::generateRouletteResult($rouletteRound['server_seed'], $rouletteRound['client_seed'] ?? '');
+                                    $spinningDuration = intval(getSetting('roulette_spinning_duration', 4));
+                                    $startedAt = strtotime($rouletteRound['started_at']);
+                                    $finishesAt = $startedAt + $spinningDuration;
+                                    $timeLeft = max(0, $finishesAt - $now);
+                                ?>
+                                    <p style="color: #ffc107; font-weight: bold; margin-top: 10px;">
+                                        🔮 Predicted Result: <span style="font-size: 1.2em;"><?php echo $predictedResult; ?></span>
+                                    </p>
+                                    <p style="margin-top: 10px; font-size: 1.1em; color: #ffc107;">
+                                        Spinning... Result in: <strong><?php echo ceil($timeLeft); ?>s</strong>
                                     </p>
                                 <?php elseif ($rouletteRound['status'] === 'finished' && $rouletteRound['result_number'] !== null): ?>
                                     <p style="color: #667eea; font-weight: bold; margin-top: 10px;">
@@ -1013,7 +1076,7 @@ include __DIR__ . '/../includes/navbar.php';
                                     Server Seed Hash: <code style="font-size: 0.8em;"><?php echo substr($rouletteRound['server_seed_hash'], 0, 16); ?>...</code>
                                 </p>
                             <?php else: ?>
-                                <p>No active round</p>
+                                <p>No active round - worker may not be running</p>
                             <?php endif; ?>
                         </div>
                     </div>
@@ -1022,19 +1085,31 @@ include __DIR__ . '/../includes/navbar.php';
                     <div class="section rounds-card" style="padding: 20px; border-radius: 8px;">
                         <h3 style="margin-top: 0;" class="rounds-card-title">🚀 Crash</h3>
                         <div id="crashRoundInfo" class="rounds-card-content">
-                            <?php if ($crashRound): ?>
+                            <?php if ($crashMode === 'local'): ?>
+                                <p style="color: #999;">Local mode - no synchronized rounds</p>
+                            <?php elseif ($crashRound): ?>
                                 <p><strong>Round #<?php echo $crashRound['round_number']; ?></strong></p>
                                 <p>Status: <strong><?php echo ucfirst($crashRound['status']); ?></strong></p>
-                                <?php if ($crashRound['status'] === 'betting'): 
+                                <?php 
+                                $now = time();
+                                if ($crashRound['status'] === 'betting'): 
+                                    $bettingEndsAt = strtotime($crashRound['betting_ends_at']);
+                                    $timeLeft = max(0, $bettingEndsAt - $now);
                                     $distributionParam = floatval(getSetting('crash_distribution_param', 0.99));
                                     $predictedCrashPoint = ProvablyFair::generateCrashPoint($crashRound['server_seed'], $crashRound['client_seed'] ?? '', $distributionParam);
                                 ?>
                                     <p style="color: #28a745; font-weight: bold; margin-top: 10px;">
                                         🔮 Predicted Crash Point: <span style="font-size: 1.2em;"><?php echo number_format($predictedCrashPoint, 2); ?>x</span>
                                     </p>
+                                    <p style="margin-top: 10px; font-size: 1.1em; color: #667eea;">
+                                        Next round in: <strong><?php echo ceil($timeLeft); ?>s</strong>
+                                    </p>
                                 <?php elseif ($crashRound['status'] === 'running' && $crashRound['crash_point']): ?>
                                     <p style="color: #ffc107; font-weight: bold; margin-top: 10px;">
                                         Crash Point: <span style="font-size: 1.2em;"><?php echo number_format($crashRound['crash_point'], 2); ?>x</span>
+                                    </p>
+                                    <p style="margin-top: 10px; font-size: 1.1em; color: #ffc107;">
+                                        Round in progress...
                                     </p>
                                 <?php elseif ($crashRound['status'] === 'finished' && $crashRound['crash_point']): ?>
                                     <p style="color: #667eea; font-weight: bold; margin-top: 10px;">
@@ -1045,7 +1120,7 @@ include __DIR__ . '/../includes/navbar.php';
                                     Server Seed Hash: <code style="font-size: 0.8em;"><?php echo substr($crashRound['server_seed_hash'], 0, 16); ?>...</code>
                                 </p>
                             <?php else: ?>
-                                <p>No active round</p>
+                                <p>No active round - worker may not be running</p>
                             <?php endif; ?>
                         </div>
                     </div>

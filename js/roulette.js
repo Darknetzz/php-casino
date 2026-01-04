@@ -220,7 +220,10 @@ $(document).ready(function() {
                 if (round.status === 'betting') {
                     const timeLeft = round.time_until_betting_ends || 0;
                     $('#rouletteResult').html(`Round #${round.round_number} - Betting ends in ${Math.ceil(timeLeft)}s`);
-                    $('#spinBtn').prop('disabled', false).text('PLACE BETS & SPIN');
+                    // Hide spin button, show countdown in central mode
+                    $('#spinBtn').hide();
+                    $('#roundCountdown').show();
+                    updateBettingCountdown(timeLeft);
                     // Reset spinning state when entering betting
                     if (isSpinning) {
                         isSpinning = false;
@@ -229,9 +232,10 @@ $(document).ready(function() {
                             spinAnimationInterval = null;
                         }
                     }
-                    updateBettingCountdown(timeLeft);
                 } else if (round.status === 'spinning') {
-                    $('#spinBtn').prop('disabled', true).text('SPINNING...');
+                    $('#spinBtn').hide();
+                    $('#roundCountdown').show();
+                    $('#countdownText').html('Spinning...');
                     // Start spinning animation when entering spinning state
                     if (roundChanged || !isSpinning) {
                         startSpinningAnimation(round);
@@ -267,15 +271,22 @@ $(document).ready(function() {
         }
         
         let timeLeft = Math.ceil(seconds);
-        bettingCountdownInterval = setInterval(function() {
-            timeLeft--;
-            if (timeLeft > 0) {
+        const updateCountdown = function() {
+            if (timeLeft > 0 && currentRound && currentRound.status === 'betting') {
                 $('#rouletteResult').html(`Round #${currentRound.round_number} - Betting ends in ${timeLeft}s`);
+                $('#countdownText').html(`Next spin in: <span style="font-size: 1.5em; color: #667eea;">${timeLeft}s</span>`);
+                timeLeft--;
             } else {
                 clearInterval(bettingCountdownInterval);
                 bettingCountdownInterval = null;
+                if (currentRound && currentRound.status === 'spinning') {
+                    $('#countdownText').html('Spinning...');
+                }
             }
-        }, 1000);
+        };
+        
+        updateCountdown();
+        bettingCountdownInterval = setInterval(updateCountdown, 1000);
     }
     
     let spinAnimationInterval = null;
@@ -482,6 +493,11 @@ $(document).ready(function() {
         
         updateActiveBetsDisplay();
         $('#result').html('');
+        
+        // In central mode, auto-place bets
+        if (currentRound && currentRound.status === 'betting') {
+            placeAllBets();
+        }
     });
     
     $('#addNumberBetBtn').click(function() {
@@ -514,6 +530,11 @@ $(document).ready(function() {
         updateActiveBetsDisplay();
         $('#numberBet').val('');
         $('#result').html('');
+        
+        // In central mode, auto-place bets
+        if (currentRound && currentRound.status === 'betting') {
+            placeAllBets();
+        }
     });
     
     $('#numberBet').keypress(function(e) {
@@ -523,6 +544,7 @@ $(document).ready(function() {
     });
     
     // Place all bets when spin button is clicked (during betting phase)
+    // Note: In central mode, this button is hidden and bets are placed automatically
     $('#spinBtn').click(function() {
         if (!currentRound || currentRound.status !== 'betting') {
             return;
@@ -530,6 +552,20 @@ $(document).ready(function() {
         
         if (numberBets.length === 0 && colorBets.length === 0) {
             $('#result').html('<div class="alert alert-error">Please add at least one bet</div>');
+            return;
+        }
+        
+        // In central mode, just place bets (spin happens automatically)
+        placeAllBets();
+    });
+    
+    // Function to place all bets (used in central mode)
+    function placeAllBets() {
+        if (!currentRound || currentRound.status !== 'betting') {
+            return;
+        }
+        
+        if (numberBets.length === 0 && colorBets.length === 0) {
             return;
         }
         

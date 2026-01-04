@@ -164,7 +164,9 @@ switch ($action) {
             'crash_distribution_param' => $crashDistributionParam,
             'blackjack_regular_multiplier' => $blackjackRegularMultiplier,
             'blackjack_blackjack_multiplier' => $blackjackBlackjackMultiplier,
-            'blackjack_dealer_stand' => $blackjackDealerStand
+            'blackjack_dealer_stand' => $blackjackDealerStand,
+            'roulette_mode' => getSetting('roulette_mode', 'local'),
+            'crash_mode' => getSetting('crash_mode', 'local')
         ];
         echo json_encode(['success' => true, 'settings' => $settings]);
         break;

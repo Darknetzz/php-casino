@@ -61,8 +61,20 @@ include __DIR__ . '/../includes/navbar.php';
                         </div>
                         <div class="roulette-pointer"></div>
                     </div>
-                    <div id="rouletteResult" class="roulette-result">Click "Spin" to play</div>
-                    <button id="spinBtn" class="btn btn-primary btn-large">SPIN</button>
+                    <div id="rouletteResult" class="roulette-result">
+                        <?php 
+                        $rouletteMode = getSetting('roulette_mode', 'local');
+                        if ($rouletteMode === 'central') {
+                            echo 'Waiting for next round...';
+                        } else {
+                            echo 'Click "Spin" to play';
+                        }
+                        ?>
+                    </div>
+                    <button id="spinBtn" class="btn btn-primary btn-large" style="<?php echo $rouletteMode === 'central' ? 'display: none;' : ''; ?>">SPIN</button>
+                    <div id="roundCountdown" style="<?php echo $rouletteMode === 'central' ? 'display: block;' : 'display: none;'; ?> text-align: center; margin-top: 15px; font-size: 18px; color: #667eea; font-weight: bold;">
+                        <div id="countdownText">Waiting for next round...</div>
+                    </div>
                 </div>
                 
                 <div id="result" class="result-message"></div>
@@ -84,7 +96,14 @@ include __DIR__ . '/../includes/navbar.php';
         </div>
     </div>
     
-    <script src="../js/roulette.js"></script>
+    <?php 
+    $rouletteMode = getSetting('roulette_mode', 'local');
+    if ($rouletteMode === 'central') {
+        echo '<script src="../js/roulette.js"></script>';
+    } else {
+        echo '<script src="../js/roulette-local.js"></script>';
+    }
+    ?>
     <script>
         $(document).ready(function() {
             // Load win rate for roulette

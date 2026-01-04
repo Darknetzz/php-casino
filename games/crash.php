@@ -23,11 +23,23 @@ include __DIR__ . '/../includes/navbar.php';
                 <div class="crash-display-container">
                     <div class="crash-graph" id="crashGraph">
                         <canvas id="crashCanvas"></canvas>
-                        <div class="crash-multiplier-display" id="multiplierDisplay">1.00x</div>
+                        <div class="crash-multiplier-display" id="multiplierDisplay">
+                        <?php 
+                        $crashMode = getSetting('crash_mode', 'local');
+                        if ($crashMode === 'central') {
+                            echo 'Waiting for next round...';
+                        } else {
+                            echo '1.00x';
+                        }
+                        ?>
+                    </div>
                     </div>
                     <div class="crash-controls" id="crashControls" style="display: none;">
                         <button id="cashOutBtn" class="btn btn-success btn-large">CASH OUT</button>
                         <div class="cash-out-info" id="cashOutInfo"></div>
+                    </div>
+                    <div id="roundCountdown" style="<?php echo $crashMode === 'central' ? 'display: block;' : 'display: none;'; ?> text-align: center; margin-top: 15px; font-size: 18px; color: #667eea; font-weight: bold;">
+                        <div id="countdownText">Waiting for next round...</div>
                     </div>
                 </div>
                 
@@ -88,7 +100,14 @@ include __DIR__ . '/../includes/navbar.php';
         </div>
     </div>
     
-    <script src="../js/crash.js"></script>
+    <?php 
+    $crashMode = getSetting('crash_mode', 'local');
+    if ($crashMode === 'central') {
+        echo '<script src="../js/crash.js"></script>';
+    } else {
+        echo '<script src="../js/crash-local.js"></script>';
+    }
+    ?>
     <script>
         $(document).ready(function() {
             // Load win rate for crash
