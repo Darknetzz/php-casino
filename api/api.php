@@ -141,6 +141,11 @@ switch ($action) {
         $crashMaxMultiplier = floatval(getSetting('crash_max_multiplier', 0));
         $crashDistributionParam = floatval(getSetting('crash_distribution_param', 0.99));
         
+        // Get blackjack settings
+        $blackjackRegularMultiplier = floatval(getSetting('blackjack_regular_multiplier', 2.0));
+        $blackjackBlackjackMultiplier = floatval(getSetting('blackjack_blackjack_multiplier', 2.5));
+        $blackjackDealerStand = intval(getSetting('blackjack_dealer_stand', 17));
+        
         $settings = [
             'max_bet' => floatval(getSetting('max_bet', 100)),
             'max_deposit' => floatval(getSetting('max_deposit', 10000)),
@@ -156,7 +161,10 @@ switch ($action) {
             'dice_num_dice' => $diceNumDice,
             'crash_speed' => $crashSpeed,
             'crash_max_multiplier' => $crashMaxMultiplier,
-            'crash_distribution_param' => $crashDistributionParam
+            'crash_distribution_param' => $crashDistributionParam,
+            'blackjack_regular_multiplier' => $blackjackRegularMultiplier,
+            'blackjack_blackjack_multiplier' => $blackjackBlackjackMultiplier,
+            'blackjack_dealer_stand' => $blackjackDealerStand
         ];
         echo json_encode(['success' => true, 'settings' => $settings]);
         break;

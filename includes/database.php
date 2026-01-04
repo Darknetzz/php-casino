@@ -130,7 +130,13 @@ class Database {
             // Plinko multipliers (9 slots, comma-separated)
             'plinko_multipliers' => '0.2,0.5,0.8,1.0,2.0,1.0,0.8,0.5,0.2',
             // Plinko step delay (milliseconds between ball movement steps)
-            'plinko_duration' => '350'
+            'plinko_duration' => '350',
+            // Blackjack regular win multiplier
+            'blackjack_regular_multiplier' => '2.0',
+            // Blackjack blackjack multiplier (21 with first 2 cards)
+            'blackjack_blackjack_multiplier' => '2.5',
+            // Blackjack dealer stand threshold
+            'blackjack_dealer_stand' => '17'
         ];
         
         foreach ($defaultSettings as $key => $value) {

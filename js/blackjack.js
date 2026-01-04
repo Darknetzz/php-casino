@@ -5,8 +5,11 @@ $(document).ready(function() {
     let gameActive = false;
     let betAmount = 0;
     let maxBet = 100;
+    let regularMultiplier = 2.0;
+    let blackjackMultiplier = 2.5;
+    let dealerStandThreshold = 17;
     
-    // Load max bet and default bet from settings
+    // Load max bet, default bet, and blackjack settings from settings
     $.get('../api/api.php?action=getSettings', function(data) {
         if (data.success) {
             if (data.settings.max_bet) {
@@ -16,6 +19,15 @@ $(document).ready(function() {
             }
             if (data.settings.default_bet) {
                 $('#betAmount').val(data.settings.default_bet);
+            }
+            if (data.settings.blackjack_regular_multiplier !== undefined) {
+                regularMultiplier = data.settings.blackjack_regular_multiplier;
+            }
+            if (data.settings.blackjack_blackjack_multiplier !== undefined) {
+                blackjackMultiplier = data.settings.blackjack_blackjack_multiplier;
+            }
+            if (data.settings.blackjack_dealer_stand !== undefined) {
+                dealerStandThreshold = data.settings.blackjack_dealer_stand;
             }
         }
     }, 'json');
@@ -170,13 +182,13 @@ $(document).ready(function() {
         
         const playerScore = calculateHand(playerHand);
         
-        // Dealer draws until 17 or higher, but stops if already beating player
+        // Dealer draws until stand threshold or higher, but stops if already beating player
         while (true) {
             const currentDealerScore = calculateHand(dealerHand);
             
-            // Dealer must hit until 17, but if already beating player, stand
-            if (currentDealerScore >= 17) {
-                break; // Dealer stands at 17 or higher
+            // Dealer must hit until stand threshold, but if already beating player, stand
+            if (currentDealerScore >= dealerStandThreshold) {
+                break; // Dealer stands at threshold or higher
             }
             
             // If dealer is already beating player (and both are valid), stand
@@ -199,7 +211,7 @@ $(document).ready(function() {
             message = `Bust! You lost $${betAmount.toFixed(2)}`;
         } else if (dealerScore > 21) {
             won = true;
-            const winAmount = isBlackjack ? betAmount * 2.5 : betAmount * 2;
+            const winAmount = isBlackjack ? betAmount * blackjackMultiplier : betAmount * regularMultiplier;
             message = `Dealer busts! You won $${winAmount.toFixed(2)}!`;
             $.post('../api/api.php?action=updateBalance', {
                 amount: winAmount,
@@ -215,7 +227,7 @@ $(document).ready(function() {
             }, 'json');
         } else if (isBlackjack) {
             won = true;
-            const winAmount = betAmount * 2.5;
+            const winAmount = betAmount * blackjackMultiplier;
             message = `Blackjack! You won $${winAmount.toFixed(2)}!`;
             $.post('../api/api.php?action=updateBalance', {
                 amount: winAmount,
@@ -231,7 +243,7 @@ $(document).ready(function() {
             }, 'json');
         } else if (playerScore > dealerScore) {
             won = true;
-            const winAmount = betAmount * 2;
+            const winAmount = betAmount * regularMultiplier;
             message = `You win! You won $${winAmount.toFixed(2)}!`;
             $.post('../api/api.php?action=updateBalance', {
                 amount: winAmount,
