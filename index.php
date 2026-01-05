@@ -78,9 +78,11 @@ include __DIR__ . '/includes/navbar.php';
                         data.transactions.forEach(function(t) {
                             const sign = t.type === 'win' || t.type === 'deposit' ? '+' : '-';
                             const color = t.type === 'win' || t.type === 'deposit' ? 'green' : 'red';
+                            const amount = Math.abs(parseFloat(t.amount));
+                            const formattedAmount = typeof formatNumber === 'function' ? formatNumber(amount) : amount.toFixed(2);
                             html += `<tr>
                                 <td>${t.type}</td>
-                                <td style="color: ${color}">${sign}$${Math.abs(t.amount).toFixed(2)}</td>
+                                <td style="color: ${color}">${sign}$${formattedAmount}</td>
                                 <td>${t.description || ''}</td>
                                 <td>${new Date(t.created_at).toLocaleString()}</td>
                             </tr>`;
