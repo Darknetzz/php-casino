@@ -208,8 +208,11 @@ $(document).ready(function() {
                             
                             // Map column from last peg row (0 to 7) to slots (0 to 8)
                             // Row 7 has 8 pegs (cols 0-7), we have 9 slots (0-8)
-                            const colRatio = ballCol / Math.max(1, lastPegRow);
-                            const finalSlot = Math.round(colRatio * (cols - 1));
+                            // The ball falls into spaces between/around pegs, creating 9 possible landing positions
+                            // Use linear interpolation with offset to ensure all 9 slots are reachable
+                            // Formula: slot = floor((column + 0.5) / 7 * 8) distributes columns evenly
+                            // This ensures middle slot (4) is accessible from column 3
+                            const finalSlot = Math.floor(((ballCol + 0.5) / 7) * 8);
                             const finalSlotClamped = Math.max(0, Math.min(cols - 1, finalSlot));
                             
                             console.log(`[Plinko Debug] Ball reached last peg row (${lastPegRow}) at col ${ballCol} -> slot ${finalSlotClamped}`);

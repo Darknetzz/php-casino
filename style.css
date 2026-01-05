@@ -773,8 +773,16 @@ button.game-disabled,
 
 .bet-controls {
     display: flex;
-    align-items: center;
-    gap: 10px;
+    flex-direction: column;
+    gap: 15px;
+    align-items: flex-start;
+}
+
+.bet-controls .bet-amount-section {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: flex-start;
 }
 
 .bet-controls label {
@@ -794,6 +802,117 @@ button.game-disabled,
     border-radius: 5px;
     width: 100px;
     font-size: 16px;
+}
+
+/* Inline bet input with minus/plus buttons */
+.bet-input-inline-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.bet-input-inline {
+    padding: 8px 12px;
+    border: 2px solid #ddd;
+    border-radius: 5px;
+    width: 120px;
+    font-size: 16px;
+    text-align: center;
+    font-weight: 600;
+}
+
+.bet-adjust-btn-inline {
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    border: 2px solid;
+    border-radius: 5px;
+    font-size: 24px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+    flex-shrink: 0;
+}
+
+.bet-adjust-btn-inline span {
+    line-height: 1;
+}
+
+.bet-adjust-btn-inline.bet-adjust-negative {
+    background: linear-gradient(135deg, #dc3545 0%, #e83e8c 100%);
+    color: white;
+    border-color: #bd2130;
+}
+
+.bet-adjust-btn-inline.bet-adjust-negative:hover {
+    background: linear-gradient(135deg, #c82333 0%, #d91a72 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(220, 53, 69, 0.4);
+    border-color: #a71e2a;
+}
+
+.bet-adjust-btn-inline.bet-adjust-negative:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(220, 53, 69, 0.3);
+}
+
+.bet-adjust-btn-inline.bet-adjust-positive {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    color: white;
+    border-color: #1e7e34;
+}
+
+.bet-adjust-btn-inline.bet-adjust-positive:hover {
+    background: linear-gradient(135deg, #218838 0%, #1aa179 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(40, 167, 69, 0.4);
+    border-color: #155724;
+}
+
+.bet-adjust-btn-inline.bet-adjust-positive:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(40, 167, 69, 0.3);
+}
+
+/* Quick bet buttons */
+.quick-bet-buttons {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.quick-bet-btn {
+    padding: 8px 16px;
+    border: 2px solid #667eea;
+    background: white;
+    color: #667eea;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 14px;
+    transition: all 0.2s ease;
+}
+
+.quick-bet-btn:hover {
+    background: #667eea;
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(102, 126, 234, 0.3);
+}
+
+.quick-bet-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(102, 126, 234, 0.2);
+}
+
+.auto-payout-section {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
 }
 
 /* Bet input wrapper for inputs inside bet-controls */
@@ -3340,6 +3459,23 @@ body.dark-mode .bet-controls label {
 
 body.dark-mode .bet-controls small {
     color: #aaa;
+}
+
+body.dark-mode .bet-input-inline {
+    background: rgba(40, 40, 60, 0.9);
+    border-color: #555;
+    color: #e0e0e0;
+}
+
+body.dark-mode .quick-bet-btn {
+    background: rgba(40, 40, 60, 0.9);
+    border-color: #667eea;
+    color: #8a9eff;
+}
+
+body.dark-mode .quick-bet-btn:hover {
+    background: #667eea;
+    color: white;
 }
 
 body.dark-mode .result-message {

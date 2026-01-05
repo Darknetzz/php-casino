@@ -71,10 +71,26 @@ include __DIR__ . '/../includes/navbar.php';
             
             <div class="crash-game" <?php if ($crashMode === 'central' && !$workerRunning): ?>style="display: none;"<?php endif; ?>>
                 <div class="bet-controls">
-                    <label>Bet Amount: $</label>
-                    <input type="number" id="betAmount" min="1" value="10" step="1" class="bet-input-with-adjust">
-                    <small>Max: $<span id="maxBet">100</span></small>
-                    <div style="margin-top: 10px;">
+                    <div class="bet-amount-section">
+                        <label>Bet Amount:</label>
+                        <div class="bet-input-inline-wrapper">
+                            <button type="button" class="bet-adjust-btn-inline bet-adjust-negative" id="betDecreaseBtn" title="Decrease bet">
+                                <span>−</span>
+                            </button>
+                            <input type="number" id="betAmount" min="1" value="10" step="1" class="bet-input-inline">
+                            <button type="button" class="bet-adjust-btn-inline bet-adjust-positive" id="betIncreaseBtn" title="Increase bet">
+                                <span>+</span>
+                            </button>
+                        </div>
+                        <small>Max: $<span id="maxBet">100</span></small>
+                    </div>
+                    <div class="quick-bet-buttons">
+                        <button type="button" class="quick-bet-btn" data-amount="10">$10</button>
+                        <button type="button" class="quick-bet-btn" data-amount="25">$25</button>
+                        <button type="button" class="quick-bet-btn" data-amount="50">$50</button>
+                        <button type="button" class="quick-bet-btn" data-amount="100">$100</button>
+                    </div>
+                    <div class="auto-payout-section">
                         <label>Auto Payout: <input type="number" id="autoPayout" min="1.01" value="" step="0.01" placeholder="e.g. 2.00" style="width: 100px; padding: 5px; margin-left: 5px;"></label>
                         <small style="display: block; color: #666; margin-top: 5px;">Leave empty to cash out manually</small>
                     </div>
@@ -198,6 +214,40 @@ include __DIR__ . '/../includes/navbar.php';
                 $('#gamesPlayed').text('0');
                 $('#wins').text('0');
                 $('#netWinLoss').text('$0.00').css('color', '#666');
+            });
+
+            // Handle inline bet adjustment buttons
+            function adjustBet(amount) {
+                const $input = $('#betAmount');
+                const current = parseFloat($input.val()) || 0;
+                const min = parseFloat($input.attr('min')) || 0;
+                const maxAttr = $input.attr('max');
+                const max = maxAttr ? parseFloat(maxAttr) : Infinity;
+                const newValue = Math.max(min, Math.min(max, current + amount));
+                $input.val(newValue).trigger('change');
+            }
+
+            $('#betDecreaseBtn').on('click', function(e) {
+                e.preventDefault();
+                adjustBet(-1);
+            });
+
+            $('#betIncreaseBtn').on('click', function(e) {
+                e.preventDefault();
+                adjustBet(1);
+            });
+
+            // Handle quick bet buttons
+            $('.quick-bet-btn').on('click', function(e) {
+                e.preventDefault();
+                const amount = parseFloat($(this).data('amount'));
+                if (amount) {
+                    const $input = $('#betAmount');
+                    const maxAttr = $input.attr('max');
+                    const max = maxAttr ? parseFloat(maxAttr) : Infinity;
+                    const finalAmount = Math.min(amount, max);
+                    $input.val(finalAmount).trigger('change');
+                }
             });
         });
     </script>
