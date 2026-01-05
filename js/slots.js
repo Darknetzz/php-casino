@@ -538,30 +538,37 @@ $(document).ready(function() {
                 
                 if (multiplier > 0) {
                     totalWin = betAmount * multiplier; // Use original bet amount, not multiplied
-                    let winType = 'custom';
-                    // Check win type
-                    const allSame = resultSymbols.length > 0 && resultSymbols.every(function(s) { return s === resultSymbols[0]; });
-                    if (allSame) {
-                        winType = 'all of a kind';
-                    } else {
-                        const symbolCounts = {};
-                        resultSymbols.forEach(function(s) {
-                            symbolCounts[s] = (symbolCounts[s] || 0) + 1;
-                        });
-                        let hasTwoOfKind = false;
-                        for (const s in symbolCounts) {
-                            if (symbolCounts[s] === 2) {
-                                hasTwoOfKind = true;
-                                break;
-                            }
-                        }
-                        if (hasTwoOfKind) {
-                            winType = '2 of a kind';
-                        }
-                    }
+                    
                     // Get winning indices to highlight only those symbols
                     const winningIndices = getWinningSymbolIndices(resultSymbols);
                     const winningSymbols = winningIndices.map(function(idx) { return resultSymbols[idx]; }).join('');
+                    
+                    // Determine win type based on actual winning symbols
+                    let winType = 'custom';
+                    if (winningIndices.length === resultSymbols.length) {
+                        // All symbols are winning - check if they're all the same
+                        const allSame = resultSymbols.length > 0 && resultSymbols.every(function(s) { return s === resultSymbols[0]; });
+                        if (allSame) {
+                            winType = 'all of a kind';
+                        } else {
+                            winType = 'custom';
+                        }
+                    } else if (winningIndices.length > 0) {
+                        // Only some symbols are winning - determine N of a kind
+                        const winningSymbolCounts = {};
+                        winningIndices.forEach(function(idx) {
+                            const symbol = resultSymbols[idx];
+                            winningSymbolCounts[symbol] = (winningSymbolCounts[symbol] || 0) + 1;
+                        });
+                        // Check if all winning symbols are the same
+                        const winningSymbolValues = Object.keys(winningSymbolCounts);
+                        if (winningSymbolValues.length === 1) {
+                            const count = winningSymbolCounts[winningSymbolValues[0]];
+                            winType = count + ' of a kind';
+                        } else {
+                            winType = 'custom';
+                        }
+                    }
                     
                     winDescriptions.push(`Middle row: ${resultSymbols.join('')} → ${winningSymbols} (${multiplier}x - ${winType})`);
                     
@@ -584,30 +591,37 @@ $(document).ready(function() {
                     if (multiplier > 0) {
                         const rowWin = betAmount * multiplier; // Use original bet amount per row
                         totalWin += rowWin;
-                        let winType = 'custom';
-                        // Check win type
-                        const allSame = resultSymbols.length > 0 && resultSymbols.every(function(s) { return s === resultSymbols[0]; });
-                        if (allSame) {
-                            winType = 'all of a kind';
-                        } else {
-                            const symbolCounts = {};
-                            resultSymbols.forEach(function(s) {
-                                symbolCounts[s] = (symbolCounts[s] || 0) + 1;
-                            });
-                            let hasTwoOfKind = false;
-                            for (const s in symbolCounts) {
-                                if (symbolCounts[s] === 2) {
-                                    hasTwoOfKind = true;
-                                    break;
-                                }
-                            }
-                            if (hasTwoOfKind) {
-                                winType = '2 of a kind';
-                            }
-                        }
+                        
                         // Get winning indices to highlight only those symbols
                         const winningIndices = getWinningSymbolIndices(resultSymbols);
                         const winningSymbols = winningIndices.map(function(idx) { return resultSymbols[idx]; }).join('');
+                        
+                        // Determine win type based on actual winning symbols
+                        let winType = 'custom';
+                        if (winningIndices.length === resultSymbols.length) {
+                            // All symbols are winning - check if they're all the same
+                            const allSame = resultSymbols.length > 0 && resultSymbols.every(function(s) { return s === resultSymbols[0]; });
+                            if (allSame) {
+                                winType = 'all of a kind';
+                            } else {
+                                winType = 'custom';
+                            }
+                        } else if (winningIndices.length > 0) {
+                            // Only some symbols are winning - determine N of a kind
+                            const winningSymbolCounts = {};
+                            winningIndices.forEach(function(idx) {
+                                const symbol = resultSymbols[idx];
+                                winningSymbolCounts[symbol] = (winningSymbolCounts[symbol] || 0) + 1;
+                            });
+                            // Check if all winning symbols are the same
+                            const winningSymbolValues = Object.keys(winningSymbolCounts);
+                            if (winningSymbolValues.length === 1) {
+                                const count = winningSymbolCounts[winningSymbolValues[0]];
+                                winType = count + ' of a kind';
+                            } else {
+                                winType = 'custom';
+                            }
+                        }
                         
                         const rowName = row === 0 ? 'Top' : (row === 1 ? 'Middle' : 'Bottom');
                         winDescriptions.push(`${rowName} row: ${resultSymbols.join('')} → ${winningSymbols} (${multiplier}x - ${winType})`);
