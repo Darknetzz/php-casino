@@ -561,6 +561,48 @@ class Database {
         return round($totalDeposit, 2);
     }
     
+    public function getCasinoStatistics() {
+        // Get total bets (all bet transactions with game)
+        $stmt = $this->db->prepare("SELECT SUM(amount) as total FROM transactions WHERE type = 'bet' AND game IS NOT NULL");
+        $stmt->execute();
+        $betResult = $stmt->fetch(PDO::FETCH_ASSOC);
+        $totalBets = floatval($betResult['total'] ?? 0);
+        
+        // Get all win transactions with their descriptions to filter by multiplier
+        $stmt = $this->db->prepare("SELECT amount, description FROM transactions WHERE type = 'win' AND game IS NOT NULL");
+        $stmt->execute();
+        $winTransactions = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        $totalWins = 0;
+        
+        foreach ($winTransactions as $win) {
+            $winAmount = floatval($win['amount']);
+            $description = $win['description'] ?? '';
+            
+            // Check if description contains multiplier info
+            $multiplier = null;
+            if (preg_match('/(\d+\.?\d*)x/i', $description, $matches)) {
+                $multiplier = floatval($matches[1]);
+            }
+            
+            // Only count wins with multiplier >= 1
+            // If no multiplier found in description, include it (could be improved)
+            if ($multiplier === null || $multiplier >= 1) {
+                $totalWins += $winAmount;
+            }
+            // If multiplier < 1, don't count it (like 0.5x for 2-of-a-kind)
+        }
+        
+        // House profit = total bets - total wins (what users bet minus what they won)
+        $houseProfit = $totalBets - $totalWins;
+        
+        return [
+            'totalBets' => round($totalBets, 2),
+            'totalWins' => round($totalWins, 2),
+            'houseProfit' => round($houseProfit, 2)
+        ];
+    }
+    
     // Roulette rounds functions
     public function getCurrentRouletteRound() {
         $stmt = $this->db->prepare("SELECT * FROM roulette_rounds WHERE status IN ('betting', 'spinning') ORDER BY round_number DESC LIMIT 1");

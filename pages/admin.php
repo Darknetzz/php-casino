@@ -476,7 +476,15 @@ if (isset($_GET['success'])) {
         $message = 'User updated successfully!';
     } elseif ($currentTab === 'rounds') {
         $message = 'Settings updated successfully!';
+    } elseif ($currentTab === 'statistics') {
+        $message = 'Statistics refreshed successfully!';
     }
+}
+
+// Get casino statistics if on statistics tab
+$casinoStats = null;
+if ($currentTab === 'statistics') {
+    $casinoStats = $db->getCasinoStatistics();
 }
 
 $pageTitle = 'Admin Panel';
@@ -511,6 +519,9 @@ include __DIR__ . '/../includes/navbar.php';
                 </a>
                 <a href="admin.php?tab=rounds" class="admin-tab <?php echo $currentTab === 'rounds' ? 'active' : ''; ?>">
                     <span>🎯</span> Game Rounds
+                </a>
+                <a href="admin.php?tab=statistics" class="admin-tab <?php echo $currentTab === 'statistics' ? 'active' : ''; ?>">
+                    <span>📈</span> Statistics
                 </a>
                 <a href="admin_predictions.php" class="admin-tab">
                     <span>🔮</span> Predictions & History
@@ -1309,6 +1320,58 @@ include __DIR__ . '/../includes/navbar.php';
                         </tbody>
                     </table>
                 </div>
+            </div>
+            <?php endif; ?>
+            
+            <!-- Statistics Section -->
+            <?php if ($currentTab === 'statistics'): ?>
+            <div class="admin-section section">
+                <h2>📈 Casino Statistics</h2>
+                <p style="margin-bottom: 20px; color: #666;">View overall casino performance metrics including house winnings and user payouts.</p>
+                
+                <?php if ($casinoStats): ?>
+                <div class="statistics-container" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-top: 30px;">
+                    <div class="stat-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                        <h3 style="margin: 0 0 10px 0; font-size: 1.1em; opacity: 0.9;">Total Bets</h3>
+                        <p style="margin: 0; font-size: 2.5em; font-weight: bold;">$<?php echo number_format($casinoStats['totalBets'], 2); ?></p>
+                        <p style="margin: 10px 0 0 0; font-size: 0.9em; opacity: 0.8;">Total amount wagered by all users</p>
+                    </div>
+                    
+                    <div class="stat-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                        <h3 style="margin: 0 0 10px 0; font-size: 1.1em; opacity: 0.9;">Total User Winnings</h3>
+                        <p style="margin: 0; font-size: 2.5em; font-weight: bold;">$<?php echo number_format($casinoStats['totalWins'], 2); ?></p>
+                        <p style="margin: 10px 0 0 0; font-size: 0.9em; opacity: 0.8;">Total amount won by all users</p>
+                    </div>
+                    
+                    <div class="stat-card" style="background: linear-gradient(135deg, <?php echo $casinoStats['houseProfit'] >= 0 ? '#11998e 0%, #38ef7d 100%' : '#ee0979 0%, #ff6a00 100%'; ?>); color: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                        <h3 style="margin: 0 0 10px 0; font-size: 1.1em; opacity: 0.9;">House Profit (Net)</h3>
+                        <p style="margin: 0; font-size: 2.5em; font-weight: bold;">$<?php echo number_format($casinoStats['houseProfit'], 2); ?></p>
+                        <p style="margin: 10px 0 0 0; font-size: 0.9em; opacity: 0.8;">
+                            <?php if ($casinoStats['houseProfit'] >= 0): ?>
+                                House is winning
+                            <?php else: ?>
+                                Users are winning
+                            <?php endif; ?>
+                        </p>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 40px; padding: 20px; background: #f8f9fa; border-radius: 8px;">
+                    <h3 style="margin-top: 0; color: #333;">Calculation Details</h3>
+                    <ul style="color: #666; line-height: 1.8;">
+                        <li><strong>Total Bets:</strong> Sum of all bet transactions (excluding deposits and admin transactions)</li>
+                        <li><strong>Total User Winnings:</strong> Sum of all win transactions with multiplier ≥ 1x</li>
+                        <li><strong>House Profit:</strong> Total Bets - Total User Winnings</li>
+                        <li style="margin-top: 10px; color: #999; font-size: 0.9em;">Note: Only game-related transactions (with game field set) are included in these statistics.</li>
+                    </ul>
+                </div>
+                
+                <div style="margin-top: 20px;">
+                    <a href="admin.php?tab=statistics" class="btn btn-primary">Refresh Statistics</a>
+                </div>
+                <?php else: ?>
+                <div class="alert alert-error">Unable to load statistics. Please try again.</div>
+                <?php endif; ?>
             </div>
             <?php endif; ?>
             
