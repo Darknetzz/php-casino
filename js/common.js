@@ -112,6 +112,34 @@ function loadDarkMode() {
 }
 
 // Add bet adjustment buttons to bet inputs
+// Round a number to a "nice" round value
+// Examples: 104 -> 100, 523 -> 500, 21400 -> 20000, 1.4k -> 1k
+function roundToNiceNumber(num) {
+    if (num < 1) return 1;
+    if (num < 10) return Math.round(num);
+    
+    // Determine the order of magnitude
+    const magnitude = Math.floor(Math.log10(num));
+    const base = Math.pow(10, magnitude);
+    
+    // Get the first digit
+    const firstDigit = Math.floor(num / base);
+    
+    // Round to nice numbers: 1, 2, 5, 10, 20, 50, 100, etc.
+    let niceDigit;
+    if (firstDigit <= 1) {
+        niceDigit = 1;
+    } else if (firstDigit <= 2) {
+        niceDigit = 2;
+    } else if (firstDigit <= 5) {
+        niceDigit = 5;
+    } else {
+        niceDigit = 10;
+    }
+    
+    return niceDigit * base;
+}
+
 // Calculate appropriate increment amounts based on balance
 function calculateIncrements(balance) {
     balance = Math.max(balance, 1); // Ensure at least 1
@@ -133,11 +161,14 @@ function calculateIncrements(balance) {
     } else {
         // For very large balances, use percentage-based increments
         increments = [
-            Math.round(balance * 0.01),  // 1%
-            Math.round(balance * 0.05),  // 5%
-            Math.round(balance * 0.10)   // 10%
+            balance * 0.01,  // 1%
+            balance * 0.05,  // 5%
+            balance * 0.10   // 10%
         ];
     }
+    
+    // Round all increments to nice numbers
+    increments = increments.map(roundToNiceNumber);
     
     // Ensure increments are reasonable and unique
     increments = increments.filter((val, idx, arr) => arr.indexOf(val) === idx && val >= 1);
