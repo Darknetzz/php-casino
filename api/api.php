@@ -179,7 +179,10 @@ switch ($action) {
             'blackjack_blackjack_multiplier' => $blackjackBlackjackMultiplier,
             'blackjack_dealer_stand' => $blackjackDealerStand,
             'roulette_mode' => getSetting('roulette_mode', 'local'),
-            'crash_mode' => getSetting('crash_mode', 'local')
+            'crash_mode' => getSetting('crash_mode', 'local'),
+            // Round intervals (seconds between rounds) for synchronized games
+            'roulette_round_interval' => intval(getSetting('roulette_round_interval', 60)),
+            'crash_round_interval' => intval(getSetting('crash_round_interval', 60))
         ];
         echo json_encode(['success' => true, 'settings' => $settings]);
         break;

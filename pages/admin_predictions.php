@@ -322,6 +322,20 @@ include __DIR__ . '/../includes/navbar.php';
         $(document).ready(function() {
             const rouletteMode = '<?php echo $rouletteMode; ?>';
             const crashMode = '<?php echo $crashMode; ?>';
+            let rouletteRoundInterval = 60;
+            let crashRoundInterval = 60;
+            
+            // Load round intervals from settings (for upcoming relative timestamps)
+            $.get('../api/api.php?action=getSettings', function(data) {
+                if (data.success && data.settings) {
+                    if (data.settings.roulette_round_interval) {
+                        rouletteRoundInterval = parseInt(data.settings.roulette_round_interval, 10) || rouletteRoundInterval;
+                    }
+                    if (data.settings.crash_round_interval) {
+                        crashRoundInterval = parseInt(data.settings.crash_round_interval, 10) || crashRoundInterval;
+                    }
+                }
+            }, 'json');
             
             // Function to get roulette number color (matches PHP function in includes/functions.php)
             // Red numbers match the actual roulette wheel: 1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36
@@ -353,6 +367,45 @@ include __DIR__ . '/../includes/navbar.php';
                         text: '#ffffff'
                     }; // Black
                 }
+            }
+            
+            // Relative time helpers
+            function getTimeAgo(date) {
+                if (!date) return '-';
+                const now = new Date();
+                const diff = now - date;
+                const seconds = Math.floor(diff / 1000);
+                const minutes = Math.floor(seconds / 60);
+                const hours = Math.floor(minutes / 60);
+                const days = Math.floor(hours / 24);
+                
+                if (days > 0) return days + 'd ago';
+                if (hours > 0) return hours + 'h ago';
+                if (minutes > 0) return minutes + 'm ago';
+                if (seconds >= 0) return 'just now';
+                
+                // Future timestamps fallback (should be rare for history)
+                const futureSeconds = Math.abs(seconds);
+                const futureMinutes = Math.floor(futureSeconds / 60);
+                const futureHours = Math.floor(futureMinutes / 60);
+                const futureDays = Math.floor(futureHours / 24);
+                if (futureDays > 0) return 'in ' + futureDays + 'd';
+                if (futureHours > 0) return 'in ' + futureHours + 'h';
+                if (futureMinutes > 0) return 'in ' + futureMinutes + 'm';
+                return 'soon';
+            }
+            
+            function formatRelativeFromNow(secondsFromNow) {
+                if (!isFinite(secondsFromNow)) return '-';
+                const s = Math.floor(secondsFromNow);
+                if (s <= 0) return 'now';
+                const minutes = Math.floor(s / 60);
+                const hours = Math.floor(minutes / 60);
+                const days = Math.floor(hours / 24);
+                if (days > 0) return 'in ' + days + 'd';
+                if (hours > 0) return 'in ' + hours + 'h';
+                if (minutes > 0) return 'in ' + minutes + 'm';
+                return 'in ' + s + 's';
             }
             
             // Game Rounds Monitor functions
@@ -630,13 +683,15 @@ include __DIR__ . '/../includes/navbar.php';
                 // Update history (always, regardless of mode)
                 $.get('../api/api.php?action=getRouletteHistory&limit=10', function(data) {
                     if (data.success && data.history) {
-                        let html = '<table class="admin-table" style="font-size: 0.9em; width: 100%;"><thead><tr><th>Round</th><th>Result</th><th>Finished</th></tr></thead><tbody>';
+                        let html = '<table class="admin-table" style="font-size: 0.9em; width: 100%;"><thead><tr><th>Round</th><th>Result</th><th>Finished</th><th>When</th></tr></thead><tbody>';
                         if (data.history.length === 0) {
-                            html += '<tr><td colspan="3" style="text-align: center; color: #999;">No history yet</td></tr>';
+                            html += '<tr><td colspan="4" style="text-align: center; color: #999;">No history yet</td></tr>';
                         } else {
                             data.history.forEach(function(round) {
-                                const finishedTime = round.finished_at ? new Date(round.finished_at).toLocaleTimeString() : '-';
-                                html += '<tr><td>#' + round.round_number + '</td><td><strong>' + (round.result_number !== null ? round.result_number : '-') + '</strong></td><td>' + finishedTime + '</td></tr>';
+                                const finishedDate = round.finished_at ? new Date(round.finished_at) : null;
+                                const finishedTime = finishedDate ? finishedDate.toLocaleTimeString() : '-';
+                                const relative = finishedDate ? getTimeAgo(finishedDate) : '-';
+                                html += '<tr><td>#' + round.round_number + '</td><td><strong>' + (round.result_number !== null ? round.result_number : '-') + '</strong></td><td>' + finishedTime + '</td><td>' + relative + '</td></tr>';
                             });
                         }
                         html += '</tbody></table>';
@@ -646,13 +701,15 @@ include __DIR__ . '/../includes/navbar.php';
                 
                 $.get('../api/api.php?action=getCrashHistory&limit=10', function(data) {
                     if (data.success && data.history) {
-                        let html = '<table class="admin-table" style="font-size: 0.9em; width: 100%;"><thead><tr><th>Round</th><th>Crash Point</th><th>Finished</th></tr></thead><tbody>';
+                        let html = '<table class="admin-table" style="font-size: 0.9em; width: 100%;"><thead><tr><th>Round</th><th>Crash Point</th><th>Finished</th><th>When</th></tr></thead><tbody>';
                         if (data.history.length === 0) {
-                            html += '<tr><td colspan="3" style="text-align: center; color: #999;">No history yet</td></tr>';
+                            html += '<tr><td colspan="4" style="text-align: center; color: #999;">No history yet</td></tr>';
                         } else {
                             data.history.forEach(function(round) {
-                                const finishedTime = round.finished_at ? new Date(round.finished_at).toLocaleTimeString() : '-';
-                                html += '<tr><td>#' + round.round_number + '</td><td><strong>' + (round.crash_point ? parseFloat(round.crash_point).toFixed(2) + 'x' : '-') + '</strong></td><td>' + finishedTime + '</td></tr>';
+                                const finishedDate = round.finished_at ? new Date(round.finished_at) : null;
+                                const finishedTime = finishedDate ? finishedDate.toLocaleTimeString() : '-';
+                                const relative = finishedDate ? getTimeAgo(finishedDate) : '-';
+                                html += '<tr><td>#' + round.round_number + '</td><td><strong>' + (round.crash_point ? parseFloat(round.crash_point).toFixed(2) + 'x' : '-') + '</strong></td><td>' + finishedTime + '</td><td>' + relative + '</td></tr>';
                             });
                         }
                         html += '</tbody></table>';
@@ -667,15 +724,17 @@ include __DIR__ . '/../includes/navbar.php';
                             if (data.predictions.length === 0) {
                                 $('#rouletteUpcomingTable').html('<p style="color: #999; text-align: center;">No predictions available</p>');
                             } else {
-                                let html = '<table class="admin-table" style="font-size: 0.9em; width: 100%;"><thead><tr><th>Round</th><th>Predicted Result</th></tr></thead><tbody>';
-                                data.predictions.forEach(function(pred) {
+                                let html = '<table class="admin-table" style="font-size: 0.9em; width: 100%;"><thead><tr><th>Round</th><th>Predicted Result</th><th>When</th></tr></thead><tbody>';
+                                data.predictions.forEach(function(pred, index) {
                                     const num = parseInt(pred.predicted_result, 10);
                                     const colors = getRouletteNumberColors(num);
+                                    const secondsFromNow = rouletteRoundInterval * (index + 1);
+                                    const when = formatRelativeFromNow(secondsFromNow);
                                     html += '<tr><td>#' + pred.round_number + '</td>';
                                     html += '<td><div style="display: inline-flex; align-items: center; gap: 8px;">';
                                     html += '<div style="width: 30px; height: 30px; border-radius: 50%; background-color: ' + colors.bg + '; color: ' + colors.text + '; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.2);">';
                                     html += num;
-                                    html += '</div></div></td></tr>';
+                                    html += '</div></div></td><td>' + when + '</td></tr>';
                                 });
                                 html += '</tbody></table>';
                                 $('#rouletteUpcomingTable').html(html);
@@ -690,13 +749,15 @@ include __DIR__ . '/../includes/navbar.php';
                             if (data.predictions.length === 0) {
                                 $('#crashUpcomingTable').html('<p style="color: #999; text-align: center;">No predictions available</p>');
                             } else {
-                                let html = '<table class="admin-table" style="font-size: 0.9em; width: 100%;"><thead><tr><th>Round</th><th>Predicted Crash</th></tr></thead><tbody>';
-                                data.predictions.forEach(function(pred) {
+                                let html = '<table class="admin-table" style="font-size: 0.9em; width: 100%;"><thead><tr><th>Round</th><th>Predicted Crash</th><th>When</th></tr></thead><tbody>';
+                                data.predictions.forEach(function(pred, index) {
                                     const multValue = parseFloat(pred.predicted_crash_point);
                                     let color = '#dc3545'; // Red for low
                                     if (multValue >= 5) color = '#ffc107'; // Yellow for medium
                                     if (multValue >= 10) color = '#28a745'; // Green for high
-                                    html += '<tr><td>#' + pred.round_number + '</td><td><strong style="color: ' + color + ';">' + parseFloat(pred.predicted_crash_point).toFixed(2) + 'x</strong></td></tr>';
+                                    const secondsFromNow = crashRoundInterval * (index + 1);
+                                    const when = formatRelativeFromNow(secondsFromNow);
+                                    html += '<tr><td>#' + pred.round_number + '</td><td><strong style="color: ' + color + ';">' + parseFloat(pred.predicted_crash_point).toFixed(2) + 'x</strong></td><td>' + when + '</td></tr>';
                                 });
                                 html += '</tbody></table>';
                                 $('#crashUpcomingTable').html(html);
