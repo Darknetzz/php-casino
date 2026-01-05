@@ -85,12 +85,28 @@ include __DIR__ . '/../includes/navbar.php';
             <span class="close" onclick="closeModal('diceStatsModal')">&times;</span>
             <h3>Your Dice Stats</h3>
             <div class="win-rate-section section" style="margin: 15px 0; background: #f8f9fa; border-radius: 8px;">
-                <div id="winRateDisplay" style="color: #666;">
-                    <span>Win Rate: <strong id="winRate">-</strong>%</span>
-                    <span style="margin-left: 20px;">Games Played: <strong id="gamesPlayed">-</strong></span>
-                    <span style="margin-left: 20px;">Wins: <strong id="wins">-</strong></span>
-                    <span style="margin-left: 20px;">Net Win/Loss: <strong id="netWinLoss">-</strong></span>
-                </div>
+                <table class="slots-info-table" style="width: 100%; margin: 0;">
+                    <tr>
+                        <th style="text-align: left;">Stat</th>
+                        <th style="text-align: right;">Value</th>
+                    </tr>
+                    <tr>
+                        <td>Win Rate</td>
+                        <td style="text-align: right;"><strong id="winRate">-</strong>%</td>
+                    </tr>
+                    <tr>
+                        <td>Games Played</td>
+                        <td style="text-align: right;"><strong id="gamesPlayed">-</strong></td>
+                    </tr>
+                    <tr>
+                        <td>Wins</td>
+                        <td style="text-align: right;"><strong id="wins">-</strong></td>
+                    </tr>
+                    <tr>
+                        <td>Net Win/Loss</td>
+                        <td style="text-align: right;"><strong id="netWinLoss">-</strong></td>
+                    </tr>
+                </table>
             </div>
             <p style="margin-top: 10px; color: #666; font-size: 13px;">
                 Stats are based on your bets and wins in this game.
