@@ -818,13 +818,28 @@ button.game-disabled,
     font-weight: 600;
 }
 
+/* Button groups for multiple increment buttons */
+.bet-adjust-buttons-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.bet-adjust-buttons-left {
+    order: -1;
+}
+
+.bet-adjust-buttons-right {
+    order: 1;
+}
+
 .bet-adjust-btn-inline {
-    width: 40px;
-    height: 40px;
-    padding: 0;
+    min-width: 50px;
+    height: 36px;
+    padding: 4px 8px;
     border: 2px solid;
     border-radius: 5px;
-    font-size: 24px;
+    font-size: 12px;
     font-weight: bold;
     cursor: pointer;
     transition: all 0.2s ease;
@@ -833,10 +848,12 @@ button.game-disabled,
     justify-content: center;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
     flex-shrink: 0;
+    white-space: nowrap;
 }
 
 .bet-adjust-btn-inline span {
     line-height: 1;
+    font-size: 11px;
 }
 
 .bet-adjust-btn-inline.bet-adjust-negative {

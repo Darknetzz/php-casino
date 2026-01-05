@@ -112,6 +112,38 @@ function loadDarkMode() {
 }
 
 // Add bet adjustment buttons to bet inputs
+// Calculate appropriate increment amounts based on balance
+function calculateIncrements(balance) {
+    balance = Math.max(balance, 1); // Ensure at least 1
+    
+    // Calculate increments: small, medium, large
+    // For small balances (< 100): 1, 5, 10
+    // For medium balances (100-1000): 1, 10, 100
+    // For large balances (1000+): 10, 100, 1000 or percentage-based
+    let increments = [];
+    
+    if (balance < 100) {
+        increments = [1, 5, 10];
+    } else if (balance < 1000) {
+        increments = [1, 10, 50];
+    } else if (balance < 10000) {
+        increments = [10, 100, 500];
+    } else if (balance < 100000) {
+        increments = [100, 1000, 5000];
+    } else {
+        // For very large balances, use percentage-based increments
+        increments = [
+            Math.round(balance * 0.01),  // 1%
+            Math.round(balance * 0.05),  // 5%
+            Math.round(balance * 0.10)   // 10%
+        ];
+    }
+    
+    // Ensure increments are reasonable and unique
+    increments = increments.filter((val, idx, arr) => arr.indexOf(val) === idx && val >= 1);
+    return increments.sort((a, b) => a - b);
+}
+
 function addBetAdjustButtons(inputSelector) {
     const $input = $(inputSelector);
     if ($input.length === 0 || $input.closest('.bet-input-inline-wrapper').length > 0) {
@@ -122,38 +154,89 @@ function addBetAdjustButtons(inputSelector) {
     const $inlineWrapper = $('<div class="bet-input-inline-wrapper"></div>');
     $input.wrap($inlineWrapper);
     
-    // Create minus button (left side)
+    // Add class to input for styling
+    $input.addClass('bet-input-inline');
+    
+    // Fetch balance and create buttons
+    $.get(getApiPath('getBalance'), function(data) {
+        if (!data.success) {
+            // Fallback to simple +/-1 buttons if balance fetch fails
+            createSimpleButtons($input);
+            return;
+        }
+        
+        const balance = parseFloat(data.balance) || 1000;
+        const increments = calculateIncrements(balance);
+        
+        // Create decrease buttons (left side)
+        const $decreaseContainer = $('<div class="bet-adjust-buttons-group bet-adjust-buttons-left"></div>');
+        increments.forEach(function(amount) {
+            const $btn = $('<button type="button" class="bet-adjust-btn-inline bet-adjust-negative" title="Decrease by $' + amount + '"></button>');
+            const displayText = amount >= 1000 ? 
+                (amount % 1000 === 0 ? (amount / 1000) + 'k' : (amount / 1000).toFixed(1) + 'k') : 
+                amount;
+            $btn.html('<span>−' + displayText + '</span>');
+            $btn.attr('data-adjust', -amount);
+            $btn.on('click', function(e) {
+                e.preventDefault();
+                adjustBetAmount($input, -amount);
+            });
+            $decreaseContainer.append($btn);
+        });
+        
+        // Create increase buttons (right side)
+        const $increaseContainer = $('<div class="bet-adjust-buttons-group bet-adjust-buttons-right"></div>');
+        increments.forEach(function(amount) {
+            const $btn = $('<button type="button" class="bet-adjust-btn-inline bet-adjust-positive" title="Increase by $' + amount + '"></button>');
+            const displayText = amount >= 1000 ? 
+                (amount % 1000 === 0 ? (amount / 1000) + 'k' : (amount / 1000).toFixed(1) + 'k') : 
+                amount;
+            $btn.html('<span>+' + displayText + '</span>');
+            $btn.attr('data-adjust', amount);
+            $btn.on('click', function(e) {
+                e.preventDefault();
+                adjustBetAmount($input, amount);
+            });
+            $increaseContainer.append($btn);
+        });
+        
+        // Add buttons to wrapper
+        $input.before($decreaseContainer);
+        $input.after($increaseContainer);
+    }, 'json').fail(function() {
+        // Fallback to simple buttons on error
+        createSimpleButtons($input);
+    });
+}
+
+// Helper function to adjust bet amount
+function adjustBetAmount($input, adjust) {
+    const current = parseFloat($input.val()) || 0;
+    const min = parseFloat($input.attr('min')) || 0;
+    const maxAttr = $input.attr('max');
+    const max = maxAttr ? parseFloat(maxAttr) : Infinity;
+    const newValue = Math.max(min, Math.min(max, current + adjust));
+    $input.val(newValue).trigger('change');
+}
+
+// Fallback function for simple +/-1 buttons
+function createSimpleButtons($input) {
     const $minusBtn = $('<button type="button" class="bet-adjust-btn-inline bet-adjust-negative" title="Decrease bet"></button>');
     $minusBtn.html('<span>−</span>');
     $minusBtn.on('click', function(e) {
         e.preventDefault();
-        const current = parseFloat($input.val()) || 0;
-        const min = parseFloat($input.attr('min')) || 0;
-        const maxAttr = $input.attr('max');
-        const max = maxAttr ? parseFloat(maxAttr) : Infinity;
-        const newValue = Math.max(min, Math.min(max, current - 1));
-        $input.val(newValue).trigger('change');
+        adjustBetAmount($input, -1);
     });
     
-    // Create plus button (right side)
     const $plusBtn = $('<button type="button" class="bet-adjust-btn-inline bet-adjust-positive" title="Increase bet"></button>');
     $plusBtn.html('<span>+</span>');
     $plusBtn.on('click', function(e) {
         e.preventDefault();
-        const current = parseFloat($input.val()) || 0;
-        const min = parseFloat($input.attr('min')) || 0;
-        const maxAttr = $input.attr('max');
-        const max = maxAttr ? parseFloat(maxAttr) : Infinity;
-        const newValue = Math.max(min, Math.min(max, current + 1));
-        $input.val(newValue).trigger('change');
+        adjustBetAmount($input, 1);
     });
     
-    // Add buttons to wrapper (minus before input, plus after)
     $input.before($minusBtn);
     $input.after($plusBtn);
-    
-    // Add class to input for styling
-    $input.addClass('bet-input-inline');
 }
 
 // Initialize bet adjustment buttons for all bet inputs
