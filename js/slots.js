@@ -294,6 +294,14 @@ $(document).ready(function() {
             }
         }
         
+        // Count occurrences of each symbol
+        const symbolCounts = {};
+        resultSymbols.forEach(function(symbol) {
+            if (symbol) {
+                symbolCounts[symbol] = (symbolCounts[symbol] || 0) + 1;
+            }
+        });
+        
         // Check N-of-a-kind rules (ordered by specificity - specific symbols first, then "any")
         // Sort rules: specific symbols first, then "any", then by count (higher first)
         const sortedRules = nOfKindRules.slice().sort(function(a, b) {
@@ -310,13 +318,11 @@ $(document).ready(function() {
             return (b.count || 0) - (a.count || 0);
         });
         
-        // Count occurrences of each symbol
-        const symbolCounts = {};
-        resultSymbols.forEach(function(symbol) {
-            if (symbol) {
-                symbolCounts[symbol] = (symbolCounts[symbol] || 0) + 1;
-            }
-        });
+        // Find the best matching rule
+        // Priority: 1) Specific symbol matches, 2) "any" symbol matches, 3) Highest count
+        let bestMatch = null;
+        let bestIsSpecific = false;
+        let bestCount = 0;
         
         // Check each rule
         for (let i = 0; i < sortedRules.length; i++) {
@@ -328,17 +334,33 @@ $(document).ready(function() {
             if (isAnySymbol) {
                 // Check if any symbol appears exactly N times (and not all symbols)
                 for (const symbol in symbolCounts) {
-                    if (symbolCounts[symbol] === count && resultSymbols.length > count) {
-                        return parseFloat(rule.multiplier) || 0;
+                    const actualCount = symbolCounts[symbol];
+                    if (actualCount === count && resultSymbols.length > count) {
+                        // Only consider if: (1) no specific match yet, or (2) same type and higher count
+                        if (!bestIsSpecific && (bestMatch === null || count > bestCount)) {
+                            bestMatch = rule;
+                            bestCount = count;
+                            bestIsSpecific = false;
+                        }
                     }
                 }
             } else {
                 // Check if the specific symbol appears exactly N times
                 const actualCount = symbolCounts[ruleSymbol] || 0;
                 if (actualCount === count && resultSymbols.length > count) {
-                    return parseFloat(rule.multiplier) || 0;
+                    // Specific symbol matches always take priority, or if already specific, use higher count
+                    if (bestMatch === null || !bestIsSpecific || (bestIsSpecific && count > bestCount)) {
+                        bestMatch = rule;
+                        bestCount = count;
+                        bestIsSpecific = true;
+                    }
                 }
             }
+        }
+        
+        // Return the multiplier from the best match, or 0 if no match
+        if (bestMatch) {
+            return parseFloat(bestMatch.multiplier) || 0;
         }
         
         return 0;
@@ -396,6 +418,14 @@ $(document).ready(function() {
             }
         }
         
+        // Count occurrences of each symbol
+        const symbolCounts = {};
+        resultSymbols.forEach(function(symbol) {
+            if (symbol) {
+                symbolCounts[symbol] = (symbolCounts[symbol] || 0) + 1;
+            }
+        });
+        
         // Check N-of-a-kind rules (ordered by specificity - specific symbols first, then "any")
         // Sort rules: specific symbols first, then "any", then by count (higher first)
         const sortedRules = nOfKindRules.slice().sort(function(a, b) {
@@ -412,13 +442,12 @@ $(document).ready(function() {
             return (b.count || 0) - (a.count || 0);
         });
         
-        // Count occurrences of each symbol
-        const symbolCounts = {};
-        resultSymbols.forEach(function(symbol) {
-            if (symbol) {
-                symbolCounts[symbol] = (symbolCounts[symbol] || 0) + 1;
-            }
-        });
+        // Find the best matching rule
+        // Priority: 1) Specific symbol matches, 2) "any" symbol matches, 3) Highest count
+        let bestMatch = null;
+        let bestSymbol = null;
+        let bestIsSpecific = false;
+        let bestCount = 0;
         
         // Check each rule
         for (let i = 0; i < sortedRules.length; i++) {
@@ -430,31 +459,41 @@ $(document).ready(function() {
             if (isAnySymbol) {
                 // Check if any symbol appears exactly N times (and not all symbols)
                 for (const symbol in symbolCounts) {
-                    if (symbolCounts[symbol] === count && resultSymbols.length > count) {
-                        // Return indices of the N matching symbols
-                        const winningIndices = [];
-                        for (let j = 0; j < resultSymbols.length; j++) {
-                            if (resultSymbols[j] === symbol) {
-                                winningIndices.push(j);
-                            }
+                    const actualCount = symbolCounts[symbol];
+                    if (actualCount === count && resultSymbols.length > count) {
+                        // Only consider if: (1) no specific match yet, or (2) same type and higher count
+                        if (!bestIsSpecific && (bestMatch === null || count > bestCount)) {
+                            bestMatch = rule;
+                            bestSymbol = symbol;
+                            bestCount = count;
+                            bestIsSpecific = false;
                         }
-                        return winningIndices;
                     }
                 }
             } else {
                 // Check if the specific symbol appears exactly N times
                 const actualCount = symbolCounts[ruleSymbol] || 0;
                 if (actualCount === count && resultSymbols.length > count) {
-                    // Return indices of the N matching symbols
-                    const winningIndices = [];
-                    for (let j = 0; j < resultSymbols.length; j++) {
-                        if (resultSymbols[j] === ruleSymbol) {
-                            winningIndices.push(j);
-                        }
+                    // Specific symbol matches always take priority, or if already specific, use higher count
+                    if (bestMatch === null || !bestIsSpecific || (bestIsSpecific && count > bestCount)) {
+                        bestMatch = rule;
+                        bestSymbol = ruleSymbol;
+                        bestCount = count;
+                        bestIsSpecific = true;
                     }
-                    return winningIndices;
                 }
             }
+        }
+        
+        // Return indices of the winning symbols from the best match
+        if (bestMatch && bestSymbol) {
+            const winningIndices = [];
+            for (let j = 0; j < resultSymbols.length; j++) {
+                if (resultSymbols[j] === bestSymbol) {
+                    winningIndices.push(j);
+                }
+            }
+            return winningIndices;
         }
         
         return [];
