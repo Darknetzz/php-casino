@@ -157,6 +157,7 @@ include __DIR__ . '/../includes/navbar.php';
                     <span>Win Rate: <strong id="winRate">-</strong>%</span>
                     <span style="margin-left: 20px;">Games Played: <strong id="gamesPlayed">-</strong></span>
                     <span style="margin-left: 20px;">Wins: <strong id="wins">-</strong></span>
+                    <span style="margin-left: 20px;">Net Win/Loss: <strong id="netWinLoss">-</strong></span>
                 </div>
             </div>
             
@@ -183,17 +184,22 @@ include __DIR__ . '/../includes/navbar.php';
                     $('#winRate').text(data.winRate.rate || 0);
                     $('#gamesPlayed').text(data.winRate.total || 0);
                     $('#wins').text(data.winRate.wins || 0);
+                    const netWinLoss = data.winRate.netWinLoss || 0;
+                    const netWinLossText = netWinLoss >= 0 ? '$' + netWinLoss.toFixed(2) : '-$' + Math.abs(netWinLoss).toFixed(2);
+                    $('#netWinLoss').text(netWinLossText).css('color', netWinLoss >= 0 ? '#28a745' : '#dc3545');
                 } else {
                     console.error('Failed to load stats:', data);
                     $('#winRate').text('0');
                     $('#gamesPlayed').text('0');
                     $('#wins').text('0');
+                    $('#netWinLoss').text('$0.00').css('color', '#666');
                 }
             }, 'json').fail(function(xhr, status, error) {
                 console.error('Error loading stats:', status, error);
                 $('#winRate').text('0');
                 $('#gamesPlayed').text('0');
                 $('#wins').text('0');
+                $('#netWinLoss').text('$0.00').css('color', '#666');
             });
         });
     </script>

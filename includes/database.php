@@ -429,19 +429,23 @@ class Database {
             $gameClause = "AND game IS NOT NULL";
         }
         
-        // Get total games played (bets)
-        $stmt = $this->db->prepare("SELECT COUNT(*) as total FROM transactions WHERE user_id = ? AND type = 'bet' $gameClause");
+        // Get total games played (bets) and total bet amount
+        $stmt = $this->db->prepare("SELECT COUNT(*) as total, SUM(amount) as totalBetAmount FROM transactions WHERE user_id = ? AND type = 'bet' $gameClause");
         $stmt->execute($params);
-        $totalGames = intval($stmt->fetch(PDO::FETCH_ASSOC)['total']);
+        $betResult = $stmt->fetch(PDO::FETCH_ASSOC);
+        $totalGames = intval($betResult['total']);
+        $totalBets = floatval($betResult['totalBetAmount'] ?? 0);
         
         // Get all win transactions with descriptions to filter by multiplier
-        $stmt = $this->db->prepare("SELECT description FROM transactions WHERE user_id = ? AND type = 'win' $gameClause");
+        $stmt = $this->db->prepare("SELECT amount, description FROM transactions WHERE user_id = ? AND type = 'win' $gameClause");
         $stmt->execute($params);
         $winTransactions = $stmt->fetchAll(PDO::FETCH_ASSOC);
         
-        // Count only wins with multiplier >= 1
+        // Count only wins with multiplier >= 1 and calculate total win amount
         $wins = 0;
+        $totalWins = 0;
         foreach ($winTransactions as $win) {
+            $winAmount = floatval($win['amount']);
             $description = $win['description'] ?? '';
             
             // Extract multiplier from description
@@ -457,11 +461,15 @@ class Database {
             // Only count as win if multiplier >= 1 (or if no multiplier found, count it to be safe)
             if ($multiplier === null || $multiplier >= 1) {
                 $wins++;
+                $totalWins += $winAmount;
             }
         }
         
+        // Calculate net win/loss
+        $netWinLoss = $totalWins - $totalBets;
+        
         if ($totalGames == 0) {
-            return ['wins' => 0, 'total' => 0, 'rate' => 0];
+            return ['wins' => 0, 'total' => 0, 'rate' => 0, 'netWinLoss' => 0];
         }
         
         $rate = ($wins / $totalGames) * 100;
@@ -469,7 +477,8 @@ class Database {
         return [
             'wins' => $wins,
             'total' => $totalGames,
-            'rate' => round($rate, 2)
+            'rate' => round($rate, 2),
+            'netWinLoss' => round($netWinLoss, 2)
         ];
     }
     

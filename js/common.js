@@ -46,12 +46,20 @@ function updateWinRateStats(gameName) {
             $('#winRate').text(data.winRate.rate || 0);
             $('#gamesPlayed').text(data.winRate.total || 0);
             $('#wins').text(data.winRate.wins || 0);
+            if ($('#netWinLoss').length > 0) {
+                const netWinLoss = data.winRate.netWinLoss || 0;
+                const netWinLossText = netWinLoss >= 0 ? '$' + netWinLoss.toFixed(2) : '-$' + Math.abs(netWinLoss).toFixed(2);
+                $('#netWinLoss').text(netWinLossText).css('color', netWinLoss >= 0 ? '#28a745' : '#dc3545');
+            }
         } else {
             // On error, keep current values or set to 0 if not set
             if ($('#winRate').text() === '-') {
                 $('#winRate').text('0');
                 $('#gamesPlayed').text('0');
                 $('#wins').text('0');
+                if ($('#netWinLoss').length > 0) {
+                    $('#netWinLoss').text('$0.00').css('color', '#666');
+                }
             }
         }
     }, 'json').fail(function() {
@@ -60,6 +68,9 @@ function updateWinRateStats(gameName) {
             $('#winRate').text('0');
             $('#gamesPlayed').text('0');
             $('#wins').text('0');
+            if ($('#netWinLoss').length > 0) {
+                $('#netWinLoss').text('$0.00').css('color', '#666');
+            }
         }
     });
 }

@@ -692,10 +692,10 @@ include __DIR__ . '/../includes/navbar.php';
                         <table class="multiplier-table" id="slotsNOfKindTable" style="max-width: 100%;">
                             <thead>
                                 <tr>
-                                    <th style="width: 25%;">Count (N)</th>
-                                    <th style="width: 35%;">Symbol</th>
-                                    <th style="width: 25%;">Multiplier</th>
-                                    <th style="width: 15%;">Actions</th>
+                                    <th style="width: 20%;">Count (N)</th>
+                                    <th style="width: 30%;">Symbol</th>
+                                    <th style="width: 20%;">Multiplier</th>
+                                    <th style="width: 30%;">Actions</th>
                                 </tr>
                             </thead>
                             <tbody id="slotsNOfKindBody">
@@ -740,7 +740,11 @@ include __DIR__ . '/../includes/navbar.php';
                                                min="0" step="0.1" style="width: 100px; padding: 8px;" required>
                                     </td>
                                     <td>
-                                        <button type="button" class="btn btn-secondary" onclick="removeNOfKindRule(this)" style="padding: 5px 10px; font-size: 12px;">Remove</button>
+                                        <div style="display: flex; gap: 5px; align-items: center;">
+                                            <button type="button" class="btn btn-secondary" onclick="moveNOfKindRuleUp(this)" style="padding: 5px 8px; font-size: 12px;" title="Move Up">↑</button>
+                                            <button type="button" class="btn btn-secondary" onclick="moveNOfKindRuleDown(this)" style="padding: 5px 8px; font-size: 12px;" title="Move Down">↓</button>
+                                            <button type="button" class="btn btn-secondary" onclick="removeNOfKindRule(this)" style="padding: 5px 10px; font-size: 12px;">Remove</button>
+                                        </div>
                                     </td>
                                 </tr>
                                 <?php endforeach; ?>
@@ -758,9 +762,9 @@ include __DIR__ . '/../includes/navbar.php';
                         <table class="multiplier-table" id="slotsCustomCombinationsTable" style="max-width: 100%;">
                             <thead>
                                 <tr>
-                                    <th style="width: 60%;">Symbols (Ordered)</th>
-                                    <th style="width: 20%;">Multiplier</th>
-                                    <th style="width: 20%;">Actions</th>
+                                    <th style="width: 50%;">Symbols (Ordered)</th>
+                                    <th style="width: 15%;">Multiplier</th>
+                                    <th style="width: 35%;">Actions</th>
                                 </tr>
                             </thead>
                             <tbody id="slotsCustomCombinationsBody">
@@ -829,7 +833,11 @@ include __DIR__ . '/../includes/navbar.php';
                                                min="0" step="0.1" style="width: 100px; padding: 8px;" required>
                                     </td>
                                     <td>
-                                        <button type="button" class="btn btn-secondary" onclick="removeCustomCombination(this)" style="padding: 5px 10px; font-size: 12px;">Remove</button>
+                                        <div style="display: flex; gap: 5px; align-items: center;">
+                                            <button type="button" class="btn btn-secondary" onclick="moveCustomCombinationUp(this)" style="padding: 5px 8px; font-size: 12px;" title="Move Up">↑</button>
+                                            <button type="button" class="btn btn-secondary" onclick="moveCustomCombinationDown(this)" style="padding: 5px 8px; font-size: 12px;" title="Move Down">↓</button>
+                                            <button type="button" class="btn btn-secondary" onclick="removeCustomCombination(this)" style="padding: 5px 10px; font-size: 12px;">Remove</button>
+                                        </div>
                                     </td>
                                 </tr>
                                 <?php endforeach; ?>
@@ -1920,7 +1928,11 @@ include __DIR__ . '/../includes/navbar.php';
                     <input type="number" class="custom-combo-multiplier" value="${multiplier}" min="0" step="0.1" style="width: 100px; padding: 8px;" required>
                 </td>
                 <td>
-                    <button type="button" class="btn btn-secondary" onclick="removeCustomCombination(this)" style="padding: 5px 10px; font-size: 12px;">Remove</button>
+                    <div style="display: flex; gap: 5px; align-items: center;">
+                        <button type="button" class="btn btn-secondary" onclick="moveCustomCombinationUp(this)" style="padding: 5px 8px; font-size: 12px;" title="Move Up">↑</button>
+                        <button type="button" class="btn btn-secondary" onclick="moveCustomCombinationDown(this)" style="padding: 5px 8px; font-size: 12px;" title="Move Down">↓</button>
+                        <button type="button" class="btn btn-secondary" onclick="removeCustomCombination(this)" style="padding: 5px 10px; font-size: 12px;">Remove</button>
+                    </div>
                 </td>
             `;
             tbody.appendChild(row);
@@ -2079,7 +2091,11 @@ include __DIR__ . '/../includes/navbar.php';
                     <input type="number" class="custom-combo-multiplier" value="5" min="0" step="0.1" style="width: 100px; padding: 8px;" required>
                 </td>
                 <td>
-                    <button type="button" class="btn btn-secondary" onclick="removeCustomCombination(this)" style="padding: 5px 10px; font-size: 12px;">Remove</button>
+                    <div style="display: flex; gap: 5px; align-items: center;">
+                        <button type="button" class="btn btn-secondary" onclick="moveCustomCombinationUp(this)" style="padding: 5px 8px; font-size: 12px;" title="Move Up">↑</button>
+                        <button type="button" class="btn btn-secondary" onclick="moveCustomCombinationDown(this)" style="padding: 5px 8px; font-size: 12px;" title="Move Down">↓</button>
+                        <button type="button" class="btn btn-secondary" onclick="removeCustomCombination(this)" style="padding: 5px 10px; font-size: 12px;">Remove</button>
+                    </div>
                 </td>
             `;
             tbody.appendChild(row);
@@ -2090,6 +2106,26 @@ include __DIR__ . '/../includes/navbar.php';
             const row = button.closest('tr');
             row.remove();
             updateCustomCombinationsIndices();
+        }
+        
+        function moveCustomCombinationUp(button) {
+            const row = button.closest('tr');
+            const tbody = row.parentNode;
+            const prevRow = row.previousElementSibling;
+            if (prevRow) {
+                tbody.insertBefore(row, prevRow);
+                updateCustomCombinationsIndices();
+            }
+        }
+        
+        function moveCustomCombinationDown(button) {
+            const row = button.closest('tr');
+            const tbody = row.parentNode;
+            const nextRow = row.nextElementSibling;
+            if (nextRow) {
+                tbody.insertBefore(nextRow, row);
+                updateCustomCombinationsIndices();
+            }
         }
         
         function updateCustomCombinationsIndices() {
@@ -2121,7 +2157,11 @@ include __DIR__ . '/../includes/navbar.php';
                     <input type="number" class="n-of-kind-multiplier" value="1" min="0" step="0.1" style="width: 100px; padding: 8px;" required>
                 </td>
                 <td>
-                    <button type="button" class="btn btn-secondary" onclick="removeNOfKindRule(this)" style="padding: 5px 10px; font-size: 12px;">Remove</button>
+                    <div style="display: flex; gap: 5px; align-items: center;">
+                        <button type="button" class="btn btn-secondary" onclick="moveNOfKindRuleUp(this)" style="padding: 5px 8px; font-size: 12px;" title="Move Up">↑</button>
+                        <button type="button" class="btn btn-secondary" onclick="moveNOfKindRuleDown(this)" style="padding: 5px 8px; font-size: 12px;" title="Move Down">↓</button>
+                        <button type="button" class="btn btn-secondary" onclick="removeNOfKindRule(this)" style="padding: 5px 10px; font-size: 12px;">Remove</button>
+                    </div>
                 </td>
             `;
             tbody.appendChild(row);
@@ -2155,6 +2195,26 @@ include __DIR__ . '/../includes/navbar.php';
             const row = button.closest('tr');
             row.remove();
             updateNOfKindIndices();
+        }
+        
+        function moveNOfKindRuleUp(button) {
+            const row = button.closest('tr');
+            const tbody = row.parentNode;
+            const prevRow = row.previousElementSibling;
+            if (prevRow) {
+                tbody.insertBefore(row, prevRow);
+                updateNOfKindIndices();
+            }
+        }
+        
+        function moveNOfKindRuleDown(button) {
+            const row = button.closest('tr');
+            const tbody = row.parentNode;
+            const nextRow = row.nextElementSibling;
+            if (nextRow) {
+                tbody.insertBefore(nextRow, row);
+                updateNOfKindIndices();
+            }
         }
         
         // Update symbol dropdowns in custom combinations when symbols are added/removed
