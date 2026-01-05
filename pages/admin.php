@@ -2102,6 +2102,31 @@ include __DIR__ . '/../includes/navbar.php';
             updateCustomCombinationsIndices();
         }
         
+        // Generic reusable row reordering functions
+        function moveRowUp(button, updateFunction) {
+            const row = button.closest('tr');
+            const tbody = row.parentNode;
+            const prevRow = row.previousElementSibling;
+            if (prevRow) {
+                tbody.insertBefore(row, prevRow);
+                if (updateFunction && typeof window[updateFunction] === 'function') {
+                    window[updateFunction]();
+                }
+            }
+        }
+        
+        function moveRowDown(button, updateFunction) {
+            const row = button.closest('tr');
+            const tbody = row.parentNode;
+            const nextRow = row.nextElementSibling;
+            if (nextRow) {
+                tbody.insertBefore(nextRow, row);
+                if (updateFunction && typeof window[updateFunction] === 'function') {
+                    window[updateFunction]();
+                }
+            }
+        }
+        
         function removeCustomCombination(button) {
             const row = button.closest('tr');
             row.remove();
@@ -2109,23 +2134,11 @@ include __DIR__ . '/../includes/navbar.php';
         }
         
         function moveCustomCombinationUp(button) {
-            const row = button.closest('tr');
-            const tbody = row.parentNode;
-            const prevRow = row.previousElementSibling;
-            if (prevRow) {
-                tbody.insertBefore(row, prevRow);
-                updateCustomCombinationsIndices();
-            }
+            moveRowUp(button, 'updateCustomCombinationsIndices');
         }
         
         function moveCustomCombinationDown(button) {
-            const row = button.closest('tr');
-            const tbody = row.parentNode;
-            const nextRow = row.nextElementSibling;
-            if (nextRow) {
-                tbody.insertBefore(nextRow, row);
-                updateCustomCombinationsIndices();
-            }
+            moveRowDown(button, 'updateCustomCombinationsIndices');
         }
         
         function updateCustomCombinationsIndices() {
@@ -2198,23 +2211,11 @@ include __DIR__ . '/../includes/navbar.php';
         }
         
         function moveNOfKindRuleUp(button) {
-            const row = button.closest('tr');
-            const tbody = row.parentNode;
-            const prevRow = row.previousElementSibling;
-            if (prevRow) {
-                tbody.insertBefore(row, prevRow);
-                updateNOfKindIndices();
-            }
+            moveRowUp(button, 'updateNOfKindIndices');
         }
         
         function moveNOfKindRuleDown(button) {
-            const row = button.closest('tr');
-            const tbody = row.parentNode;
-            const nextRow = row.nextElementSibling;
-            if (nextRow) {
-                tbody.insertBefore(nextRow, row);
-                updateNOfKindIndices();
-            }
+            moveRowDown(button, 'updateNOfKindIndices');
         }
         
         // Update symbol dropdowns in custom combinations when symbols are added/removed
