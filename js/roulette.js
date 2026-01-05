@@ -448,13 +448,13 @@ $(document).ready(function() {
                         // Don't call showRoundResult again to avoid re-animating
                         const resultColor = getNumberColor(lastRoundResult);
                         // Always update to ensure it's displayed correctly
-                        $('#rouletteResult').html(`<span class="roulette-number roulette-${resultColor}">${lastRoundResult}</span>`);
+                        $('#rouletteResult').html(`<span class="roulette-number roulette-${resultColor}">${lastRoundResult}</span>`).css('color', '');
                         $('#spinBtn').hide();
                         $('#roundCountdown').show();
                         $('#countdownText').html('Next round starting soon...');
                     } else {
                         // No previous result - worker might not be running
-                        $('#rouletteResult').html('Waiting for next round...<br><small style="color: #999;">Make sure the game rounds worker is running</small>');
+                        $('#rouletteResult').html('Waiting for next round...<br><small style="color: #999;">Make sure the game rounds worker is running</small>').css('color', '#ffffff');
                         $('#spinBtn').hide();
                         $('#roundCountdown').show();
                         $('#countdownText').html('Waiting for next round...');
@@ -497,10 +497,11 @@ $(document).ready(function() {
                     $('#rouletteCenterResult').css('opacity', 0);
                     const bettingEndsIn = round.time_until_betting_ends || 0;
                     const resultIn = round.time_until_result || (bettingEndsIn + 4); // fallback to +4 if not provided
-                    $('#rouletteResult').html(`Round #${round.round_number}`);
+                    $('#countdownText').html(`Round #${round.round_number}`);
                     // Hide spin button, show countdown in central mode
                     $('#spinBtn').hide();
                     $('#roundCountdown').show();
+                    // Countdown will be set by updateBettingCountdown, which will set white color
                     // For the main countdown, show time until result (betting ends + spinning duration)
                     updateBettingCountdown(bettingEndsIn, resultIn);
                     
@@ -643,8 +644,8 @@ $(document).ready(function() {
                 if (countdownPhase === 'betting') {
                     // Show betting countdown
                     if (bettingEnds > 0) {
-                        $('#rouletteResult').html(`Round #${currentRound.round_number}`);
-                        $('#countdownText').html(`Place your bets (${bettingEnds}s)...`);
+                        $('#rouletteResult').html(`Place your bets (${bettingEnds}s)...`).css('color', '#ffffff');
+                        $('#countdownText').html(`Round #${currentRound.round_number}`);
                         
                         // Enable betting
                         $('.bet-btn, #addNumberBetBtn').prop('disabled', false).removeClass('disabled');
@@ -653,8 +654,8 @@ $(document).ready(function() {
                 } else if (countdownPhase === 'spinning') {
                     // Show spinning countdown
                     if (spinningTime > 0) {
-                        $('#rouletteResult').html(`Round #${currentRound.round_number}`);
-                        $('#countdownText').html(`Spinning in ${spinningTime}s...`);
+                        $('#rouletteResult').html(`Spinning in ${spinningTime}s...`).css('color', '#ffffff');
+                        $('#countdownText').html(`Round #${currentRound.round_number}`);
                     } else {
                         clearInterval(bettingCountdownInterval);
                         bettingCountdownInterval = null;
@@ -730,7 +731,7 @@ $(document).ready(function() {
         spinAnimationInterval = setInterval(function() {
             const randomNum = Math.floor(Math.random() * 37);
             const color = getNumberColor(randomNum);
-            $('#rouletteResult').html(`<span class="roulette-number roulette-${color}">${randomNum}</span>`);
+            $('#rouletteResult').html(`<span class="roulette-number roulette-${color}">${randomNum}</span>`).css('color', '');
             spinCount++;
             
             if (spinCount >= maxSpins) {
@@ -748,7 +749,7 @@ $(document).ready(function() {
         }
         
         const resultColor = getNumberColor(resultNum);
-        $('#rouletteResult').html(`<span class="roulette-number roulette-${resultColor}">${resultNum}</span>`);
+        $('#rouletteResult').html(`<span class="roulette-number roulette-${resultColor}">${resultNum}</span>`).css('color', '');
         
         // Display result in center circle
         const centerCircle = $('#rouletteCenterResult');
