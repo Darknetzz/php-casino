@@ -10,7 +10,12 @@ include __DIR__ . '/../includes/navbar.php';
     
     <div class="container">
         <div class="game-container section">
-            <h1>🛞 Roulette</h1>
+            <div class="game-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h1>🛞 Roulette</h1>
+                <button class="btn btn-outline-secondary" onclick="openModal('rouletteStatsModal')" title="View your stats">
+                    📊 Stats
+                </button>
+            </div>
             
             <?php 
             $rouletteMode = getSetting('roulette_mode', 'local');
@@ -147,16 +152,6 @@ include __DIR__ . '/../includes/navbar.php';
                 <div id="result" class="result-message"></div>
             </div>
             
-            <div class="win-rate-section section" style="margin: 20px 0; background: #f8f9fa; border-radius: 8px;">
-                <h4 style="margin: 0 0 10px 0; color: #667eea;">📊 Your Stats</h4>
-                <div id="winRateDisplay" style="color: #444; font-weight: 500;">
-                    <span>Win Rate: <strong id="winRate">-</strong>%</span>
-                    <span style="margin-left: 20px;">Games Played: <strong id="gamesPlayed">-</strong></span>
-                    <span style="margin-left: 20px;">Wins: <strong id="wins">-</strong></span>
-                    <span style="margin-left: 20px;">Net Win/Loss: <strong id="netWinLoss">-</strong></span>
-                </div>
-            </div>
-            
             <div class="game-info section" style="text-align: center;">
                 <button class="btn btn-secondary" onclick="openModal('rouletteHowToPlayModal')" style="margin: 5px;">How to Play</button>
                 <button class="btn btn-secondary" onclick="openModal('roulettePayoutsModal')" style="margin: 5px;">Payouts</button>
@@ -199,6 +194,25 @@ include __DIR__ . '/../includes/navbar.php';
             });
         });
     </script>
+    
+    <!-- Stats Modal -->
+    <div id="rouletteStatsModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('rouletteStatsModal')">&times;</span>
+            <h3>Your Roulette Stats</h3>
+            <div class="win-rate-section section" style="margin: 15px 0; background: #f8f9fa; border-radius: 8px;">
+                <div id="winRateDisplay" style="color: #444; font-weight: 500;">
+                    <span>Win Rate: <strong id="winRate">-</strong>%</span>
+                    <span style="margin-left: 20px;">Games Played: <strong id="gamesPlayed">-</strong></span>
+                    <span style="margin-left: 20px;">Wins: <strong id="wins">-</strong></span>
+                    <span style="margin-left: 20px;">Net Win/Loss: <strong id="netWinLoss">-</strong></span>
+                </div>
+            </div>
+            <p style="margin-top: 10px; color: #666; font-size: 13px;">
+                Stats are based on your bets and wins in this game.
+            </p>
+        </div>
+    </div>
     
     <!-- How to Play Modal -->
     <div id="rouletteHowToPlayModal" class="modal" style="display: none;">

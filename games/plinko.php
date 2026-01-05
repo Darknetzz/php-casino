@@ -10,7 +10,12 @@ include __DIR__ . '/../includes/navbar.php';
     
     <div class="container">
         <div class="game-container section">
-            <h1>⚪ Plinko</h1>
+            <div class="game-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h1>⚪ Plinko</h1>
+                <button class="btn btn-outline-secondary" onclick="openModal('plinkoStatsModal')" title="View your stats">
+                    📊 Stats
+                </button>
+            </div>
             
             <div class="plinko-game">
                 <div class="bet-controls">
@@ -34,16 +39,6 @@ include __DIR__ . '/../includes/navbar.php';
                 </div>
                 
                 <div id="result" class="result-message"></div>
-            </div>
-            
-            <div class="win-rate-section section" style="margin: 20px 0; background: #f8f9fa; border-radius: 8px;">
-                <h4 style="margin: 0 0 10px 0; color: #667eea;">📊 Your Stats</h4>
-                <div id="winRateDisplay" style="color: #666;">
-                    <span>Win Rate: <strong id="winRate">-</strong>%</span>
-                    <span style="margin-left: 20px;">Games Played: <strong id="gamesPlayed">-</strong></span>
-                    <span style="margin-left: 20px;">Wins: <strong id="wins">-</strong></span>
-                    <span style="margin-left: 20px;">Net Win/Loss: <strong id="netWinLoss">-</strong></span>
-                </div>
             </div>
             
             <div class="game-info section" style="text-align: center;">
@@ -98,6 +93,25 @@ include __DIR__ . '/../includes/navbar.php';
             }, 'json');
         });
     </script>
+    
+    <!-- Stats Modal -->
+    <div id="plinkoStatsModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('plinkoStatsModal')">&times;</span>
+            <h3>Your Plinko Stats</h3>
+            <div class="win-rate-section section" style="margin: 15px 0; background: #f8f9fa; border-radius: 8px;">
+                <div id="winRateDisplay" style="color: #666;">
+                    <span>Win Rate: <strong id="winRate">-</strong>%</span>
+                    <span style="margin-left: 20px;">Games Played: <strong id="gamesPlayed">-</strong></span>
+                    <span style="margin-left: 20px;">Wins: <strong id="wins">-</strong></span>
+                    <span style="margin-left: 20px;">Net Win/Loss: <strong id="netWinLoss">-</strong></span>
+                </div>
+            </div>
+            <p style="margin-top: 10px; color: #666; font-size: 13px;">
+                Stats are based on your bets and wins in this game.
+            </p>
+        </div>
+    </div>
     
     <!-- How to Play Modal -->
     <div id="plinkoHowToPlayModal" class="modal" style="display: none;">
