@@ -12,9 +12,17 @@ include __DIR__ . '/../includes/navbar.php';
         <div class="game-container section">
             <div class="game-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                 <h1>🚀 Crash</h1>
-                <button class="btn btn-outline-secondary" onclick="openModal('crashStatsModal')" title="View your stats">
-                    📊 Stats
-                </button>
+                <div class="game-header-actions" style="display: flex; gap: 8px;">
+                    <button class="btn btn-outline-secondary" onclick="openModal('crashStatsModal')" title="View your stats">
+                        📊 Stats
+                    </button>
+                    <button class="btn btn-outline-secondary" onclick="openModal('crashHowToPlayModal')" title="How to play">
+                        ❓ How to Play
+                    </button>
+                    <button class="btn btn-outline-secondary" onclick="openModal('crashInfoModal')" title="Game info">
+                        💰 Game Info
+                    </button>
+                </div>
             </div>
             
             <?php 
@@ -154,11 +162,6 @@ include __DIR__ . '/../includes/navbar.php';
                 </div>
                 
                 <div id="result" class="result-message"></div>
-            </div>
-            
-            <div class="game-info section" style="text-align: center;">
-                <button class="btn btn-secondary" onclick="openModal('crashHowToPlayModal')" style="margin: 5px;">How to Play</button>
-                <button class="btn btn-secondary" onclick="openModal('crashInfoModal')" style="margin: 5px;">Game Info</button>
             </div>
         </div>
     </div>
