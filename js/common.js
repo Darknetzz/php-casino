@@ -114,90 +114,46 @@ function loadDarkMode() {
 // Add bet adjustment buttons to bet inputs
 function addBetAdjustButtons(inputSelector) {
     const $input = $(inputSelector);
-    if ($input.length === 0 || $input.closest('.bet-input-wrapper').length > 0) {
+    if ($input.length === 0 || $input.closest('.bet-input-inline-wrapper').length > 0) {
         return; // Already has buttons or input doesn't exist
     }
     
-    // Check if input is inside bet-controls (flex container)
-    const $betControls = $input.closest('.bet-controls');
-    const isInBetControls = $betControls.length > 0;
+    // Wrap input in inline wrapper with minus/plus buttons
+    const $inlineWrapper = $('<div class="bet-input-inline-wrapper"></div>');
+    $input.wrap($inlineWrapper);
     
-    if (isInBetControls) {
-        // For inputs in bet-controls, wrap in a container that maintains flex behavior
-        const $wrapper = $('<div class="bet-input-wrapper"></div>');
-        $input.wrap($wrapper);
-        const $wrapperContainer = $input.parent(); // Get the wrapper after wrapping
-        
-        // Create button groups container (3-column grid)
-        const $buttonGroups = $('<div class="bet-adjust-buttons-inline"></div>');
-        
-        // Arrange buttons in grid order: +1000, +100, +10, -10, -100, -1000
-        const adjustments = [1000, 100, 10, -10, -100, -1000];
-        
-        adjustments.forEach(function(adjust) {
-            const $btn = $('<button type="button" class="btn btn-sm bet-adjust-btn"></button>');
-            $btn.text(adjust > 0 ? '+' + adjust : adjust);
-            $btn.attr('data-adjust', adjust);
-            
-            if (adjust > 0) {
-                $btn.addClass('bet-adjust-positive');
-            } else {
-                $btn.addClass('bet-adjust-negative');
-            }
-            
-            $btn.on('click', function(e) {
-                e.preventDefault();
-                const current = parseFloat($input.val()) || 0;
-                const min = parseFloat($input.attr('min')) || 0;
-                const max = parseFloat($input.attr('max')) || Infinity;
-                const newValue = Math.max(min, Math.min(max, current + adjust));
-                $input.val(newValue).trigger('change');
-            });
-            
-            $buttonGroups.append($btn);
-        });
-        
-        $wrapperContainer.append($buttonGroups);
-    } else {
-        // For inputs not in bet-controls, use form-group structure
-        const $formGroup = $('<div class="form-group"></div>');
-        $input.wrap($formGroup);
-        
-        const $inputWrapper = $('<div class="form-input-wrapper"></div>');
-        $input.wrap($inputWrapper);
-        const $inputWrapperContainer = $input.parent(); // Get the wrapper after wrapping
-        
-        // Create button groups container (3-column grid)
-        const $buttonGroups = $('<div class="form-button-groups"></div>');
-        
-        // Arrange buttons in grid order: +1000, +100, +10, -10, -100, -1000
-        const adjustments = [1000, 100, 10, -10, -100, -1000];
-        
-        adjustments.forEach(function(adjust) {
-            const $btn = $('<button type="button" class="btn btn-sm bet-adjust-btn"></button>');
-            $btn.text(adjust > 0 ? '+' + adjust : adjust);
-            $btn.attr('data-adjust', adjust);
-            
-            if (adjust > 0) {
-                $btn.addClass('bet-adjust-positive');
-            } else {
-                $btn.addClass('bet-adjust-negative');
-            }
-            
-            $btn.on('click', function(e) {
-                e.preventDefault();
-                const current = parseFloat($input.val()) || 0;
-                const min = parseFloat($input.attr('min')) || 0;
-                const max = parseFloat($input.attr('max')) || Infinity;
-                const newValue = Math.max(min, Math.min(max, current + adjust));
-                $input.val(newValue).trigger('change');
-            });
-            
-            $buttonGroups.append($btn);
-        });
-        
-        $inputWrapperContainer.after($buttonGroups);
-    }
+    // Create minus button (left side)
+    const $minusBtn = $('<button type="button" class="bet-adjust-btn-inline bet-adjust-negative" title="Decrease bet"></button>');
+    $minusBtn.html('<span>−</span>');
+    $minusBtn.on('click', function(e) {
+        e.preventDefault();
+        const current = parseFloat($input.val()) || 0;
+        const min = parseFloat($input.attr('min')) || 0;
+        const maxAttr = $input.attr('max');
+        const max = maxAttr ? parseFloat(maxAttr) : Infinity;
+        const newValue = Math.max(min, Math.min(max, current - 1));
+        $input.val(newValue).trigger('change');
+    });
+    
+    // Create plus button (right side)
+    const $plusBtn = $('<button type="button" class="bet-adjust-btn-inline bet-adjust-positive" title="Increase bet"></button>');
+    $plusBtn.html('<span>+</span>');
+    $plusBtn.on('click', function(e) {
+        e.preventDefault();
+        const current = parseFloat($input.val()) || 0;
+        const min = parseFloat($input.attr('min')) || 0;
+        const maxAttr = $input.attr('max');
+        const max = maxAttr ? parseFloat(maxAttr) : Infinity;
+        const newValue = Math.max(min, Math.min(max, current + 1));
+        $input.val(newValue).trigger('change');
+    });
+    
+    // Add buttons to wrapper (minus before input, plus after)
+    $input.before($minusBtn);
+    $input.after($plusBtn);
+    
+    // Add class to input for styling
+    $input.addClass('bet-input-inline');
 }
 
 // Initialize bet adjustment buttons for all bet inputs
@@ -207,11 +163,30 @@ function initBetAdjustButtons() {
         $('.bet-input-with-adjust').each(function() {
             const $input = $(this);
             // Only add if not already wrapped
-            if ($input.closest('.bet-input-wrapper').length === 0 && $input.closest('.form-input-wrapper').length === 0) {
+            if ($input.closest('.bet-input-inline-wrapper').length === 0) {
                 addBetAdjustButtons($input);
             }
         });
     }, 100);
+}
+
+// Initialize quick bet buttons for all games
+function initQuickBetButtons() {
+    $('.quick-bet-btn').on('click', function(e) {
+        e.preventDefault();
+        const amount = parseFloat($(this).data('amount'));
+        if (amount) {
+            // Find the bet input in the same bet-controls container
+            const $betControls = $(this).closest('.bet-controls');
+            const $input = $betControls.find('input.bet-input-with-adjust, input[id="betAmount"]');
+            if ($input.length > 0) {
+                const maxAttr = $input.attr('max');
+                const max = maxAttr ? parseFloat(maxAttr) : Infinity;
+                const finalAmount = Math.min(amount, max);
+                $input.val(finalAmount).trigger('change');
+            }
+        }
+    });
 }
 
 // Initialize common functionality when document is ready
@@ -233,9 +208,13 @@ $(document).ready(function() {
     // Initialize bet adjustment buttons
     initBetAdjustButtons();
     
+    // Initialize quick bet buttons
+    initQuickBetButtons();
+    
     // Also try again after a longer delay in case some inputs are added dynamically
     setTimeout(function() {
         initBetAdjustButtons();
+        initQuickBetButtons();
     }, 500);
 });
 

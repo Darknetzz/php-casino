@@ -778,15 +778,9 @@ button.game-disabled,
     align-items: flex-start;
 }
 
-.bet-controls .bet-amount-section {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    align-items: flex-start;
-}
-
 .bet-controls label {
     font-weight: 600;
+    margin-right: 8px;
 }
 
 .bet-controls small {
@@ -794,6 +788,8 @@ button.game-disabled,
     font-size: 13px;
     font-weight: 500;
     margin-left: 5px;
+    display: block;
+    margin-top: 5px;
 }
 
 .bet-controls input {
