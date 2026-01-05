@@ -13,6 +13,10 @@ $error = '';
 $rouletteMode = getSetting('roulette_mode', 'local');
 $crashMode = getSetting('crash_mode', 'local');
 
+// Get current rounds for monitor
+$rouletteRound = $db->getCurrentRouletteRound();
+$crashRound = $db->getCurrentCrashRound();
+
 // Get upcoming predictions
 $rouletteUpcoming = [];
 $crashUpcoming = [];
@@ -59,6 +63,120 @@ include __DIR__ . '/../includes/navbar.php';
                 <a href="admin_predictions.php" class="admin-tab active">
                     <span>🔮</span> Predictions & History
                 </a>
+            </div>
+            
+            <!-- Game Rounds Monitor Section -->
+            <div class="admin-section section">
+                <h3 style="margin-top: 20px; margin-bottom: 15px; color: #667eea;">Game Rounds Monitor</h3>
+                <p style="margin-bottom: 20px;" class="admin-description">Monitor current game rounds and predict upcoming results (admin only).</p>
+                <p style="margin-bottom: 20px; padding: 10px; background: rgba(102, 126, 234, 0.1); border-radius: 5px;" class="admin-description">
+                    <strong>Current Modes:</strong> Roulette: <strong><?php echo ucfirst($rouletteMode); ?></strong> | Crash: <strong><?php echo ucfirst($crashMode); ?></strong><br>
+                    <small>Central mode requires the game rounds worker to be running.</small>
+                </p>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px;">
+                    <!-- Roulette Round -->
+                    <div class="section rounds-card" style="padding: 20px; border-radius: 8px;">
+                        <h3 style="margin-top: 0;" class="rounds-card-title">🛞 Roulette</h3>
+                        <div id="rouletteRoundInfo" class="rounds-card-content">
+                            <?php if ($rouletteMode === 'local'): ?>
+                                <p style="color: #999;">Local mode - no synchronized rounds</p>
+                            <?php elseif ($rouletteRound): ?>
+                                <p><strong>Round #<?php echo $rouletteRound['round_number']; ?></strong></p>
+                                <p>Status: <strong><?php echo ucfirst($rouletteRound['status']); ?></strong></p>
+                                <?php 
+                                $now = time();
+                                if ($rouletteRound['status'] === 'betting'): 
+                                    $bettingEndsAt = strtotime($rouletteRound['betting_ends_at']);
+                                    $bettingEndsIn = max(0, $bettingEndsAt - $now);
+                                    $spinningDuration = intval(getSetting('roulette_spinning_duration', 4));
+                                    // Time until result = betting ends + spinning duration
+                                    $resultIn = $bettingEndsIn + $spinningDuration;
+                                    $predictedResult = ProvablyFair::generateRouletteResult($rouletteRound['server_seed'], $rouletteRound['client_seed'] ?? '');
+                                ?>
+                                    <p style="font-weight: bold; margin-top: 10px;">
+                                        🔮 Predicted Result: <span style="font-size: 1.2em; color: <?php echo getRouletteNumberColor($predictedResult); ?>;"><?php echo $predictedResult; ?></span>
+                                    </p>
+                                    <p style="margin-top: 10px; font-size: 1.1em; color: #667eea;">
+                                        Next spin in: <strong><?php echo ceil($resultIn); ?>s</strong>
+                                    </p>
+                                <?php elseif ($rouletteRound['status'] === 'spinning'): 
+                                    $predictedResult = ProvablyFair::generateRouletteResult($rouletteRound['server_seed'], $rouletteRound['client_seed'] ?? '');
+                                    $spinningDuration = intval(getSetting('roulette_spinning_duration', 4));
+                                    $startedAt = strtotime($rouletteRound['started_at']);
+                                    $finishesAt = $startedAt + $spinningDuration;
+                                    $timeLeft = max(0, $finishesAt - $now);
+                                ?>
+                                    <p style="font-weight: bold; margin-top: 10px;">
+                                        🔮 Predicted Result: <span style="font-size: 1.2em; color: <?php echo getRouletteNumberColor($predictedResult); ?>;"><?php echo $predictedResult; ?></span>
+                                    </p>
+                                    <p style="margin-top: 10px; font-size: 1.1em; color: #ffc107;">
+                                        Spinning... Result in: <strong><?php echo ceil($timeLeft); ?>s</strong>
+                                    </p>
+                                <?php elseif ($rouletteRound['status'] === 'finished' && $rouletteRound['result_number'] !== null): ?>
+                                    <p style="color: #667eea; font-weight: bold; margin-top: 10px;">
+                                        Result: <span style="font-size: 1.2em;"><?php echo $rouletteRound['result_number']; ?></span>
+                                    </p>
+                                <?php endif; ?>
+                                <p style="font-size: 0.9em; margin-top: 10px;" class="rounds-seed-hash">
+                                    Server Seed Hash: <code style="font-size: 0.8em;"><?php echo substr($rouletteRound['server_seed_hash'], 0, 16); ?>...</code>
+                                </p>
+                            <?php else: ?>
+                                <p>No active round - worker may not be running</p>
+                            <?php endif; ?>
+                        </div>
+                        <div id="rouletteAllBets" style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #ddd;">
+                            <h4 style="margin-top: 0; color: #667eea;">👥 All Players' Bets</h4>
+                            <div id="rouletteAllBetsContent" style="max-height: 300px; overflow-y: auto;">
+                                <p style="text-align: center; color: #999;">Loading bets...</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Crash Round -->
+                    <div class="section rounds-card" style="padding: 20px; border-radius: 8px;">
+                        <h3 style="margin-top: 0;" class="rounds-card-title">🚀 Crash</h3>
+                        <div id="crashRoundInfo" class="rounds-card-content">
+                            <?php if ($crashMode === 'local'): ?>
+                                <p style="color: #999;">Local mode - no synchronized rounds</p>
+                            <?php elseif ($crashRound): ?>
+                                <p><strong>Round #<?php echo $crashRound['round_number']; ?></strong></p>
+                                <p>Status: <strong><?php echo ucfirst($crashRound['status']); ?></strong></p>
+                                <?php 
+                                $now = time();
+                                if ($crashRound['status'] === 'betting'): 
+                                    $bettingEndsAt = strtotime($crashRound['betting_ends_at']);
+                                    $timeLeft = max(0, $bettingEndsAt - $now);
+                                    $distributionParam = floatval(getSetting('crash_distribution_param', 0.99));
+                                    $predictedCrashPoint = ProvablyFair::generateCrashPoint($crashRound['server_seed'], $crashRound['client_seed'] ?? '', $distributionParam);
+                                ?>
+                                    <p style="color: #28a745; font-weight: bold; margin-top: 10px;">
+                                        🔮 Predicted Crash Point: <span style="font-size: 1.2em;"><?php echo number_format($predictedCrashPoint, 2); ?>x</span>
+                                    </p>
+                                    <p style="margin-top: 10px; font-size: 1.1em; color: #667eea;">
+                                        Next round in: <strong><?php echo ceil($timeLeft); ?>s</strong>
+                                    </p>
+                                <?php elseif ($crashRound['status'] === 'running' && $crashRound['crash_point']): ?>
+                                    <p style="color: #ffc107; font-weight: bold; margin-top: 10px;">
+                                        Crash Point: <span style="font-size: 1.2em;"><?php echo number_format($crashRound['crash_point'], 2); ?>x</span>
+                                    </p>
+                                    <p style="margin-top: 10px; font-size: 1.1em; color: #ffc107;">
+                                        Round in progress...
+                                    </p>
+                                <?php elseif ($crashRound['status'] === 'finished' && $crashRound['crash_point']): ?>
+                                    <p style="color: #667eea; font-weight: bold; margin-top: 10px;">
+                                        Crashed at: <span style="font-size: 1.2em;"><?php echo number_format($crashRound['crash_point'], 2); ?>x</span>
+                                    </p>
+                                <?php endif; ?>
+                                <p style="font-size: 0.9em; margin-top: 10px;" class="rounds-seed-hash">
+                                    Server Seed Hash: <code style="font-size: 0.8em;"><?php echo substr($crashRound['server_seed_hash'], 0, 16); ?>...</code>
+                                </p>
+                            <?php else: ?>
+                                <p>No active round - worker may not be running</p>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                </div>
             </div>
             
             <div class="admin-section section">
@@ -236,6 +354,277 @@ include __DIR__ . '/../includes/navbar.php';
                     }; // Black
                 }
             }
+            
+            // Game Rounds Monitor functions
+            let roundsPollInterval = null;
+            
+            function updateRouletteAllBetsDisplay(allBets, predictedResult) {
+                const container = $('#rouletteAllBetsContent');
+                if (!container.length) return;
+                
+                if (!allBets || allBets.length === 0) {
+                    container.html('<p style="text-align: center; color: #999;">No bets placed yet</p>');
+                    return;
+                }
+                
+                // Group bets by user
+                const betsByUser = {};
+                allBets.forEach(function(bet) {
+                    const userId = bet.user_id;
+                    if (!betsByUser[userId]) {
+                        betsByUser[userId] = {
+                            username: bet.username || 'Unknown',
+                            bets: []
+                        };
+                    }
+                    betsByUser[userId].bets.push(bet);
+                });
+                
+                // Helper function to check if a color/range bet wins
+                function checkColorBetWin(betType, resultNum) {
+                    const redNumbers = [1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36];
+                    const resultColor = resultNum === 0 ? 'green' : (redNumbers.includes(resultNum) ? 'red' : 'black');
+                    const isEven = resultNum !== 0 && resultNum % 2 === 0;
+                    const isOdd = resultNum !== 0 && resultNum % 2 === 1;
+                    
+                    switch(betType) {
+                        case 'red':
+                            return resultColor === 'red';
+                        case 'black':
+                            return resultColor === 'black';
+                        case 'green':
+                            return resultNum === 0;
+                        case 'even':
+                            return isEven;
+                        case 'odd':
+                            return isOdd;
+                        case 'low':
+                            return resultNum >= 1 && resultNum <= 18;
+                        case 'high':
+                            return resultNum >= 19 && resultNum <= 36;
+                        default:
+                            return false;
+                    }
+                }
+                
+                let html = '<div style="display: flex; flex-direction: column; gap: 12px;">';
+                
+                // Display bets grouped by user
+                Object.keys(betsByUser).forEach(function(userId) {
+                    const userData = betsByUser[userId];
+                    
+                    // Consolidate bets by bet_type and bet_value for this user
+                    const consolidatedBets = {};
+                    userData.bets.forEach(function(bet) {
+                        const key = bet.bet_type + '_' + bet.bet_value;
+                        if (!consolidatedBets[key]) {
+                            consolidatedBets[key] = {
+                                bet_type: bet.bet_type,
+                                bet_value: bet.bet_value,
+                                amount: 0,
+                                count: 0,
+                                multiplier: bet.multiplier || 2
+                            };
+                        }
+                        consolidatedBets[key].amount += parseFloat(bet.amount || 0);
+                        consolidatedBets[key].count += 1;
+                    });
+                    
+                    html += '<div style="border: 1px solid #ddd; border-radius: 6px; padding: 12px; background: #f9f9f9;">';
+                    html += '<div style="font-weight: bold; margin-bottom: 8px; color: #667eea;">' + escapeHtml(userData.username) + '</div>';
+                    html += '<div style="display: flex; flex-direction: column; gap: 6px;">';
+                    
+                    // Display consolidated bets
+                    Object.keys(consolidatedBets).forEach(function(key) {
+                        const bet = consolidatedBets[key];
+                        
+                        // Check if bet matches predicted result (only if predictedResult is provided)
+                        let matchesPrediction = false;
+                        if (predictedResult !== null && predictedResult !== undefined) {
+                            if (bet.bet_type === 'number') {
+                                matchesPrediction = parseInt(bet.bet_value) === parseInt(predictedResult);
+                            } else if (bet.bet_type === 'color' || bet.bet_type === 'range') {
+                                matchesPrediction = checkColorBetWin(bet.bet_value, parseInt(predictedResult));
+                            }
+                        }
+                        
+                        const sparkleIcon = matchesPrediction ? ' 🔮' : '';
+                        const countText = bet.count > 1 ? ` (${bet.count}x)` : '';
+                        const formatNumber = typeof window.formatNumber === 'function' ? window.formatNumber : function(n) { return parseFloat(n).toFixed(2); };
+                        
+                        if (bet.bet_type === 'number') {
+                            const number = parseInt(bet.bet_value);
+                            const colors = getRouletteNumberColors(number);
+                            html += '<div style="display: flex; align-items: center; gap: 8px; padding: 6px; background: white; border-radius: 4px;">';
+                            html += '<div style="width: 24px; height: 24px; border-radius: 50%; background-color: ' + colors.bg + '; color: ' + colors.text + '; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.2);">' + number + '</div>';
+                            html += '<span>Number ' + bet.bet_value + ': $' + formatNumber(bet.amount) + countText + sparkleIcon + '</span>';
+                            html += '</div>';
+                        } else if (bet.bet_type === 'color' || bet.bet_type === 'range') {
+                            const betValue = bet.bet_value || '';
+                            const betName = betValue.charAt(0).toUpperCase() + betValue.slice(1);
+                            let colorClass = '';
+                            if (betValue === 'red') {
+                                colorClass = 'bet-item-red';
+                            } else if (betValue === 'black') {
+                                colorClass = 'bet-item-black';
+                            } else if (betValue === 'green') {
+                                colorClass = 'bet-item-green';
+                            }
+                            html += '<div class="bet-item ' + colorClass + '" style="display: flex; align-items: center; padding: 6px; background: white; border-radius: 4px;">';
+                            html += '<span>' + betName + ': $' + formatNumber(bet.amount) + ' (' + parseInt(bet.multiplier) + 'x)' + countText + sparkleIcon + '</span>';
+                            html += '</div>';
+                        }
+                    });
+                    
+                    html += '</div>';
+                    html += '</div>';
+                });
+                
+                html += '</div>';
+                container.html(html);
+            }
+            
+            function escapeHtml(text) {
+                const map = {
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    '"': '&quot;',
+                    "'": '&#039;'
+                };
+                return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+            }
+            
+            function updateRoundsMonitor() {
+                // Only poll if in central mode
+                if (rouletteMode === 'central') {
+                    // Update roulette round
+                    $.get('../api/api.php?action=getRouletteRoundAdmin', function(data) {
+                        if (data.success) {
+                            if (data.round) {
+                                const round = data.round;
+                                let html = '';
+                                
+                                if (round.status === 'betting') {
+                                    const bettingEnds = round.time_until_betting_ends || 0;
+                                    const resultTime = round.time_until_result || (bettingEnds + 4); // fallback to +4 if not provided
+                                    
+                                    html = '<p><strong>Round #' + round.round_number + '</strong></p>';
+                                    html += '<p>Status: <strong>Betting</strong></p>';
+                                    if (round.predicted_result !== undefined) {
+                                        const numberColor = getRouletteNumberColor(round.predicted_result);
+                                        html += '<p style="font-weight: bold; margin-top: 10px;">';
+                                        html += '🔮 Predicted Result: <span style="font-size: 1.2em; color: ' + numberColor + ';">' + round.predicted_result + '</span></p>';
+                                    }
+                                    html += '<p style="margin-top: 10px; font-size: 1.1em; color: #667eea;">';
+                                    html += 'Next spin in: <strong>' + Math.ceil(resultTime) + 's</strong></p>';
+                                } else if (round.status === 'spinning') {
+                                    const timeLeft = round.time_until_finish || 0;
+                                    
+                                    html = '<p><strong>Round #' + round.round_number + '</strong></p>';
+                                    html += '<p>Status: <strong>Spinning</strong></p>';
+                                    if (round.predicted_result !== undefined) {
+                                        const numberColor = getRouletteNumberColor(round.predicted_result);
+                                        html += '<p style="font-weight: bold; margin-top: 10px;">';
+                                        html += '🔮 Predicted Result: <span style="font-size: 1.2em; color: ' + numberColor + ';">' + round.predicted_result + '</span></p>';
+                                    }
+                                    html += '<p style="margin-top: 10px; font-size: 1.1em; color: #ffc107;">';
+                                    html += 'Spinning... Result in: <strong>' + Math.ceil(timeLeft) + 's</strong></p>';
+                                } else if (round.status === 'finished' && round.result_number !== null) {
+                                    html = '<p><strong>Round #' + round.round_number + '</strong></p>';
+                                    html += '<p>Status: <strong>Finished</strong></p>';
+                                    html += '<p style="color: #667eea; font-weight: bold; margin-top: 10px;">';
+                                    html += 'Result: <span style="font-size: 1.2em;">' + round.result_number + '</span></p>';
+                                } else {
+                                    html = '<p><strong>Round #' + round.round_number + '</strong></p>';
+                                    html += '<p>Status: <strong>' + round.status.charAt(0).toUpperCase() + round.status.slice(1) + '</strong></p>';
+                                }
+                                
+                                html += '<p style="font-size: 0.9em; margin-top: 10px;" class="rounds-seed-hash">';
+                                html += 'Server Seed Hash: <code style="font-size: 0.8em;">' + (round.server_seed_hash ? round.server_seed_hash.substring(0, 16) : '') + '...</code></p>';
+                                
+                                $('#rouletteRoundInfo').html(html);
+                                
+                                // Update all bets display
+                                if (round.all_bets && round.all_bets.length > 0) {
+                                    updateRouletteAllBetsDisplay(round.all_bets, round.predicted_result);
+                                } else {
+                                    $('#rouletteAllBetsContent').html('<p style="text-align: center; color: #999;">No bets placed yet</p>');
+                                }
+                            } else {
+                                $('#rouletteRoundInfo').html('<p>No active round - worker may not be running</p>');
+                                $('#rouletteAllBetsContent').html('<p style="text-align: center; color: #999;">No active round</p>');
+                            }
+                        }
+                    }, 'json').fail(function() {
+                        console.error('Failed to update roulette round');
+                    });
+                } else {
+                    $('#rouletteRoundInfo').html('<p style="color: #999;">Local mode - no synchronized rounds</p>');
+                }
+                
+                // Only poll if in central mode
+                if (crashMode === 'central') {
+                    // Update crash round
+                    $.get('../api/api.php?action=getCrashRoundAdmin', function(data) {
+                        if (data.success) {
+                            if (data.round) {
+                                const round = data.round;
+                                let html = '';
+                                
+                                if (round.status === 'betting') {
+                                    const timeLeft = round.time_until_betting_ends || 0;
+                                    
+                                    html = '<p><strong>Round #' + round.round_number + '</strong></p>';
+                                    html += '<p>Status: <strong>Betting</strong></p>';
+                                    if (round.predicted_crash_point !== undefined) {
+                                        html += '<p style="color: #28a745; font-weight: bold; margin-top: 10px;">';
+                                        html += '🔮 Predicted Crash Point: <span style="font-size: 1.2em;">' + parseFloat(round.predicted_crash_point).toFixed(2) + 'x</span></p>';
+                                    }
+                                    html += '<p style="margin-top: 10px; font-size: 1.1em; color: #667eea;">';
+                                    html += 'Next round in: <strong>' + Math.ceil(timeLeft) + 's</strong></p>';
+                                } else if (round.status === 'running' && round.crash_point) {
+                                    html = '<p><strong>Round #' + round.round_number + '</strong></p>';
+                                    html += '<p>Status: <strong>Running</strong></p>';
+                                    html += '<p style="color: #ffc107; font-weight: bold; margin-top: 10px;">';
+                                    html += 'Crash Point: <span style="font-size: 1.2em;">' + parseFloat(round.crash_point).toFixed(2) + 'x</span></p>';
+                                    html += '<p style="margin-top: 10px; font-size: 1.1em; color: #ffc107;">Round in progress...</p>';
+                                } else if (round.status === 'finished' && round.crash_point) {
+                                    html = '<p><strong>Round #' + round.round_number + '</strong></p>';
+                                    html += '<p>Status: <strong>Finished</strong></p>';
+                                    html += '<p style="color: #667eea; font-weight: bold; margin-top: 10px;">';
+                                    html += 'Crashed at: <span style="font-size: 1.2em;">' + parseFloat(round.crash_point).toFixed(2) + 'x</span></p>';
+                                } else {
+                                    html = '<p><strong>Round #' + round.round_number + '</strong></p>';
+                                    html += '<p>Status: <strong>' + round.status.charAt(0).toUpperCase() + round.status.slice(1) + '</strong></p>';
+                                }
+                                
+                                html += '<p style="font-size: 0.9em; margin-top: 10px;" class="rounds-seed-hash">';
+                                html += 'Server Seed Hash: <code style="font-size: 0.8em;">' + (round.server_seed_hash ? round.server_seed_hash.substring(0, 16) : '') + '...</code></p>';
+                                
+                                $('#crashRoundInfo').html(html);
+                            } else {
+                                $('#crashRoundInfo').html('<p>No active round - worker may not be running</p>');
+                            }
+                        }
+                    }, 'json').fail(function() {
+                        console.error('Failed to update crash round');
+                    });
+                } else {
+                    $('#crashRoundInfo').html('<p style="color: #999;">Local mode - no synchronized rounds</p>');
+                }
+            }
+            
+            // Start polling for rounds monitor
+            updateRoundsMonitor();
+            roundsPollInterval = setInterval(updateRoundsMonitor, 2000); // Poll every 2 seconds
+            
+            // Cleanup on page unload
+            $(window).on('beforeunload', function() {
+                if (roundsPollInterval) {
+                    clearInterval(roundsPollInterval);
+                }
+            });
             
             function updatePredictionsAndHistory() {
                 // Update history (always, regardless of mode)
