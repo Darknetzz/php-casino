@@ -30,6 +30,7 @@ if ($crashMode === 'central') {
 $pageTitle = 'Admin Panel - Predictions & History';
 include __DIR__ . '/../includes/header.php';
 include __DIR__ . '/../includes/navbar.php';
+require_once __DIR__ . '/../includes/admin_nav.php';
 ?>
     
     <div class="container">
@@ -43,27 +44,7 @@ include __DIR__ . '/../includes/navbar.php';
                 <div class="alert alert-error"><?php echo htmlspecialchars($error); ?></div>
             <?php endif; ?>
             
-            <!-- Admin Navigation Tabs -->
-            <div class="admin-nav-tabs">
-                <a href="admin.php?tab=multipliers" class="admin-tab">
-                    <span>🎰</span> Game Settings
-                </a>
-                <a href="admin.php?tab=limits" class="admin-tab">
-                    <span>🔒</span> Limits
-                </a>
-                <a href="admin.php?tab=settings" class="admin-tab">
-                    <span>📊</span> Casino Settings
-                </a>
-                <a href="admin.php?tab=users" class="admin-tab">
-                    <span>👥</span> User Management
-                </a>
-                <a href="admin.php?tab=rounds" class="admin-tab">
-                    <span>🎯</span> Game Rounds
-                </a>
-                <a href="admin_predictions.php" class="admin-tab active">
-                    <span>🔮</span> Predictions & History
-                </a>
-            </div>
+            <?php renderAdminNav('predictions'); ?>
             
             <!-- Game Rounds Monitor Section -->
             <div class="admin-section section">

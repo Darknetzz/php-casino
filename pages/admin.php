@@ -490,6 +490,8 @@ if ($currentTab === 'statistics') {
 $pageTitle = 'Admin Panel';
 include __DIR__ . '/../includes/header.php';
 include __DIR__ . '/../includes/navbar.php';
+require_once __DIR__ . '/../includes/admin_nav.php';
+require_once __DIR__ . '/../includes/admin_subnav.php';
 ?>
     
     <div class="container">
@@ -503,53 +505,10 @@ include __DIR__ . '/../includes/navbar.php';
                 <div class="alert alert-error"><?php echo htmlspecialchars($error); ?></div>
             <?php endif; ?>
             
-            <!-- Admin Navigation Tabs -->
-            <div class="admin-nav-tabs">
-                <a href="admin.php?tab=multipliers" class="admin-tab <?php echo $currentTab === 'multipliers' ? 'active' : ''; ?>">
-                    <span>🎰</span> Game Settings
-                </a>
-                <a href="admin.php?tab=limits" class="admin-tab <?php echo $currentTab === 'limits' ? 'active' : ''; ?>">
-                    <span>🔒</span> Limits
-                </a>
-                <a href="admin.php?tab=settings" class="admin-tab <?php echo $currentTab === 'settings' ? 'active' : ''; ?>">
-                    <span>📊</span> Casino Settings
-                </a>
-                <a href="admin.php?tab=users" class="admin-tab <?php echo $currentTab === 'users' ? 'active' : ''; ?>">
-                    <span>👥</span> User Management
-                </a>
-                <a href="admin.php?tab=rounds" class="admin-tab <?php echo $currentTab === 'rounds' ? 'active' : ''; ?>">
-                    <span>🎯</span> Game Rounds
-                </a>
-                <a href="admin.php?tab=statistics" class="admin-tab <?php echo $currentTab === 'statistics' ? 'active' : ''; ?>">
-                    <span>📈</span> Statistics
-                </a>
-                <a href="admin_predictions.php" class="admin-tab">
-                    <span>🔮</span> Predictions & History
-                </a>
-            </div>
+            <?php renderAdminNav($currentTab); ?>
             
-            <!-- Game Settings Subnav -->
             <?php if ($currentTab === 'multipliers'): ?>
-            <div class="admin-subnav-tabs">
-                <a href="admin.php?tab=multipliers&game=slots" class="admin-subtab <?php echo $currentGame === 'slots' ? 'active' : ''; ?>">
-                    <span>🎰</span> Slots
-                </a>
-                <a href="admin.php?tab=multipliers&game=plinko" class="admin-subtab <?php echo $currentGame === 'plinko' ? 'active' : ''; ?>">
-                    <span>⚪</span> Plinko
-                </a>
-                <a href="admin.php?tab=multipliers&game=dice" class="admin-subtab <?php echo $currentGame === 'dice' ? 'active' : ''; ?>">
-                    <span>🎲</span> Dice Roll
-                </a>
-                <a href="admin.php?tab=multipliers&game=roulette" class="admin-subtab <?php echo $currentGame === 'roulette' ? 'active' : ''; ?>">
-                    <span>🛞</span> Roulette
-                </a>
-                <a href="admin.php?tab=multipliers&game=crash" class="admin-subtab <?php echo $currentGame === 'crash' ? 'active' : ''; ?>">
-                    <span>🚀</span> Crash
-                </a>
-                <a href="admin.php?tab=multipliers&game=blackjack" class="admin-subtab <?php echo $currentGame === 'blackjack' ? 'active' : ''; ?>">
-                    <span>🃏</span> Blackjack
-                </a>
-            </div>
+                <?php renderAdminSubnav($currentGame, 'admin.php?tab=multipliers'); ?>
             <?php endif; ?>
             
             <!-- Limits Section -->
